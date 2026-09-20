@@ -1,0 +1,34 @@
+{
+  "name": "correspondente",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @corr/web dev",
+    "build": "pnpm --recursive build",
+    "typecheck": "pnpm --recursive typecheck",
+    "lint": "pnpm --filter @corr/web lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "pnpm --filter @corr/db generate",
+    "db:custom": "pnpm --filter @corr/db custom",
+    "db:migrate": "pnpm --filter @corr/db migrate",
+    "db:studio": "pnpm --filter @corr/db studio",
+    "db:seed": "pnpm --filter @corr/db seed",
+    "supabase": "supabase",
+    "test:db": "vitest run --config vitest.db.config.ts",
+    "setup": "pnpm supabase start && pnpm db:migrate && pnpm db:seed",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.10.2",
+    "dotenv": "^17.2.3",
+    "supabase": "^2.22.12",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

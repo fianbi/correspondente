@@ -1,0 +1,31 @@
+{
+  "name": "@corr/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "generate": "drizzle-kit generate",
+    "custom": "drizzle-kit generate --custom",
+    "migrate": "tsx src/migrate.ts",
+    "studio": "drizzle-kit studio",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "@corr/core": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.20.3",
+    "@supabase/supabase-js": "^2.116.0",
+    "dotenv": "^17.2.3"
+  }
+}

@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Builds nativos autorizados (pnpm 11 exige aprovação explícita).
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+  sharp: true
+  supabase: true
+  "@tailwindcss/oxide": true
+

@@ -1,0 +1,32 @@
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+.output/
+.wxt/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+
+supabase/.branches/
+supabase/.temp/
+
+# Material de referência: capturas dos portais dos bancos (que contêm dado
+# pessoal real — CPF, RG, endereço, dados de terceiros) e análises de produtos
+# concorrentes. Fica só na máquina; o que entra no repositório é o que foi
+# destilado em docs/ e as fixtures anonimizadas.
+benchmarks/
+fixtures/**/*.local.html
+
+.DS_Store
+Thumbs.db
+
+test-results/
+playwright-report/
+blob-report/
+
+e2e/.auth/

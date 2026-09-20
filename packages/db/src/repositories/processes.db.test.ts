@@ -1,0 +1,134 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { personInputSchema, processInputSchema } from "@corr/core";
+import { createTestOrg, destroyTestOrg, CPFS_VALIDOS, type TestOrg } from "../testing/fixtures";
+import { createPerson } from "./people";
+import {
+  createProcess,
+  getProcess,
+  listProcesses,
+  listProcessesByStage,
+  moveProcessToStage,
+  summarizeProcesses,
+} from "./processes";
+
+let orgA: TestOrg;
+let orgB: TestOrg;
+let pessoaA1: string;
+let pessoaA2: string;
+let pessoaB1: string;
+
+async function novaPessoa(org: TestOrg, cpf: string, nome: string) {
+  const input = personInputSchema.parse({ cpf, fullName: nome });
+  const person = await createPerson(org.ctx, input);
+  return person.id;
+}
+
+function processInput(personId: string, extra: Record<string, unknown> = {}) {
+  return processInputSchema.parse({ personId, ...extra });
+}
+
+beforeAll(async () => {
+  orgA = await createTestOrg("proc-a");
+  orgB = await createTestOrg("proc-b");
+  pessoaA1 = await novaPessoa(orgA, CPFS_VALIDOS[0], "Ana Paula Ribeiro");
+  pessoaA2 = await novaPessoa(orgA, CPFS_VALIDOS[1], "Bruno Martins de Souza");
+  pessoaB1 = await novaPessoa(orgB, CPFS_VALIDOS[0], "Cliente do Outro Escritório");
+});
+
+afterAll(async () => {
+  await destroyTestOrg(orgA);
+  await destroyTestOrg(orgB);
+});
+
+describe("esteira de processos", () => {
+  it("numera sequencialmente dentro do escritório", async () => {
+    const primeiro = await createProcess(orgA.ctx, processInput(pessoaA1));
+    const segundo = await createProcess(orgA.ctx, processInput(pessoaA2));
+
+    expect(primeiro.number).toBe(1);
+    expect(segundo.number).toBe(2);
+  });
+
+  it("cada escritório tem a própria numeração, começando do 1", async () => {
+    const deB = await createProcess(orgB.ctx, processInput(pessoaB1));
+    expect(deB.number).toBe(1);
+  });
+
+  it("numeração aguenta criações simultâneas sem repetir", async () => {
+    // O contador é atualizado com `update ... returning`, então o lock de linha
+    // serializa os concorrentes. Sem isso, dois processos sairiam com o mesmo
+    // número e o unique(org_id, number) estouraria na cara do operador.
+    const criados = await Promise.all(
+      Array.from({ length: 5 }, () => createProcess(orgA.ctx, processInput(pessoaA1))),
+    );
+
+    const numeros = criados.map((p) => p.number);
+    expect(new Set(numeros).size).toBe(numeros.length);
+  });
+
+  it("o proponente entra automaticamente como participante", async () => {
+    const criado = await createProcess(orgA.ctx, processInput(pessoaA2));
+    const completo = await getProcess(orgA.ctx, criado.id);
+
+    expect(completo.participants).toEqual([
+      expect.objectContaining({ personId: pessoaA2, role: "proponente" }),
+    ]);
+  });
+
+  it("agrupa por fase na ordem do funil, incluindo fases vazias", async () => {
+    const colunas = await listProcessesByStage(orgA.ctx);
+
+    expect(colunas.map((c) => c.stage)).toEqual([
+      "cadastro",
+      "correspondente",
+      "montagem",
+      "conformidade_contrato",
+      "agencia",
+      "cri",
+    ]);
+    // Coluna vazia precisa existir: o Kanban tem que mostrar a fase mesmo sem
+    // nenhum card, senão o operador não tem para onde arrastar.
+    expect(colunas.find((c) => c.stage === "cri")?.processes).toEqual([]);
+  });
+
+  it("mover de fase muda a coluna do Kanban", async () => {
+    const criado = await createProcess(orgA.ctx, processInput(pessoaA1));
+    await moveProcessToStage(orgA.ctx, criado.id, "agencia");
+
+    const colunas = await listProcessesByStage(orgA.ctx);
+    const naAgencia = colunas.find((c) => c.stage === "agencia")?.processes ?? [];
+    expect(naAgencia.map((p) => p.id)).toContain(criado.id);
+  });
+
+  it("esconde processos encerrados por padrão", async () => {
+    const criado = await createProcess(orgA.ctx, processInput(pessoaA1, { status: "cancelado" }));
+
+    const padrao = await listProcesses(orgA.ctx);
+    expect(padrao.map((p) => p.id)).not.toContain(criado.id);
+
+    const comEncerrados = await listProcesses(orgA.ctx, { includeClosed: true });
+    expect(comEncerrados.map((p) => p.id)).toContain(criado.id);
+  });
+
+  it("a listagem traz o nome do cliente sem consulta extra", async () => {
+    const [primeiro] = await listProcesses(orgA.ctx);
+    expect(primeiro?.personName).toBeTruthy();
+    expect(primeiro?.personCpf).toBeTruthy();
+  });
+
+  it("um escritório não vê processo do outro", async () => {
+    const deB = await listProcesses(orgB.ctx);
+    const deA = await listProcesses(orgA.ctx);
+
+    expect(deB).toHaveLength(1);
+    expect(deA.map((p) => p.id)).not.toContain(deB[0]!.id);
+
+    await expect(getProcess(orgA.ctx, deB[0]!.id)).rejects.toThrow(/não encontrad/i);
+  });
+
+  it("o resumo por status só soma o próprio escritório", async () => {
+    const resumoB = await summarizeProcesses(orgB.ctx);
+    const total = resumoB.reduce((acc, row) => acc + row.quantity, 0);
+    expect(total).toBe(1);
+  });
+});

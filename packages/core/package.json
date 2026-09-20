@@ -1,0 +1,21 @@
+{
+  "name": "@corr/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./format": "./src/format/index.ts",
+    "./domain": "./src/domain/index.ts",
+    "./portais": "./src/portais/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./fields": "./src/fields/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}

@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+ * Paleta própria (deliberadamente distante do teal da Rauzee): azul-petróleo
+ * como primária, cinzas frios de superfície e as cores de status da esteira,
+ * que aparecem em Kanban, badge e gráfico — por isso vivem aqui, e não soltas
+ * em classe de componente.
+ */
+@theme {
+  --color-brand-50: #eef4fb;
+  --color-brand-100: #d7e5f5;
+  --color-brand-200: #b0cbea;
+  --color-brand-300: #7ea9da;
+  --color-brand-400: #4a81c4;
+  --color-brand-500: #2b62a8;
+  --color-brand-600: #1f4c87;
+  --color-brand-700: #1a3e6d;
+  --color-brand-800: #163254;
+  --color-brand-900: #10243c;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f8fa;
+  --color-line: #e3e8ee;
+  --color-ink: #0f1b2a;
+  --color-ink-muted: #5b6b7f;
+
+  --color-status-aberto: #64748b;
+  --color-status-aguardando: #b45309;
+  --color-status-aprovado: #15803d;
+  --color-status-condicionado: #a16207;
+  --color-status-reprovado: #b91c1c;
+  --color-status-assinado: #1d4ed8;
+  --color-status-vencido: #9f1239;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Números de valor e CPF em tabela só alinham com tabular-nums. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
