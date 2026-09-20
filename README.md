@@ -123,6 +123,17 @@ Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 | `pnpm db:migrate` | Aplica migrations pendentes |
 | `pnpm db:studio` | Drizzle Studio |
 
+## Integração contínua
+
+`.github/workflows/ci.yml` roda a cada push: tipos, lint e testes unitários primeiro (sem
+banco), depois a stack do Supabase de pé para os testes de banco e end-to-end, e por fim o
+build do app e da extensão.
+
+O teste `rls-coverage.db.test.ts` merece destaque: ele confere no catálogo do Postgres que
+**toda tabela com `org_id` tem RLS e uma policy amarrada ao escritório da transação**. O
+jeito mais fácil de furar a tenancy deste sistema não é escrever uma query errada — é criar
+uma tabela nova e esquecer a policy, o que nenhum teste de funcionalidade pegaria.
+
 ## Estado da implementação
 
 - [x] **M0** — monorepo, autenticação, escritórios, isolamento multi-tenant, shell do app

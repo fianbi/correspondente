@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# Uma execução por branch: push seguido cancela o anterior em vez de enfileirar.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Estático primeiro, sem banco: se o tipo não fecha, não vale subir Postgres.
+  estatico:
+    name: Tipos, lint e testes unitários
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+
+  integracao:
+    name: Banco e end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Subir a stack local do Supabase
+        run: pnpm supabase start
+
+      - name: Ambiente
+        run: |
+          # As chaves do Supabase local são fixas e públicas por desenho: esta
+          # stack sobe do zero a cada execução e morre junto com o runner.
+          {
+            echo "DATABASE_URL=postgresql://app_user:app_ci_password@127.0.0.1:54322/postgres"
+            echo "DATABASE_ADMIN_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+            echo "NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(pnpm supabase status --output json | jq -r '.ANON_KEY')"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$(pnpm supabase status --output json | jq -r '.SERVICE_ROLE_KEY')"
+            echo "SEED_USER_EMAIL=dev@correspondente.local"
+            echo "SEED_USER_PASSWORD=dev12345678"
+          } >> .env.local
+
+      - run: pnpm db:migrate
+      - run: pnpm db:seed
+
+      - name: Testes de banco (isolamento, repositórios, auditoria)
+        run: pnpm test:db
+
+      - name: Navegador do Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Testes end-to-end
+        run: pnpm e2e
+        env:
+          CI: "true"
+
+      - name: Relatório quando falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
+  build:
+    name: Build de produção
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build do app web
+        # O build só precisa das variáveis existirem: nenhuma chamada de rede
+        # acontece em tempo de compilação.
+        run: pnpm --filter @corr/web build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-placeholder
+          DATABASE_URL: postgresql://app_user:x@127.0.0.1:54322/postgres
+          DATABASE_ADMIN_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
+      - name: Build da extensão
+        run: |
+          pnpm --filter @corr/extension prepare:types
+          pnpm --filter @corr/extension build
