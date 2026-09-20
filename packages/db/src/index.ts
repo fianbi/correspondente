@@ -31,4 +31,8 @@ export type {
   ProcessEvent,
   ProcessFieldValue,
   ProcessStageState,
+  AccessLink,
+  Document,
+  NewDocument,
+  Pendency,
 } from "./schema/index";

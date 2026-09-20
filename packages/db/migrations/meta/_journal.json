@@ -50,6 +50,20 @@
       "when": 1789870994254,
       "tag": "0006_rls_fluxos",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789879159573,
+      "tag": "0007_tiny_boomerang",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789879170121,
+      "tag": "0008_rls_documentos",
+      "breakpoints": true
     }
   ]
 }

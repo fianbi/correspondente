@@ -4,3 +4,6 @@ export * from "./catalogs";
 export * from "./processes";
 export * from "./flows";
 export * from "./process-fields";
+export * from "./documents";
+export * from "./pendencies";
+export * from "./access-links";

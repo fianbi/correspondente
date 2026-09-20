@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Home, Users, FolderOpen, Settings } from "lucide-react";
+import { AlertCircle, FileText, FolderOpen, Home, Settings, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/processos", label: "Processos", icon: FileText },
   { href: "/pessoas", label: "Pessoas", icon: Users },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
+  { href: "/pendencias", label: "Pendências", icon: AlertCircle },
 ] as const;
 
 export function SidebarNav() {

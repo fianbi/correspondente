@@ -73,10 +73,18 @@ export interface FieldBlock {
   fields: string[];
 }
 
+/** Documento que a etapa exige — vira o checklist da fase. */
+export interface StageRequirement {
+  documentType: string;
+  required: boolean;
+  note?: string;
+}
+
 export interface StageDef {
   key: string;
   label: string;
   blocks: FieldBlock[];
+  requirements?: StageRequirement[];
 }
 
 export interface FlowDef {

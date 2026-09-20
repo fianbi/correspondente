@@ -53,6 +53,12 @@ export const DEFAULT_FLOW: FlowDef = {
           ],
         },
       ],
+      requirements: [
+        { documentType: "rg", required: true },
+        { documentType: "comprovante_residencia", required: true },
+        { documentType: "comprovante_renda", required: true },
+        { documentType: "extrato_fgts", required: false, note: "Quando houver uso de FGTS." },
+      ],
     },
     {
       key: "correspondente",
@@ -152,6 +158,7 @@ export const DEFAULT_FLOW: FlowDef = {
           ],
         },
       ],
+      requirements: [{ documentType: "matricula_imovel", required: true }],
     },
   ],
 };

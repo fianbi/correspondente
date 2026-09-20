@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata, Route } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import {
   NotFoundError,
@@ -10,14 +11,18 @@ import {
   type FieldOption,
 } from "@corr/core";
 import {
+  buildChecklist,
   getFlowForProcess,
   getProcess,
   getProcessFieldValues,
+  listAccessLinks,
   listAgencies,
   listBanks,
   listBrokers,
   listOrgMembers,
+  listProcessDocuments,
   listProcessEvents,
+  listProcessPendencies,
   listRealEstateAgencies,
   listStageStates,
 } from "@corr/db";
@@ -29,10 +34,19 @@ import type { DynamicOptions } from "@/components/fields/field-input";
 import { History } from "./history";
 import { StageForm, type RenderBlock } from "./stage-form";
 import { ProcessHeaderControls } from "./header-controls";
+import { DocumentsPanel } from "./documents-panel";
+import { PendenciesPanel } from "./pendencies-panel";
 
 export const metadata: Metadata = { title: "Processo" };
 
-type Tab = "etapas" | "historico";
+type Tab = "etapas" | "documentos" | "pendencias" | "historico";
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "etapas", label: "Etapas" },
+  { key: "documentos", label: "Documentos" },
+  { key: "pendencias", label: "Pendências" },
+  { key: "historico", label: "Histórico" },
+];
 
 export default async function ProcessoPage({
   params,
@@ -44,7 +58,7 @@ export default async function ProcessoPage({
   const ctx = await requireOrgContext();
   const { id } = await params;
   const { etapa, aba } = await searchParams;
-  const tab: Tab = aba === "historico" ? "historico" : "etapas";
+  const tab: Tab = (TABS.find((t) => t.key === aba)?.key ?? "etapas") as Tab;
 
   const process = await getProcess(ctx, id).catch((error: unknown) => {
     if (error instanceof NotFoundError) notFound();
@@ -89,6 +103,30 @@ export default async function ProcessoPage({
   const currentStageKey =
     flow.stages.find((s) => s.key === etapa)?.key ?? process.stage ?? flow.stages[0]?.key;
   const currentStage = flow.stages.find((s) => s.key === currentStageKey) ?? flow.stages[0];
+
+  const [documents, pendencies, links] = await Promise.all([
+    listProcessDocuments(ctx, id),
+    listProcessPendencies(ctx, id),
+    listAccessLinks(ctx, id),
+  ]);
+
+  const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
+
+  const linkRows = links.map((link) => ({
+    id: link.id,
+    label: link.label,
+    canUpload: link.canUpload,
+    expired: link.expired,
+    revoked: link.revoked,
+    accessCount: link.accessCount,
+  }));
+
+  // O link do portal precisa da origem real da requisição: em produção é o
+  // domínio do escritório, em desenvolvimento é o localhost da máquina.
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
+  const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const portalBaseUrl = `${protocol}://${host}`;
 
   const proponent = process.participants.find((p) => p.role === "proponente");
 
@@ -161,28 +199,52 @@ export default async function ProcessoPage({
             })}
           </ol>
 
-          <div className="mt-3 flex gap-1 border-t border-line pt-3">
-            {(["etapas", "historico"] as const).map((target) => (
+        </nav>
+
+        <div className="min-w-0 flex-1">
+          {/*
+            São links de navegação, não abas de widget: mudam a URL e o
+            histórico do navegador. Marcá-los como `role="tab"` mentiria para
+            quem usa leitor de tela.
+          */}
+          <nav
+            aria-label="Seções do processo"
+            className="mb-4 flex flex-wrap gap-1 border-b border-line pb-2"
+          >
+            {TABS.map((target) => (
               <Link
-                key={target}
-                href={tabHref(target)}
-                aria-current={tab === target ? "page" : undefined}
+                key={target.key}
+                href={tabHref(target.key)}
+                aria-current={tab === target.key ? "page" : undefined}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-sm transition",
-                  tab === target
+                  tab === target.key
                     ? "bg-brand-50 font-medium text-brand-700"
                     : "text-ink-muted hover:bg-surface-muted hover:text-ink",
                 )}
               >
-                {target === "etapas" ? "Etapas" : "Histórico"}
+                {target.label}
               </Link>
             ))}
-          </div>
-        </nav>
+          </nav>
 
-        <div className="min-w-0 flex-1">
           {tab === "historico" ? (
             <HistoryTab processId={id} actors={members} relations={relations} />
+          ) : tab === "documentos" ? (
+            <DocumentsPanel
+              processId={id}
+              stageKey={currentStage?.key ?? null}
+              documents={documents}
+              checklist={checklist}
+            />
+          ) : tab === "pendencias" ? (
+            <PendenciesPanel
+              processId={id}
+              stageKey={currentStage?.key ?? null}
+              pendencies={pendencies}
+              links={linkRows}
+              portalBaseUrl={portalBaseUrl}
+            />
           ) : currentStage ? (
             <StageForm
               processId={id}
@@ -196,6 +258,7 @@ export default async function ProcessoPage({
             />
           ) : null}
 
+          {tab === "etapas" ? (
           <Card className="mt-5">
             <CardHeader title="Pessoas do processo" />
             <CardBody className="p-0">
@@ -222,6 +285,7 @@ export default async function ProcessoPage({
               </ul>
             </CardBody>
           </Card>
+          ) : null}
         </div>
       </main>
     </>

@@ -3,7 +3,7 @@ import "./load-env";
 import { createClient } from "@supabase/supabase-js";
 import { eq, sql } from "drizzle-orm";
 import { getAdminDb } from "./client";
-import { ensureDefaultFlow } from "./repositories/flows";
+import { resetDefaultFlow } from "./repositories/flows";
 import { banks } from "./schema/catalogs";
 import { orgCounters, orgMembers, orgs } from "./schema/orgs";
 import { people } from "./schema/people";
@@ -115,9 +115,10 @@ async function main() {
   await db.insert(orgMembers).values({ orgId: org.id, userId, role: "owner" }).onConflictDoNothing();
   await db.insert(orgCounters).values({ orgId: org.id }).onConflictDoNothing();
 
-  // Fluxo padrão do escritório: sem ele a tela do processo não teria etapas.
-  await ensureDefaultFlow({ orgId: org.id, userId, role: "owner" });
-  console.log("fluxo padrão garantido");
+  // Recria o fluxo a cada seed para o ambiente de desenvolvimento acompanhar o
+  // fluxo padrão do código (inclusive o checklist de cada etapa).
+  await resetDefaultFlow({ orgId: org.id, userId, role: "owner" });
+  console.log("fluxo padrão recriado");
 
   const [caixa] = await db.select().from(banks).where(eq(banks.code, "104")).limit(1);
 

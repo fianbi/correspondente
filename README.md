@@ -29,6 +29,17 @@ mora: coluna nativa de `processes` (o que entra em listagem e soma) ou
 `process_field_values` (o que só interessa dentro de uma etapa). O mesmo catálogo vai
 alimentar o gerador de formulários em PDF e o preenchimento da extensão.
 
+## Documentos e acesso de terceiros
+
+Os arquivos ficam num bucket privado: não existe URL permanente. Toda leitura passa por
+uma URL assinada de curta duração, emitida depois de conferir quem está pedindo. O upload
+vai direto do navegador para o armazenamento, com permissão assinada pelo servidor — o
+caminho do arquivo é sempre decidido pelo servidor, nunca pelo cliente.
+
+O link de acesso para cliente e corretor guarda apenas o hash do token, como senha: um
+vazamento do banco não abre o portal de ninguém. O portal mostra andamento, checklist e o
+que aquele link enviou — nunca documentos internos, que podem conter parecer de crédito.
+
 ## Como o isolamento entre escritórios funciona
 
 Toda tabela tem `org_id` e duas barreiras independentes:
@@ -92,6 +103,6 @@ Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 - [x] **M0** — monorepo, autenticação, escritórios, isolamento multi-tenant, shell do app
 - [x] **M1** — pessoas (dedupe por CPF), rendas, processos (tabela + Kanban), cadastros de apoio
 - [x] **M2** — catálogo de campos, fluxo configurável por etapa, auditoria campo-a-campo
-- [ ] **M3** — documentos, checklist por fase, pendências, link de acesso para terceiros
+- [x] **M3** — documentos, checklist por fase, pendências, link de acesso para terceiros
 - [ ] **M4** — extensão MV3: captura e preenchimento no Caixa Aqui
 - [ ] **M5** — formulários PDF, resumo do processo, dashboard com indicadores

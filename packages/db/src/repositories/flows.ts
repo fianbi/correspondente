@@ -2,6 +2,7 @@ import {
   type FieldBlock,
   type FlowDef,
   type OrgContext,
+  type StageRequirement,
   DEFAULT_FLOW,
   NotFoundError,
   validateFlow,
@@ -16,6 +17,7 @@ export interface StageConfig {
   label: string;
   position: number;
   blocks: FieldBlock[];
+  requirements: StageRequirement[];
 }
 
 export interface FlowConfig {
@@ -44,6 +46,7 @@ async function insertFlow(tx: Tx, orgId: string, def: FlowDef, isDefault: boolea
       label: stage.label,
       position: index,
       blocks: stage.blocks,
+      requirements: stage.requirements ?? [],
     })),
   );
 
@@ -99,6 +102,7 @@ export async function getFlowConfig(ctx: OrgContext, flowId: string): Promise<Fl
         label: stage.label,
         position: stage.position,
         blocks: stage.blocks,
+        requirements: stage.requirements,
       })),
     };
   });
@@ -124,4 +128,20 @@ export async function listFlows(ctx: OrgContext) {
       .where(eq(flows.orgId, ctx.orgId))
       .orderBy(asc(flows.name)),
   );
+}
+
+/**
+ * Recria o fluxo padrão a partir do código.
+ *
+ * Existe para o seed de desenvolvimento: o fluxo de um escritório é cópia dele
+ * e não deve ser sobrescrito por mudança no código — em produção, alterar o
+ * fluxo padrão jamais pode apagar a configuração que o escritório ajustou.
+ * Só processos sem `flow_id` sobrevivem a isto, que é o caso do seed.
+ */
+export async function resetDefaultFlow(ctx: OrgContext): Promise<string> {
+  return withOrg(ctx, async (tx) => {
+    await tx.delete(flows).where(and(eq(flows.orgId, ctx.orgId), eq(flows.isDefault, true)));
+    const flow = await insertFlow(tx, ctx.orgId, DEFAULT_FLOW, true);
+    return flow.id;
+  });
 }

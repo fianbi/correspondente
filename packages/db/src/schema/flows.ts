@@ -12,7 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { FieldBlock } from "@corr/core";
+import type { FieldBlock, StageRequirement } from "@corr/core";
 import { orgs, profiles } from "./orgs";
 import { processes } from "./processes";
 
@@ -61,6 +61,8 @@ export const flowStages = pgTable(
     label: text("label").notNull(),
     position: integer("position").notNull(),
     blocks: jsonb("blocks").$type<FieldBlock[]>().notNull().default([]),
+    /** Checklist de documentos exigidos nesta etapa. */
+    requirements: jsonb("requirements").$type<StageRequirement[]>().notNull().default([]),
     ...timestamps,
   },
   (table) => [
