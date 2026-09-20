@@ -34,3 +34,6 @@ e2e/.auth/
 # Build da extensão
 apps/extension/.output/
 apps/extension/.wxt/
+
+# Gerado pelo Next a cada build/dev
+apps/web/next-env.d.ts
