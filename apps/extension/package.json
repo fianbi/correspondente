@@ -1,0 +1,27 @@
+{
+  "name": "@corr/extension",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "tsc --noEmit",
+    "prepare:types": "wxt prepare"
+  },
+  "dependencies": {
+    "@corr/core": "workspace:*",
+    "@corr/portal": "workspace:*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.30",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@wxt-dev/module-react": "^1.1.3",
+    "typescript": "^5.9.3",
+    "wxt": "^0.21.4"
+  }
+}

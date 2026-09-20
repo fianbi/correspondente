@@ -1,0 +1,19 @@
+{
+  "name": "@corr/portal",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@corr/core": "workspace:*"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.0.0"
+  }
+}

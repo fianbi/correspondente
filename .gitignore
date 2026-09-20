@@ -30,3 +30,7 @@ playwright-report/
 blob-report/
 
 e2e/.auth/
+
+# Build da extensão
+apps/extension/.output/
+apps/extension/.wxt/

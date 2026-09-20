@@ -10,7 +10,7 @@ loadEnv({ path: [resolve(repoRoot, ".env.local"), resolve(repoRoot, ".env")], qu
 
 const config: NextConfig = {
   // Os pacotes do monorepo exportam TypeScript direto, sem build intermediário.
-  transpilePackages: ["@corr/core", "@corr/db"],
+  transpilePackages: ["@corr/core", "@corr/db", "@corr/portal"],
   serverExternalPackages: ["postgres"],
   typedRoutes: true,
   experimental: {

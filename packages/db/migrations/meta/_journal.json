@@ -64,6 +64,20 @@
       "when": 1789879170121,
       "tag": "0008_rls_documentos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789880833982,
+      "tag": "0009_magenta_skreet",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789880857044,
+      "tag": "0010_rls_extensao",
+      "breakpoints": true
     }
   ]
 }

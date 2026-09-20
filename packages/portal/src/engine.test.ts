@@ -1,0 +1,240 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Window } from "happy-dom";
+import { beforeEach, describe, expect, it } from "vitest";
+import { CAIXA_PROFILE, toCaixaValues } from "./caixa";
+import { captureScreen, discoverFields, fillScreen, matchScreen } from "./engine";
+
+/**
+ * Os testes rodam contra as fixtures anonimizadas do portal real
+ * (`fixtures/caixa/`), geradas por `scripts/anonimizar-fixtures.mjs`. É o que
+ * permite mudar o motor de preenchimento sem abrir o Caixa Aqui — e descobrir
+ * a quebra aqui, não com um cliente esperando do outro lado da mesa.
+ */
+const raiz = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+
+function carregarFixture(nome: string): Document {
+  const html = readFileSync(resolve(raiz, "fixtures/caixa", nome), "utf8");
+  const window = new Window({ url: "https://habitacao.caixa.gov.br/sicaq/cadastroCliente" });
+  window.document.write(html);
+  return window.document as unknown as Document;
+}
+
+const PESSOA = {
+  cpf: "11144477735",
+  fullName: "Ana Paula Ribeiro",
+  shortName: "Ana P Ribeiro",
+  birthDate: "1991-07-20",
+  sex: "feminino",
+  nationality: "brasileiro",
+  birthUf: "SP",
+  fatherName: "Carlos Ribeiro",
+  motherName: "Marta Ribeiro",
+  educationLevel: "superior_completo",
+  pis: "12345678901",
+  docType: "rg",
+  docNumber: "478054188",
+  docIssuedAt: "2018-09-03",
+  maritalStatus: "casado_comunhao_parcial",
+  spouseName: "Bruno Ribeiro",
+  spouseCpf: "52998224725",
+};
+
+const TELA_DADOS = CAIXA_PROFILE.screens[0]!;
+
+describe("reconhecimento de tela", () => {
+  it("identifica a tela de dados cadastrais pela URL e pelo marcador", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const tela = matchScreen(
+      CAIXA_PROFILE.screens,
+      "https://habitacao.caixa.gov.br/sicaq/cadastroCliente",
+      doc,
+    );
+    expect(tela?.key).toBe("cadastro_dados");
+  });
+
+  it("não confunde com a tela de endereço, que tem outros campos", () => {
+    const doc = carregarFixture("cadastro-de-clientes-4.html");
+    const tela = matchScreen(
+      CAIXA_PROFILE.screens,
+      "https://habitacao.caixa.gov.br/sicaq/cadastroCliente",
+      doc,
+    );
+    expect(tela?.key).toBe("cadastro_endereco");
+  });
+
+  it("URL de outro sistema não casa com perfil nenhum", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    expect(matchScreen(CAIXA_PROFILE.screens, "https://outro-banco.com/cadastro", doc)).toBeNull();
+  });
+});
+
+describe("preenchimento da tela de dados cadastrais", () => {
+  let doc: Document;
+
+  beforeEach(() => {
+    doc = carregarFixture("cadastro-de-clientes-3.html");
+  });
+
+  it("escreve texto, data e documento nos campos certos", () => {
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    const valor = (name: string) =>
+      doc.querySelector<HTMLInputElement>(`[name="${name}"]`)?.value;
+
+    expect(valor("dataCpf")).toBe("11144477735");
+    expect(valor("nomeCompleto")).toBe("ANA PAULA RIBEIRO");
+    // O portal espera dd/mm/aaaa; o sistema guarda aaaa-mm-dd.
+    expect(valor("dataNascimento")).toBe("20/07/1991");
+    expect(valor("nomePai")).toBe("CARLOS RIBEIRO");
+  });
+
+  it("traduz valor de domínio para o código do portal", () => {
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    const select = (name: string) =>
+      doc.querySelector<HTMLSelectElement>(`[name="${name}"]`)?.value;
+
+    expect(select("cmbSexo")).toBe("F");
+    // "Casado com comunhão parcial" é o código 9 no SICAQ — casar por texto
+    // visível quebraria a cada acento que o banco resolvesse trocar.
+    expect(select("cmbEstadoCivil")).toBe("9");
+    expect(select("cmbGrauInstrucao")).toBe("09");
+    expect(select("cmbUFNaturalidade")).toBe("35");
+  });
+
+  it("preenche o grupo de documento do tipo selecionado", () => {
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbTipoDocumento"]')?.value).toBe("0372008");
+    expect(doc.querySelector<HTMLInputElement>('[name="identidadeNumeroRg"]')?.value).toBe(
+      "478054188",
+    );
+    expect(doc.querySelector<HTMLInputElement>('[name="dataEmissaoIdentidadeRg"]')?.value).toBe(
+      "03/09/2018",
+    );
+  });
+
+  it("não escreve no grupo de outro tipo de documento", () => {
+    const comCnh = { ...PESSOA, docType: "cnh", docFirstLicenseDate: "2010-01-15" };
+    const doc12 = carregarFixture("cadastro-de-clientes-12-cnh.html");
+
+    const resultados = fillScreen(doc12, TELA_DADOS, toCaixaValues(comCnh));
+
+    expect(doc12.querySelector<HTMLInputElement>('[name="identidadeNumeroCnh"]')?.value).toBe(
+      "478054188",
+    );
+    expect(doc12.querySelector<HTMLInputElement>('[name="dataPrimeiraHabilitacaoCnh"]')?.value).toBe(
+      "15/01/2010",
+    );
+
+    // Os campos do RG nem existem nesta tela: o motor reporta em vez de
+    // escrever às cegas.
+    const doRg = resultados.filter((r) => r.selector.includes("Rg"));
+    expect(doRg.every((r) => r.status !== "preenchido")).toBe(true);
+  });
+
+  it("campo sem valor no cadastro fica em branco, e isso é reportado", () => {
+    const resultados = fillScreen(doc, TELA_DADOS, toCaixaValues({ ...PESSOA, pis: null }));
+
+    const pis = resultados.find((r) => r.dataKey === "person.pis");
+    expect(pis?.status).toBe("sem_valor");
+    expect(doc.querySelector<HTMLInputElement>('[name="pis"]')?.value).toBe("");
+  });
+
+  it("valor sem opção equivalente não é chutado", () => {
+    // União estável não existe no SICAQ: melhor deixar vazio para o operador
+    // decidir do que marcar "casado" e falsear o regime de bens.
+    const resultados = fillScreen(
+      doc,
+      TELA_DADOS,
+      toCaixaValues({ ...PESSOA, maritalStatus: "uniao_estavel" }),
+    );
+
+    const estadoCivil = resultados.find((r) => r.dataKey === "person.maritalStatus");
+    expect(estadoCivil?.status).toBe("sem_valor");
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbEstadoCivil"]')?.value).toBe("");
+  });
+
+  it("dispara os eventos que a tela do banco escuta", () => {
+    const campo = doc.querySelector<HTMLInputElement>('[name="nomeCompleto"]')!;
+    const eventos: string[] = [];
+    campo.addEventListener("input", () => eventos.push("input"));
+    campo.addEventListener("change", () => eventos.push("change"));
+
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    // Sem estes eventos, telas antigas salvam o campo vazio mesmo com o texto
+    // aparecendo para quem está olhando.
+    expect(eventos).toEqual(["input", "change"]);
+  });
+
+  it("não sobrescreve o que já está preenchido quando pedido", () => {
+    const campo = doc.querySelector<HTMLInputElement>('[name="nomeCompleto"]')!;
+    campo.value = "NOME JA DIGITADO";
+
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA), { skipFilled: true });
+
+    expect(campo.value).toBe("NOME JA DIGITADO");
+  });
+
+  it("nunca submete o formulário", () => {
+    let submetido = false;
+    doc.querySelector("form")?.addEventListener("submit", () => {
+      submetido = true;
+    });
+
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    // Quem confere e salva é o operador. Esta é a linha entre assistir e agir
+    // sozinho dentro do sistema do banco.
+    expect(submetido).toBe(false);
+  });
+});
+
+describe("captura da tela", () => {
+  it("lê o que está na tela e devolve no formato do sistema", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    fillScreen(doc, TELA_DADOS, toCaixaValues(PESSOA));
+
+    const capturado = Object.fromEntries(
+      captureScreen(doc, TELA_DADOS).map((item) => [item.dataKey, item.value]),
+    );
+
+    expect(capturado["person.fullName"]).toBe("ANA PAULA RIBEIRO");
+    // A data volta convertida para o formato do sistema.
+    expect(capturado["person.birthDate"]).toBe("1991-07-20");
+  });
+
+  it("ignora campo vazio em vez de gravar string vazia", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const capturado = captureScreen(doc, TELA_DADOS);
+    expect(capturado).toEqual([]);
+  });
+});
+
+describe("modo de aprendizado", () => {
+  it("lista os campos da tela e marca os que o perfil já conhece", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const campos = discoverFields(doc, TELA_DADOS);
+
+    expect(campos.length).toBeGreaterThan(20);
+
+    const nome = campos.find((c) => c.name === "nomeCompleto");
+    expect(nome?.known).toBe(true);
+
+    // Campo que o perfil ainda não mapeia aparece como desconhecido, que é o
+    // que a extensão oferece para o operador ensinar.
+    const desconhecidos = campos.filter((c) => !c.known);
+    expect(desconhecidos.length).toBeGreaterThan(0);
+  });
+
+  it("tenta adivinhar o rótulo a partir da tabela, já que não há label", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const campos = discoverFields(doc, null);
+
+    const comRotulo = campos.filter((c) => c.label && c.label !== c.name);
+    expect(comRotulo.length).toBeGreaterThan(5);
+  });
+});

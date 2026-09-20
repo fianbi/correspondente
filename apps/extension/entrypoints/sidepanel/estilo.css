@@ -1,0 +1,180 @@
+/* Painel estreito: o Chrome abre a barra lateral com pouco mais de 300px. */
+:root {
+  --brand: #1f4c87;
+  --ink: #0f1b2a;
+  --ink-muted: #5b6b7f;
+  --line: #e3e8ee;
+  --surface-muted: #f6f8fa;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+body {
+  margin: 0;
+  background: #fff;
+}
+
+.painel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+}
+
+h1 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 8px;
+  font: inherit;
+}
+
+input:focus {
+  outline: 2px solid rgba(31, 76, 135, 0.3);
+  border-color: var(--brand);
+}
+
+button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primario {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.primario:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button.link {
+  border: none;
+  background: none;
+  color: var(--ink-muted);
+  padding: 0;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+.acoes {
+  display: flex;
+  gap: 6px;
+}
+
+.acoes button {
+  flex: 1;
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.item {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.item.selecionado {
+  background: #eef4fb;
+  color: var(--brand);
+}
+
+.rotulo {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.destaque {
+  margin: 0;
+  font-weight: 600;
+}
+
+.discreto {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.erro {
+  margin: 0;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ok {
+  margin: 0;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}

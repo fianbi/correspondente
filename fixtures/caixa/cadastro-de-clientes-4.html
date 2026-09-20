@@ -1,0 +1,711 @@
+
+<!-- saved from url=(0104)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente_1_validar -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+<title>Caixa Aqui - Cadastro de Clientes</title>
+
+
+
+
+</head>
+<body bgcolor="#FFFFFF" onload="JavaScript:init();">
+	<center>
+		<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+		<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Cadastro de Clientes
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+		  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="javascript:voltar();" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+
+		<form name="main" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente3" method="post">
+
+			<input type="hidden" name="UFEndereco" id="UFEndereco"> <input type="hidden" name="nomeLocalidade" id="nomeLocalidade">
+			<!-- <input type="hidden" name="cepConsultadoPorUltimo" value="" />  -->
+
+
+			<table cellspacing="0" class="tbForm" style="margin-bottom: 12px;">
+				<tbody><tr>
+					<td align="center" class="header" colspan="4">&nbsp;Endereço</td>
+				</tr>
+				<tr>
+					<td width="100">CEP</td>
+					<td width="600" colspan="3"><input type="text" id="cep" name="cep" size="8" style="vertical-align: middle" onchange="javascript:changedCep();" maxlength="8" value="">
+						
+							 <a href="JavaScript:carregaEnderecoPorCep();" title="Consultar" class="btn-azul">Consultar</a> <a href="https://www.correios.com.br/" target="_blank" title="Localizar CEP - Correios" class="btn-azul">Localizar
+								CEP - Correios</a>
+								
+					</td>
+				</tr>
+				<tr>
+					<td width="100">Endereço</td>
+					<td width="600" colspan="3"><select name="cmbTipoLogradouro" id="cmbTipoLogradouro" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="ACA">ACAMPAMENTO</option>
+
+    <option value="AC ">ACESSO</option>
+
+    <option value="ACL">ACESSO LOCAL</option>
+
+    <option value="AD ">ADRO</option>
+
+    <option value="AER">AEROPORTO</option>
+
+    <option value="AL ">ALAMEDA</option>
+
+    <option value="AT ">ALTO</option>
+
+    <option value="ANT">ANTIGA ESTRADA</option>
+
+    <option value="A  ">ÁREA</option>
+
+    <option value="AE ">ÁREA ESPECIAL</option>
+
+    <option value="ART">ARTERIA</option>
+
+    <option value="ATL">ATALHO</option>
+
+    <option value="AV ">AVENIDA</option>
+
+    <option value="AVC">AVENIDA CONTORN</option>
+
+    <option value="AVM">AVENIDA MARGDIR</option>
+
+    <option value="AME">AVENIDA MARGESQ</option>
+
+    <option value="AMD">AVENIDA MARGINA</option>
+
+    <option value="AVV">AVENIDA VELHA</option>
+
+    <option value="BX ">BAIXA</option>
+
+    <option value="BLO">BALÃO</option>
+
+    <option value="BAL">BALNEÁRIO</option>
+
+    <option value="BC ">BECO</option>
+
+    <option value="BEL">BELVEDERE</option>
+
+    <option value="BL ">BLOCO</option>
+
+    <option value="BLS">BLOCOS</option>
+
+    <option value="BSQ">BOSQUE</option>
+
+    <option value="BVD">BOULEVARD</option>
+
+    <option value="BLV">BULEVAR</option>
+
+    <option value="BCO">BURACO</option>
+
+    <option value="C  ">CAIS</option>
+
+    <option value="CAL">CALCADA</option>
+
+    <option value="CAM">CAMINHO</option>
+
+    <option value="CPO">CAMPO</option>
+
+    <option value="CAN">CANAL</option>
+
+    <option value="CH ">CHACARA</option>
+
+    <option value="CHA">CHAPADAO</option>
+
+    <option value="CIC">CICLOVIA</option>
+
+    <option value="CIR">CIRCULAR</option>
+
+    <option value="COL">COLONIA</option>
+
+    <option value="CMP">COMPLEXO VIARIO</option>
+
+    <option value="CON">CONDOMINIO</option>
+
+    <option value="CJ ">CONJUNTO</option>
+
+    <option value="CJM">CONJUNTO MUTIRA</option>
+
+    <option value="CTN">CONTORNO</option>
+
+    <option value="COR">CORREDOR</option>
+
+    <option value="CRG">CORREGO</option>
+
+    <option value="DSC">DESCIDA</option>
+
+    <option value="DSV">DESVIO</option>
+
+    <option value="DT ">DISTRITO</option>
+
+    <option value="EVD">ELEVADA</option>
+
+    <option value="ENT">ENTRADA PARTICU</option>
+
+    <option value="EQ ">ENTRE QUADRA</option>
+
+    <option value="ESC">ESCADA</option>
+
+    <option value="ESD">ESCADARIA</option>
+
+    <option value="ESP">ESPLA</option>
+
+    <option value="ETC">ESTACAO</option>
+
+    <option value="ETT">ESTACIONAMENTO</option>
+
+    <option value="ETD">ESTADIO</option>
+
+    <option value="ETN">ESTANCIA</option>
+
+    <option value="EST">ESTRADA</option>
+
+    <option value="ETA">ESTRADA ANTIGA</option>
+
+    <option value="ESL">ESTRADA DE LIGA</option>
+
+    <option value="ESE">ESTRADA ESTADUA</option>
+
+    <option value="ESM">ESTRADA MUNICIP</option>
+
+    <option value="ETP">ESTRADA PARTICU</option>
+
+    <option value="ESV">ESTRADA VELHA</option>
+
+    <option value="FAV">FAVELA</option>
+
+    <option value="FAZ">FAZENDA</option>
+
+    <option value="FRA">FEIRA</option>
+
+    <option value="FER">FERROVIA</option>
+
+    <option value="FNT">FONTE</option>
+
+    <option value="FTE">FORTE</option>
+
+    <option value="GAL">GALERIA</option>
+
+    <option value="GJA">GRANJA</option>
+
+    <option value="HAB">HABITACIONAL</option>
+
+    <option value="IA ">ILHA</option>
+
+    <option value="JD ">JARDIM</option>
+
+    <option value="JDE">JARDINETE</option>
+
+    <option value="LD ">LADEIRA</option>
+
+    <option value="LG ">LAGO</option>
+
+    <option value="LGA">LAGOA</option>
+
+    <option value="LRG">LARGO</option>
+
+    <option value="LOT">LOTEAMENTO</option>
+
+    <option value="MNA">MARINA</option>
+
+    <option value="MOD">MÓDULO</option>
+
+    <option value="MTE">MONTE</option>
+
+    <option value="MRO">MORRO</option>
+
+    <option value="NUC">NÚCLEO</option>
+
+    <option value="PDA">PARADA</option>
+
+    <option value="PDO">PARADOURO</option>
+
+    <option value="PAR">PARALELA</option>
+
+    <option value="PRQ">PARQUE</option>
+
+    <option value="PRM">PARQUE MUNICIPA</option>
+
+    <option value="PRR">PARQUE RESIDÊNC</option>
+
+    <option value="PSG">PASSAGEM</option>
+
+    <option value="PSP">PASSAGEM DE PED</option>
+
+    <option value="PSS">PASSAGEM SUBTER</option>
+
+    <option value="PSA">PASSARELA</option>
+
+    <option value="PAS">PASSEIO</option>
+
+    <option value="PAT">PATIO</option>
+
+    <option value="PNT">PONTA</option>
+
+    <option value="PTE">PONTE</option>
+
+    <option value="PTO">PORTO</option>
+
+    <option value="PC ">PRACA</option>
+
+    <option value="PCE">PRAÇA DE ESPORT</option>
+
+    <option value="PR ">PRAIA</option>
+
+    <option value="1AL">PRIMEIRA LADEIR</option>
+
+    <option value="PRL">PROLONGAMENTO</option>
+
+    <option value="Q  ">QUADRA</option>
+
+    <option value="4AL">QUARTA LADEIRA</option>
+
+    <option value="QTA">QUINTA</option>
+
+    <option value="5AL">QUINTA LADEIRA</option>
+
+    <option value="QTS">QUINTAS</option>
+
+    <option value="RAM">RAMAL</option>
+
+    <option value="RMP">RAMPA</option>
+
+    <option value="REC">RECANTO</option>
+
+    <option value="RCR">RECREIO</option>
+
+    <option value="RES">RESIDENCIAL</option>
+
+    <option value="RET">RETA</option>
+
+    <option value="RER">RETIRO</option>
+
+    <option value="RTN">RETORNO</option>
+
+    <option value="ROA">RODO ANEL</option>
+
+    <option value="ROD">RODOVIA</option>
+
+    <option value="RTT">ROTATORIA</option>
+
+    <option value="ROT">RÓTULA</option>
+
+    <option value="R  ">RUA</option>
+
+    <option value="R L">RUA DE LIGAÇÃO</option>
+
+    <option value="RPE">RUA DE PEDESTRE</option>
+
+    <option value="R I">RUA INTEGRAÇÃO</option>
+
+    <option value="R P">RUA PARTICULAR</option>
+
+    <option value="R V">RUA VELHA</option>
+
+    <option value="2AL">SEGUNDA LADEIRA</option>
+
+    <option value="SRV">SERVIDÃO</option>
+
+    <option value="ST ">SETOR</option>
+
+    <option value="SIT">SÍTIO</option>
+
+    <option value="SUB">SUBIDA</option>
+
+    <option value="3AL">TERCEIRA LADEIR</option>
+
+    <option value="TER">TERMINAL</option>
+
+    <option value="TV ">TRAVESSA</option>
+
+    <option value="TVP">TRAVESSA PARTIC</option>
+
+    <option value="TVV">TRAVESSA VELHA</option>
+
+    <option value="TR ">TRECHO</option>
+
+    <option value="TRV">TREVO</option>
+
+    <option value="TCH">TRINCHEIRA</option>
+
+    <option value="TUN">TUNEL</option>
+
+    <option value="UNI">UNIDADE</option>
+
+    <option value="VAL">VALA</option>
+
+    <option value="VLE">VALE</option>
+
+    <option value="VRT">VARIANTE</option>
+
+    <option value="VER">VEREDA</option>
+
+    <option value="V  ">VIA</option>
+
+    <option value="V C">VIA COLETORA</option>
+
+    <option value="VAC">VIA DE ACESSO</option>
+
+    <option value="VPE">VIA DE PEDESTRE</option>
+
+    <option value="VEV">VIA ELEVADO</option>
+
+    <option value="V-E">VIA EXPRESSA</option>
+
+    <option value="VLT">VIA LITORANEA</option>
+
+    <option value="V L">VIA LOCAL</option>
+
+    <option value="VD ">VIADUTO</option>
+
+    <option value="VLA">VIELA</option>
+
+    <option value="VL ">VILA</option>
+
+    <option value="ZIG">ZIGUE-ZAGUE</option>
+
+    <option value="1A ">1A AVENIDA</option>
+
+    <option value="1PA">1A PARALELA</option>
+
+    <option value="1R ">1A RUA</option>
+
+    <option value="1SU">1A SUBIDA</option>
+
+    <option value="1TV">1A TRAVESSA</option>
+
+    <option value="1VL">1A VILA</option>
+
+    <option value="1AT">1O ALTO</option>
+
+    <option value="1BC">1O BECO</option>
+
+    <option value="1PR">1O PARQUE</option>
+
+    <option value="10R">10A RUA</option>
+
+    <option value="10T">10A TRAVESSA</option>
+
+    <option value="11R">11A RUA</option>
+
+    <option value="11T">11A TRAVESSA</option>
+
+    <option value="12R">12A RUA</option>
+
+    <option value="12T">12A TRAVESSA</option>
+
+    <option value="13T">13A TRAVESSA</option>
+
+    <option value="14T">14A TRAVESSA</option>
+
+    <option value="15T">15A TRAVESSA</option>
+
+    <option value="16T">16A TRAVESSA</option>
+
+    <option value="18A">18A TRAVESSA</option>
+
+    <option value="19A">19A TRAVESSA</option>
+
+    <option value="2A ">2A AVENIDA</option>
+
+    <option value="2PA">2A PARALELA</option>
+
+    <option value="2R ">2A RUA</option>
+
+    <option value="2SU">2A SUBIDA</option>
+
+    <option value="2TV">2A TRAVESSA</option>
+
+    <option value="2VL">2A VILA</option>
+
+    <option value="2AT">2O ALTO</option>
+
+    <option value="2BC">2O BECO</option>
+
+    <option value="2PR">2O PARQUE</option>
+
+    <option value="3A ">3A AVENIDA</option>
+
+    <option value="3PA">3A PARALELA</option>
+
+    <option value="3R ">3A RUA</option>
+
+    <option value="3SU">3A SUBIDA</option>
+
+    <option value="3TV">3A TRAVESSA</option>
+
+    <option value="3VL">3A VILA</option>
+
+    <option value="3AT">3O ALTO</option>
+
+    <option value="3BC">3O BECO</option>
+
+    <option value="3PR">3O PARQUE</option>
+
+    <option value="4A ">4A AVENIDA</option>
+
+    <option value="4PA">4A PARALELA</option>
+
+    <option value="4R ">4A RUA</option>
+
+    <option value="4SU">4A SUBIDA</option>
+
+    <option value="4TV">4A TRAVESSA</option>
+
+    <option value="4VL">4A VILA</option>
+
+    <option value="4AT">4O ALTO</option>
+
+    <option value="4BC">4O BECO</option>
+
+    <option value="5A ">5A AVENIDA</option>
+
+    <option value="5PA">5A PARALELA</option>
+
+    <option value="5R ">5A RUA</option>
+
+    <option value="5SU">5A SUBIDA</option>
+
+    <option value="5TV">5A TRAVESSA</option>
+
+    <option value="5VL">5A VILA</option>
+
+    <option value="5AT">5O ALTO</option>
+
+    <option value="5BC">5O BECO</option>
+
+    <option value="6AV">6A AVENIDA</option>
+
+    <option value="6R ">6A RUA</option>
+
+    <option value="6SU">6A SUBIDA</option>
+
+    <option value="6TV">6A TRAVESSA</option>
+
+    <option value="7R ">7A RUA</option>
+
+    <option value="7TV">7A TRAVESSA</option>
+
+    <option value="8R ">8A RUA</option>
+
+    <option value="8TV">8A TRAVESSA</option>
+
+    <option value="9R ">9A RUA</option>
+
+    <option value="9TV">9A TRAVESSA</option>
+
+    <option value="8R ">8A RUA</option>
+
+    <option value="8TV">8A TRAVESSA</option>
+
+    <option value="9R ">9A RUA</option>
+
+    <option value="9TV">9A TRAVESSA</option>
+
+</select>
+
+ <input type="text" id="logradouro" name="logradouro" size="55" maxlength="50" onkeyup="this.value = this.value.toUpperCase();" value="" style="width: 300px;"></td>
+				</tr>
+				<tr>					
+					<td width="56">Número</td>
+					<td width="56"><input type="text" id="numero" name="numero" size="5" maxlength="7" value="" onkeypress="return validateIfIsNumber(event);">
+					</td>
+					<td width="100">Complemento</td>
+					<td width="213"><input type="text" id="complemento" name="complemento" size="13" maxlength="15" onkeyup="this.value = this.value.toUpperCase();" value="">
+					</td>
+				</tr>
+				<tr>
+					<td width="100" height="22">Bairro</td>
+					<td width="325" colspan="3" height="22"><input type="text" id="bairro" name="bairro" size="45" maxlength="40" onkeyup="this.value = this.value.toUpperCase();" value="">
+					</td>
+				</tr>
+				<tr>
+
+					<td width="70">UF</td>
+					<td width="70"><input type="text" id="cmbUFEndereco" name="cmbUFEndereco" size="1" value="" disabled="">
+					</td>
+					<td>Município</td>
+					<td><input type="text" id="cmbMunicipioEndereco" name="cmbMunicipioEndereco" size="50" value="" style="min-width: 215px; width: 215px;" disabled=""></td>
+
+				</tr>
+				<tr>
+					<td width="100" height="30">Tipo de Imóvel</td>
+					<td width="325" colspan="3" height="22"><select name="cmbTipoImovel" id="cmbTipoImovel" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="01">CASA</option>
+
+    <option value="03">SÍTIO</option>
+
+    <option value="04">CHÁCARA</option>
+
+    <option value="05">APARTAMENTO</option>
+
+    <option value="08">FAZENDA</option>
+
+    <option value="10">OUTROS TIPOS IMÓVEIS</option>
+
+</select>
+
+
+					</td>
+					
+				</tr>
+				<tr>
+					<td width="100" height="30">Ocupação do Imóvel</td>
+					<td width="325" colspan="3" height="22"><select name="cmbTipoOcupacaoImovel" id="cmbTipoOcupacaoImovel" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="01">PRÓPRIA QUITADA</option>
+
+    <option value="02">PRÓPRIA FINANCIADA CAIXA</option>
+
+    <option value="03">PRÓPRIA FINANCIADA OUTRAS ENTIDADES</option>
+
+    <option value="04">ALUGADA</option>
+
+    <option value="05">MORA COM PAIS/PARENTES</option>
+
+    <option value="06">CEDIDA</option>
+
+    <option value="07">FUNCIONAL</option>
+
+    <option value="08">OUTROS</option>
+
+</select>
+
+
+					</td>
+				</tr>
+				<tr>
+					<td width="113" height="30">Comprovante Residência</td>
+					<td width="112" height="30" colspan="3"><input type="text" id="comprovanteResidenciaMes" name="comprovanteResidenciaMes" size="1" maxlength="2" value="" onkeypress="return validateIfIsNumber(event);" onkeyup="FormataMes(this,event,'comprovanteResidenciaAno')"> /
+						<input type="text" id="comprovanteResidenciaAno" name="comprovanteResidenciaAno" size="2" maxlength="4" value="" onkeypress="return validateIfIsNumber(event);" onkeyup="FormataAno(this,event,'dddRes')"></td>
+				</tr>
+			</tbody></table>
+
+			<table cellspacing="0" class="tbForm" style="margin-bottom: 12px;">
+				<tbody><tr>
+					<td align="center" class="header" colspan="2">Telefone</td>
+				</tr>
+				<tr>
+					<td width="200">Telefone Celular</td>
+					<td width="225"><input type="text" id="dddCel" name="dddCel" size="2" maxlength="2" value="" onkeypress="return validateIfIsNumber(event);"> <input type="text" id="telefoneCel" name="telefoneCel" size="9" maxlength="9" value="" onkeypress="return validateIfIsNumber(event);"></td>
+				</tr>				
+			</tbody></table>
+
+			<table cellspacing="0" class="tbForm" style="margin-bottom: 12px;">
+				<tbody><tr>
+					<td align="center" class="header" height="15">E-mail</td>
+				</tr>
+				<tr>
+					<td class="tdtab12C" height="23" align="center"><input type="text" id="email" name="email" size="50" maxlength="50" onkeyup="this.value = this.value.toUpperCase();" value="">
+					</td>
+				</tr>
+			</tbody></table>
+		</form>
+
+			</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+		  <div style="margin-top: 7px; width: 55px; height: 20px;">
+  		  </div>
+		  <div id="divAvancar">
+			  <a href="JavaScript:avancar();" style="margin-top: 5px; height: 55px; margin-right: 15px;" title="Avançar">
+                  <svg class="svg-inline--fa fa-chevron-right fa-w-10 fa-3x" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path></svg><!-- <i class="fas fa-chevron-right fa-3x"></i> -->
+			  </a>
+		  </div>
+		
+	</div>
+
+		</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+
+
+</center></body></html>

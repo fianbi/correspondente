@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import { ORG_ROLE_LABELS, roleAtLeast } from "@corr/core";
-import { getOrg, listOrgMembers } from "@corr/db";
+import { getOrg, listApiTokens, listOrgMembers } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
+import { TokenSection } from "./token-section";
 
 export const metadata: Metadata = { title: "Escritório" };
 
 export default async function EscritorioPage() {
   const ctx = await requireOrgContext();
-  const [org, members] = await Promise.all([getOrg(ctx), listOrgMembers(ctx)]);
+  const [org, members, tokens] = await Promise.all([
+    getOrg(ctx),
+    listOrgMembers(ctx),
+    listApiTokens(ctx),
+  ]);
 
   return (
     <>
@@ -23,6 +28,15 @@ export default async function EscritorioPage() {
             <SettingsForm org={org} canEdit={roleAtLeast(ctx.role, "admin")} />
           </CardBody>
         </Card>
+
+        <TokenSection
+          tokens={tokens.map((token) => ({
+            id: token.id,
+            label: token.label,
+            revoked: token.revoked,
+            lastUsedAt: token.lastUsedAt,
+          }))}
+        />
 
         <Card>
           <CardHeader title="Equipe" description={`${members.length} usuário(s) com acesso.`} />

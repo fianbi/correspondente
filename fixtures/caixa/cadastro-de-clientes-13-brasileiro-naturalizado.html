@@ -1,0 +1,1150 @@
+
+<!-- saved from url=(0118)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/st_cadastro_cliente1_combo_nacionalidade -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+	
+
+<title>Caixa Aqui - Cadastro de Clientes</title>
+
+
+
+
+
+
+
+
+
+</head>
+<body bgcolor="#FFFFFF" onload="JavaScript:init();">
+<!-- POP UP -->
+			<div id="popup-contentSeg">
+				<img class="title" src="#" width="25px !important" height="25px !important">
+				<span>"Cliente com necessidade de atenção especial e de explicação detalhada dos procedimentos efetuados"</span>
+				<button type="button" onclick="fecharPublicoVulneravel()" name="OK" id="button">OK</button>
+			</div>
+		<!-- FIM POP UP -->
+	<form id="main" name="main" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente_1_validar" onsubmit="javascript:return validate();" method="post">
+
+		<input type="hidden" name="UFNaturalidade" id="UFNaturalidade"> <input type="hidden" name="descOrgaoEmissor" id="descOrgaoEmissor"> <input type="hidden" name="descOcupacaoPrincipal" id="descOcupacaoPrincipal">
+		<input type="hidden" name="cpfCliente" id="cpfCliente">
+
+		<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+		<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Cadastro de Clientes
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+		  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+
+		<div style="display: block;">
+					</div><table style="WIDTH: 600px;" cellspacing="0" class="tbForm">
+			<tbody><tr>
+				<td class="header" colspan="4" align="center">Dados Cadastrais</td>
+			</tr>
+
+			<tr>
+				<td width="141">CPF do Cliente</td>
+				<td width="285" colspan="3"><input style="width: 120px;" type="text" id="dataCpf" name="dataCpf" readonly="readonly" size="13" maxlength="11" value="">
+					<!--  <a href="JavaScript:consultaCPF();"><img border="0" src="/caixaaquistatic/images/botao/botao_consultar.gif" alt="consultar" width="100" height="19" /></a>-->
+				</td>
+			</tr>
+
+			<tr>
+				<td width="141">Nome do Cliente (Completo - sem abreviações)</td>
+				<td width="285" style="padding: 2px 8px;" colspan="3">
+					
+					<input style="width: 100%;" type="text" id="nomeCompleto" name="nomeCompleto" size="45" maxlength="70" onkeyup="this.value = this.value.toUpperCase();" value=""></td>
+			</tr>
+
+			<tr>
+				<td width="141">Declaração de Propósitos</td>
+					<td width="400" colspan="3"><input type="checkbox" id="movimentaContaDepositoPoupanca" name="movimentaContaDepositoPoupanca">
+						<b>Movimentação de Conta de Depósito/Poupança</b> <br> <input type="checkbox" id="emprestimosFinanciamentos" name="emprestimosFinanciamentos" onchange="enableHabitacional();"> <b>Empréstimos/Financiamentos</b>
+						<br>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<b>Financiamento Habitacional</b> &nbsp;&nbsp;&nbsp; 
+							<input type="radio" id="habitacionalSIM" name="habitacional" value="true">&nbsp;&nbsp;&nbsp;<b>SIM</b>
+	                         		&nbsp;&nbsp;&nbsp;
+	                         		<input type="radio" id="habitacionalNAO" name="habitacional" value="false">&nbsp;&nbsp;&nbsp;<b>NÃO</b>
+							<br>
+						  <input type="checkbox" id="investimentos" name="investimentos">
+						<b>Investimentos</b> <br> <input type="checkbox" id="cartaoCredito" name="cartaoCredito">
+						<b>Cartão de Crédito</b> <br> <input type="checkbox" id="seguroPrevidenciaCapitalizacaoConsorcios" name="seguroPrevidenciaCapitalizacaoConsorcios">
+						<b>Seguros/Previdência Privada/Capitalização/Consórcios</b> <br>
+						<input type="checkbox" id="operacoesInternacionaisCambio" name="operacoesInternacionaisCambio">
+						<b>Operações Internacionais/Câmbio</b> <br> <!-- SPN201400233 
+	                       		<input type="checkbox" id="socioAdministradorControladorDiretor" name="socioAdministradorControladorDiretor"  /> <b>Sócio/ Administrador/ Controlador/ Diretor</b> <br />
+	                       		<input type="checkbox" id="procuradorTutorCurador" name="procuradorTutorCurador"  /> <b>Procurador/ Tutor/ Curador</b> <br />
+	                       		--></td>
+				
+			</tr>
+			<tr>
+				<td width="141">Nome do Cliente (Formato Reduzido)</td>
+				<td width="285" style="padding: 2px 8px;" colspan="3"><input style="width: 100%;" type="text" id="nomeReduzido" name="nomeReduzido" size="45" maxlength="25" onkeyup="this.value = this.value.toUpperCase();" value=""></td>
+			</tr>
+			<tr>
+				<td width="141">Data de Nascimento</td>
+				<td width="160"><input type="text" id="dataNascimento" name="dataNascimento" value="" onkeypress="return dateMask(this, event);" size="8" maxlength="10"></td>
+				<td style="width: 20px;">Sexo:</td>
+				<td width="110"><select name="cmbSexo" id="cmbSexo" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="M">MASCULINO</option>
+
+    <option value="F">FEMININO</option>
+
+</select>
+
+</td>
+			</tr>
+			<tr>
+				<td width="141">Nacionalidade</td>
+				<td width="285" colspan="3"><select name="cmbNacionalidade" id="cmbNacionalidade" size="1" onchange="JavaScript:carregaComboPaisesSIICO()">
+
+    <option value=""></option>
+
+    <option value="BRASILEIRO">BRASILEIRA</option>
+
+    <option value="BRASILEIRO_NATURALIZADO">BRASILEIRO NATURALIZADO</option>
+
+    <option value="BRASILEIRO_NASCIDO_EXTERIOR">BRASILEIRO NASCIDO NO EXTERIOR</option>
+
+    <option value="ESTRANGEIRO">ESTRANGEIRA</option>
+
+</select>
+
+</td>
+			</tr>
+			
+			<tr>
+				<td width="141">Naturalidade</td>
+				<td width="285" colspan="1">
+					<select name="cmbUFNaturalidade" id="cmbUFNaturalidade" size="1" onchange="JavaScript:carregaListaMunicipios(this)" disabled=""></select>
+
+ 
+				</td>
+				<td width="285" colspan="2">
+					<select name="cmbMunicipioNaturalidade" id="cmbMunicipioNaturalidade" size="1" onchange="" disabled=""></select>
+
+</td>
+			</tr>
+			<tr>
+				<td width="141">Nome do Pai</td>
+				<td width="285" style="padding: 2px 8px;" colspan="3"><input style="width: 100%" type="text" id="nomePai" name="nomePai" size="45" maxlength="70" onkeyup="this.value = this.value.toUpperCase();" value=""></td>
+			</tr>
+			<tr>
+				<td width="141">Nome da Mãe</td>
+				<td width="285" style="padding: 2px 8px;" colspan="3"><input style="width: 100%;" type="text" id="nomeMae" name="nomeMae" size="45" maxlength="70" onkeyup="this.value = this.value.toUpperCase();" value=""></td>
+			</tr>
+			<tr>
+				<td width="141">Grau de Instrução</td>
+				<td width="285" colspan="3"><select name="cmbGrauInstrucao" id="cmbGrauInstrucao" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="02">ATÉ 4A SÉRIE INCOMPLETA DO ENSINO FUNDAMENTAL</option>
+
+    <option value="03">COM 4A SÉRIE COMPLETA DO ENSINO FUNDAMENTAL</option>
+
+    <option value="04">DA 5A A 8A SÉRIE INCOMPLETA DO ENSINO FUNDAMENTAL</option>
+
+    <option value="05">ENSINO FUNDAMENTAL COMPLETO</option>
+
+    <option value="06">ENSINO MÉDIO INCOMPLETO</option>
+
+    <option value="07">ENSINO MÉDIO COMPLETO</option>
+
+    <option value="08">SUPERIOR INCOMPLETO</option>
+
+    <option value="09">SUPERIOR COMPLETO</option>
+
+    <option value="10">ESPECIALIZAÇÃO/PÓS GRADUAÇÃO</option>
+
+    <option value="11">MESTRADO</option>
+
+    <option value="12">DOUTORADO</option>
+
+</select>
+
+</td>
+			</tr>			
+			<tr>
+				<td width="141">PIS/NIS</td>
+				<td width="160" colspan="3"><input style="width: 120px;" type="text" name="pis" id="pis" size="11" maxlength="11" value="" onfocus="this.select();PararTAB(this)" onkeypress="ChecarTAB(this);" onkeyup="Mostra(this,11)"></td>
+			</tr>
+			<tr>
+				<td width="141">Tipo de Documento de
+					Identificação</td>
+				<td width="285" colspan="3"><select name="cmbTipoDocumento" id="cmbTipoDocumento" size="1" onchange="JavaScript:carregaCamposDocumentosIdentificacao(this)">
+
+    <option value=""></option>
+
+    <option value="0372008">DOCUMENTO DE IDENTIFICAÇÃO</option>
+
+    <option value="0372102">RIC - REGISTRO DE IDENTIDADE CIVIL</option>
+
+    <option value="0781">PASSAPORTE</option>
+
+    <option value="0782">CNH - CARTEIRA NACIONAL DE HABILITAÇÃO</option>
+
+</select>
+
+
+				</td>
+			</tr>
+			
+			
+			
+			
+				<tr>
+					<td width="141">Número da Carteira Nacional de Habilitação</td>
+					<td width="160" colspan="3"><input type="text" id="identidadeNumeroCnh" name="identidadeNumeroCnh" size="11" maxlength="11" value="">
+					</td>
+				</tr>
+				<tr>
+					<td width="141">Órgão Emissor</td>
+					<td width="110" colspan="3"><select name="cmbOrgaoEmissorCnh" id="cmbOrgaoEmissorCnh" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="83">ÓRGÃO DE TRÂNSITO</option>
+
+</select>
+
+</td>
+				</tr>
+				<tr>
+					<td width="141">UF</td>
+					<td width="110" colspan="3"><select name="cmbUFIdentidadeCnh" id="cmbUFIdentidadeCnh" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="AC">AC</option>
+
+    <option value="AL">AL</option>
+
+    <option value="AM">AM</option>
+
+    <option value="AP">AP</option>
+
+    <option value="BA">BA</option>
+
+    <option value="CE">CE</option>
+
+    <option value="DF">DF</option>
+
+    <option value="ES">ES</option>
+
+    <option value="GO">GO</option>
+
+    <option value="MA">MA</option>
+
+    <option value="MG">MG</option>
+
+    <option value="MS">MS</option>
+
+    <option value="MT">MT</option>
+
+    <option value="PA">PA</option>
+
+    <option value="PB">PB</option>
+
+    <option value="PE">PE</option>
+
+    <option value="PI">PI</option>
+
+    <option value="PR">PR</option>
+
+    <option value="RJ">RJ</option>
+
+    <option value="RN">RN</option>
+
+    <option value="RO">RO</option>
+
+    <option value="RR">RR</option>
+
+    <option value="RS">RS</option>
+
+    <option value="SC">SC</option>
+
+    <option value="SE">SE</option>
+
+    <option value="SP">SP</option>
+
+    <option value="TO">TO</option>
+
+</select>
+
+</td>
+				</tr>
+				<tr>
+					<td width="141">Data 1ª Habilitação</td>
+					<td width="110" colspan="3"><input type="text" id="dataPrimeiraHabilitacaoCnh" name="dataPrimeiraHabilitacaoCnh" onkeypress="return dateMask(this, event);" size="8" maxlength="10" value="">
+					</td>
+				</tr>
+				<tr>
+					<td width="141">Data de Emissão</td>
+					<td width="160"><input type="text" id="dataEmissaoIdentidadeCnh" name="dataEmissaoIdentidadeCnh" onkeypress="return dateMask(this, event);" size="8" maxlength="10" value="">
+					</td>
+					<td width="141">Data Fim Validade</td>
+					<td width="160"><input type="text" id="dataFimValidadeCnh" name="dataFimValidadeCnh" onkeypress="return dateMask(this, event);" size="8" maxlength="10" value="">
+					</td>
+				</tr>
+			
+			<tr>
+				<td width="141">Estado Civil</td>
+				<td width="305" colspan="3"><select name="cmbEstadoCivil" id="cmbEstadoCivil" size="1" onchange="JavaScript:showConjuge();">
+
+    <option value=""></option>
+
+    <option value="1">SOLTEIRO (A)</option>
+
+    <option value="3">DIVORCIADO (A)</option>
+
+    <option value="4">SEPARADO (A) JUDICIALMENTE</option>
+
+    <option value="5">VIÚVO (A)</option>
+
+    <option value="7">CASADO (A) COM COMUNHÃO TOTAL DE BENS</option>
+
+    <option value="8">CASADO (A) COM SEPARAÇÃO DE BENS</option>
+
+    <option value="9">CASADO (A) COM COMUNHÃO PARCIAL DE BENS</option>
+
+</select>
+
+</td>
+			</tr>
+			<tr>
+				<td width="141">Tipo de Ocupação</td>
+				<td width="305" colspan="3"><select name="cmbTpOcupacao" id="cmbTpOcupacao" size="1" onchange="JavaScript:showOcupacao();">
+
+    <option value=""></option>
+
+    <option value="01">FORMAL</option>
+
+    <option value="02">INFORMAL</option>
+
+</select>
+
+</td>
+			</tr>
+			<tr>
+				<td width="141">Ocupação</td>
+				<td width="305" colspan="3">
+					<div id="divOcupacaoFormal" style="display: inline;">
+						<select name="cmbOcupacaoFormal" id="cmbOcupacaoFormal" size="1" onchange="javascript:loadDescOcup(this);">
+
+    <option value=""></option>
+
+    <option value="125">ADMINISTRADOR</option>
+
+    <option value="131">ADVOGADO</option>
+
+    <option value="405">AGENCIADOR DE PROPAGANDA</option>
+
+    <option value="292">AGENTE ADMINISTRATIVO</option>
+
+    <option value="595">AGENTE DE SERVICOS FUNERARIOS E EMBALSAMADOR</option>
+
+    <option value="594">AGENTE DE VIAGEM E GUIA DE TURISMO</option>
+
+    <option value="103">AGRONOMO</option>
+
+    <option value="591">ALFAIATE</option>
+
+    <option value="126">ANALISTA DE SISTEMAS</option>
+
+    <option value="923">APOSENTADO EXCETO FUNCIONARIO PUBLICO</option>
+
+    <option value="102">ARQUITETO</option>
+
+    <option value="134">ASSISTENTE SOCIAL</option>
+
+    <option value="128">ASTRONOMO E METEOROLOGISTA</option>
+
+    <option value="168">ATLETA PROFISSIONAL E TECNICO EM DESPORTOS</option>
+
+    <option value="162">ATOR E DIRETOR DE ESPETACULOS PUBLICOS</option>
+
+    <option value="123">ATUARIO E MATEMATICO</option>
+
+    <option value="394">AUXILIAR DE ESCRITORIO E ASSEMELHADOS</option>
+
+    <option value="596">AUXILIAR DE LABORATORIO</option>
+
+    <option value="395">BANCARIO E ECONOMIARIO</option>
+
+    <option value="135">BIBLIOTECARIO ARQUIVISTA MUSEOLOGO E ARQUEOLOGO</option>
+
+    <option value="116">BIOLOGO E BIOMEDICO</option>
+
+    <option value="931">BOLSISTA ESTAGIARIO E ASSEMELHADOS</option>
+
+    <option value="544">BOMBEIRO E INSTALADOR DE GAS AGUA ESGOTO E ASSEMELHADOS</option>
+
+    <option value="511">CABELEIREIRO BARBEIRO MANICURE PEDICURE MAQUILADOR ESTETICISTA E MASSAGISTA</option>
+
+    <option value="163">CANTOR E COMPOSITOR</option>
+
+    <option value="907">CAPITALISTA RECEBENDO RENDIMENTO DE APLICACAO DE CAPITAL EM ATIVOS FINANCEIROS</option>
+
+    <option value="391">CHEFE INTERMEDIARIO</option>
+
+    <option value="183">COMANDANTE DE EMBARCACOES</option>
+
+    <option value="182">COMISSARIO DE BORDO</option>
+
+    <option value="136">COMUNICOLOGO</option>
+
+    <option value="124">CONTADOR</option>
+
+    <option value="533">CONTRAMESTRE DE EMBARCACOES</option>
+
+    <option value="165">COREOGRAFO E BAILARINO</option>
+
+    <option value="403">CORRETOR DE IMOVEIS, SEGUROS, TITULOS E VALORES</option>
+
+    <option value="193">DECORADOR</option>
+
+    <option value="214">DELEGADO DE POLICIA</option>
+
+    <option value="491">DEMONSTRADOR</option>
+
+    <option value="192">DESENHISTA COMERCIAL</option>
+
+    <option value="105">DESENHISTA INDUSTRIAL</option>
+
+    <option value="158">DESENHISTA TECNICO</option>
+
+    <option value="593">DESPACHANTE INCLUSIVE O ADUANEIRO</option>
+
+    <option value="212">DIPLOMATA</option>
+
+    <option value="301">DIRETOR DE EMPRESAS</option>
+
+    <option value="144">DIRETOR DE ESTABELECIMENTO DE ENSINO</option>
+
+    <option value="121">ECONOMISTA</option>
+
+    <option value="703">ELETRICISTA E ASSEMELHADOS</option>
+
+    <option value="542">ELETRICISTA MANUTENCAO VEICULO AUTO MAQ APARELHOS ELETRICO ELETRONICO E TELECOM</option>
+
+    <option value="598">EMPREGADO DOMESTICO</option>
+
+    <option value="161">EMPRESARIO E PRODUTOR DE ESPETACULOS PUBLICOS</option>
+
+    <option value="113">ENFERMEIRO E NUTRICIONISTA</option>
+
+    <option value="101">ENGENHEIRO</option>
+
+    <option value="191">ESCULTOR, PINTOR E ASSEMELHADOS</option>
+
+    <option value="949">ESPOLIO</option>
+
+    <option value="122">ESTATISTICO</option>
+
+    <option value="597">ESTIVADOR CARREGADOR EMBALADOR E ASSEMELHADOS</option>
+
+    <option value="117">FARMACEUTICO</option>
+
+    <option value="413">FEIRANTE</option>
+
+    <option value="213">FISCAL</option>
+
+    <option value="106">FISICO</option>
+
+    <option value="114">FISIOTERAPEUTA E TERAPEUTA OCUPACIONAL</option>
+
+    <option value="118">FONOAUDIOLOGO</option>
+
+    <option value="922">FUNCIONARIO PUBLICO CIVIL APOSENTADO</option>
+
+    <option value="605">GARIMPEIRO</option>
+
+    <option value="127">GEOGRAFO</option>
+
+    <option value="107">GEOLOGO</option>
+
+    <option value="303">GERENTE</option>
+
+    <option value="521">GOVERNANTA DE HOTEL CAMAREIRO PORTEIRO COZINHEIRO E GARCOM</option>
+
+    <option value="717">JOALHEIROS E OURIVES</option>
+
+    <option value="412">JORNALEIRO</option>
+
+    <option value="171">JORNALISTA</option>
+
+    <option value="543">LANTERNEIRO E PINTOR DE VEICULOS METALICOS</option>
+
+    <option value="404">LEILOEIRO, AVALIADOR E ASSEMELHADOS</option>
+
+    <option value="166">LOCUTOR E COMENTARISTA DE RADIO E TELEVISAO E RADIALISTA</option>
+
+    <option value="535">MAQUINISTA E FOGUISTA DE EMBARCACOES, LOCOMOTIVAS E ASSEMELH</option>
+
+    <option value="534">MARINHEIRO E ASSEMELHADOS</option>
+
+    <option value="541">MECANICO DE MANUTENCAO DE VEICULOS AUTOMOTORES E MAQUINAS</option>
+
+    <option value="702">MECANICO MANUTENCAO MONTADOR PREPARADOR OPERADOR DE MAQ E APARELHOS PROD INDUST</option>
+
+    <option value="111">MEDICO</option>
+
+    <option value="701">MESTRE E CONTRAMESTRE</option>
+
+    <option value="295">MILITAR EM GERAL</option>
+
+    <option value="921">MILITAR REFORMADO</option>
+
+    <option value="492">MODELO DE MODAS</option>
+
+    <option value="532">MOTORISTA DE VEICULOS DE TRANSPORTE DE CARGA</option>
+
+    <option value="531">MOTORISTA DE VEICULOS DE TRANSPORTE DE PASSAGEIROS</option>
+
+    <option value="164">MUSICO</option>
+
+    <option value="291">OCUPANTE DE CARGO DE DIRECAO E ASSESSORAMENTO INTERMEDIARIO</option>
+
+    <option value="215">OCUPANTE DE CARGO DE DIRECAO E ASSESSORAMENTO SUPERIOR</option>
+
+    <option value="115">ODONTOLOGO</option>
+
+    <option value="216">OFICIAIS DAS FORCAS ARMADAS E FORCAS AUXILIARES</option>
+
+    <option value="167">OPERADOR DE CAMERAS DE CINEMA E TELEVISAO</option>
+
+    <option value="145">OUTROS TRABALHADORES DE NIVEL SUPERIOR LIGADOS AO ENSINO</option>
+
+    <option value="924">PENSIONISTA</option>
+
+    <option value="181">PILOTO DE AERONAVES</option>
+
+    <option value="203">PODER EXECUTIVO PRESIDENTE MINISTRO GOVERNADOR SECRETARIO E MEMBROS DO MP</option>
+
+    <option value="205">PODER JUDICIARIO MINISTRO DE TRIBUNAL SUPERIOR DESEMBARGADOR E JUIZ</option>
+
+    <option value="201">PODER LEGISLATIVO SENADOR DEPUTADO FEDERAL DEPUTADO ESTADUAL E VEREADOR</option>
+
+    <option value="501">PORTEIRO DE EDIFICIO ASCENSORISTA GARAGISTA E FAXINEIRO</option>
+
+    <option value="211">PROCURADOR E ASSEMELHADOS</option>
+
+    <option value="143">PROFESSORES DE ENSINO DE PRIMEIRO E SEGUNDO GRAUS</option>
+
+    <option value="142">PROFESSORES DE ENSINO SUPERIOR</option>
+
+    <option value="456">PROFISSAO CRIADA PARA TESTE</option>
+
+    <option value="138">PROFISSIONAIS DE LETRAS E DE ARTES</option>
+
+    <option value="901">PROPRIETARIO DE ESTABELECIMENTO AGRICOLA DA PECUARIA FLORESTAL</option>
+
+    <option value="902">PROPRIETARIO DE ESTABELECIMENTO COMERCIAL</option>
+
+    <option value="904">PROPRIETARIO DE ESTABELECIMENTO DE PRESTACAO DE SERVICOS</option>
+
+    <option value="903">PROPRIETARIO DE ESTABELECIMENTO INDUSTRIAL</option>
+
+    <option value="906">PROPRIETARIO DE IMOVEL, RECEBENDO RENDIMENTO DE ALUGUEL</option>
+
+    <option value="905">PROPRIETARIO DE MICROEMPRESA</option>
+
+    <option value="592">PROTETICO</option>
+
+    <option value="132">PSICOLOGO</option>
+
+    <option value="172">PUBLICITARIO</option>
+
+    <option value="104">QUIMICO</option>
+
+    <option value="137">RELACOES PUBLICAS</option>
+
+    <option value="910">SACERDOTES OU MEMBROS DE ORDENS OU SEITAS RELIGIOSAS</option>
+
+    <option value="393">SECRETARIO ESTENOGRAFO DATILOGRAFO RECEPCIONISTA TELEFONISTA E ASSEMELHADOS</option>
+
+    <option value="396">SECURITARIO</option>
+
+    <option value="293">SERVENTUARIO DE JUSTICA</option>
+
+    <option value="297">SERVIDOR PUBLICO ESTADUAL</option>
+
+    <option value="296">SERVIDOR PUBLICO FEDERAL</option>
+
+    <option value="298">SERVIDOR PUBLICO MUNICIPAL</option>
+
+    <option value="133">SOCIOLOGO</option>
+
+    <option value="401">SUPERVISOR, INSPETOR E AGENTE DE COMPRAS E VENDAS</option>
+
+    <option value="294">TABELIAO</option>
+
+    <option value="152">TECNICO DE BIOLOGIA</option>
+
+    <option value="151">TECNICO DE CONTABILIDADE E DE ESTATISTICA</option>
+
+    <option value="156">TECNICO DE ELETRICIDADE, ELETRONICA E TELECOMUNICACOES</option>
+
+    <option value="157">TECNICO DE LABORATORIO E RAIO X</option>
+
+    <option value="155">TECNICO DE MECANICA</option>
+
+    <option value="154">TECNICO DE QUIMICA</option>
+
+    <option value="153">TECNICO EM AGRONOMIA E AGRIMENSURA</option>
+
+    <option value="108">TECNOLOGO</option>
+
+    <option value="601">TRABALHADOR AGRICOLA</option>
+
+    <option value="602">TRABALHADOR DA PECUARIA</option>
+
+    <option value="604">TRABALHADOR DA PESCA</option>
+
+    <option value="711">TRABALHADOR DE ARTES GRAFICAS</option>
+
+    <option value="709">TRABALHADOR DE CONSTRUCAO CIVIL</option>
+
+    <option value="713">TRABALHADOR DE FABRICACAO DE ARTEFATOS DE MADEIRA</option>
+
+    <option value="715">TRABALHADOR DE FABRICACAO DE CALCADOS E ARTEFATOS DE COURO</option>
+
+    <option value="714">TRABALHADOR DE FABRICACAO DE PAPEL E PAPELAO</option>
+
+    <option value="716">TRABALHADOR DE FABRICACAO DE PRODUTOS DE BORRACHA E PLASTICO</option>
+
+    <option value="712">TRABALHADOR DE FABRICACAO DE PRODUTOS TEXTEIS EXCETO ROUPAS</option>
+
+    <option value="705">TRABALHADOR DE FABRICACAO DE ROUPAS</option>
+
+    <option value="710">TRABALHADOR DE FABRICACAO E PREPARACAO DE ALIMENTOS E BEBIDA</option>
+
+    <option value="704">TRABALHADOR DE INSTALACOES DE PROCESSAMENTO QUIMICO</option>
+
+    <option value="706">TRABALHADOR DE TRATAMENTO DE FUMO E DE FABRICACAO DE CIGARROS E CHARUTOS</option>
+
+    <option value="708">TRABALHADOR DE USINAGEM DE METAIS</option>
+
+    <option value="392">TRABALHADOR DOS SERVICOS DE CONTABILIDADE DE CAIXA E TRABALHADORES ASSEMELHADOS</option>
+
+    <option value="603">TRABALHADOR FLORESTAL</option>
+
+    <option value="707">TRABALHADOR METALURGICO E SIDERURGICO</option>
+
+    <option value="517">TRABALHADORES DOS SERVICOS DE PROTECAO E SEGURANCA EXCETO MILITAR</option>
+
+    <option value="411">VENDEDOR DE COMERCIO VAREJISTA E ATACADISTA</option>
+
+    <option value="402">VENDEDOR PRACISTA REPRESENTANTE COMERCIAL CAIXEIRO VIAJANTE E ASSEMELHADOS</option>
+
+    <option value="112">VETERINARIO E ZOOTECNISTA</option>
+
+</select>
+
+
+					</div>
+					<div id="divOcupacaoInformal" style="display: none">
+						<select name="cmbOcupacaoInformal" id="cmbOcupacaoInformal" size="1" onchange="javascript:loadDescOcup(this);">
+
+    <option value=""></option>
+
+    <option value="187689">ACOUGUEIRO</option>
+
+    <option value="72980821">ACUPUNTURISTA</option>
+
+    <option value="72981095">ADESTRADOR DE ANIMAIS</option>
+
+    <option value="72981131">ADMINISTRADOR</option>
+
+    <option value="518729">ADVOGADO</option>
+
+    <option value="72981142">AFIADOR</option>
+
+    <option value="187690">AGRICULTOR</option>
+
+    <option value="551315">AGRONOMO</option>
+
+    <option value="72981148">ALAMBIQUEIRO</option>
+
+    <option value="187691">ALFAIATE</option>
+
+    <option value="547893">ANALISTA DE SISTEMA</option>
+
+    <option value="530056">ARQUITETO</option>
+
+    <option value="72981171">ARTISTA DE CIRCO</option>
+
+    <option value="594629">ARTISTA DE DANÇA</option>
+
+    <option value="187694">ARTISTA VISUAL</option>
+
+    <option value="72981178">ASTROLOGO E NUMEROLOGO</option>
+
+    <option value="2885158">ATIVIDADES RELIGIOSAS</option>
+
+    <option value="72981183">ATLETA</option>
+
+    <option value="594534">ATOR</option>
+
+    <option value="187698">AUXILIAR GERAL</option>
+
+    <option value="187699">BABA</option>
+
+    <option value="187702">BARBEIRO</option>
+
+    <option value="72981223">BIOLOGO</option>
+
+    <option value="72981229">BIOMEDICO</option>
+
+    <option value="187704">BORDADOR</option>
+
+    <option value="187705">BORRACHEIRO</option>
+
+    <option value="187708">CABELEIREIRO(A)</option>
+
+    <option value="551327">CAMAREIRO(A)</option>
+
+    <option value="187731">CAMINHONEIRO AUTONOMO</option>
+
+    <option value="551340">CANTOR(A)</option>
+
+    <option value="187710">CARPINTEIRO</option>
+
+    <option value="72981250">CARREGADOR DE MERCADORIAS</option>
+
+    <option value="187711">CARROCEIRO</option>
+
+    <option value="594226">CARTOGRAFO</option>
+
+    <option value="72981272">CATADORES DE MATERIAL RECICLAVEL</option>
+
+    <option value="72981281">CERAMISTA</option>
+
+    <option value="72981292">CHAVEIRO</option>
+
+    <option value="187712">COBRADOR</option>
+
+    <option value="594564">COMENTARISTA DE RADIO E TELEVISAO</option>
+
+    <option value="594668">COMPOSITOR</option>
+
+    <option value="187713">CONFEITEIRO(A)</option>
+
+    <option value="594320">CONSERTADOR DE APARELHO ELETRONICO ELETRODOMESTICO</option>
+
+    <option value="548201">CONSULTOR</option>
+
+    <option value="530063">CONTADOR</option>
+
+    <option value="187714">CORRETOR</option>
+
+    <option value="187715">COSTUREIRO(A)</option>
+
+    <option value="187717">COZINHEIRO(A)</option>
+
+    <option value="72981314">CROCHETEIRO A MAO</option>
+
+    <option value="72981330">CUIDADOR DE IDOSOS</option>
+
+    <option value="187718">DECORADOR(A)</option>
+
+    <option value="187719">DEDETIZADOR</option>
+
+    <option value="701108">DEPOSITOS PCI PAI</option>
+
+    <option value="908743">DESENHISTA</option>
+
+    <option value="187720">DESPACHANTE</option>
+
+    <option value="187722">DIGITADOR</option>
+
+    <option value="551380">ECONOMISTA</option>
+
+    <option value="187724">ELETRICISTA</option>
+
+    <option value="187703">ENCANADOR</option>
+
+    <option value="187725">ENFERMEIRO(A)</option>
+
+    <option value="518730">ENGENHEIRO</option>
+
+    <option value="72981341">ENGRAXATE</option>
+
+    <option value="72981358">ESOTERICO E PARANORMAL</option>
+
+    <option value="72981345">ESTETICISTA</option>
+
+    <option value="187726">ESTOFADOR</option>
+
+    <option value="72981429">EXTRATIVISTA</option>
+
+    <option value="72981434">FARMACEUTICO</option>
+
+    <option value="187727">FAXINEIRO(A)</option>
+
+    <option value="187728">FEIRANTE</option>
+
+    <option value="784603">FISIOTERAPEUTA</option>
+
+    <option value="551383">FONAUDIOLOGO</option>
+
+    <option value="187730">FOTOGRAFO(A)</option>
+
+    <option value="187737">FUNILEIRO</option>
+
+    <option value="72981475">GANDULA</option>
+
+    <option value="187733">GARCOM GARCONETE</option>
+
+    <option value="578245">GEOLOGO</option>
+
+    <option value="72981490">GESSEIRO</option>
+
+    <option value="72981506">GUARDADOR DE VEÍCULOS (FLANELINHA)</option>
+
+    <option value="187735">GUIA DE TURISMO</option>
+
+    <option value="72981528">INTERPRETE</option>
+
+    <option value="187736">JARDINEIRO</option>
+
+    <option value="72981549">JOALHEIRO E OURIVES</option>
+
+    <option value="72981563">JORNALEIRO</option>
+
+    <option value="551392">JORNALISTA</option>
+
+    <option value="72981582">LADRILHEIRO</option>
+
+    <option value="187738">LAVADOR DE VEÍCULOS</option>
+
+    <option value="72981593">LAVADOR E PASSADOR DE ROUPAS</option>
+
+    <option value="72981607">LIMPADOR DE FACHADAS</option>
+
+    <option value="187741">MANICURE, PEDICURE</option>
+
+    <option value="72981611">MANOBRISTA</option>
+
+    <option value="187742">MAQUIADOR</option>
+
+    <option value="187745">MARCENEIRO</option>
+
+    <option value="72981622">MASSAGISTA</option>
+
+    <option value="187746">MECÂNICO</option>
+
+    <option value="72981634">MINHOCULTOR</option>
+
+    <option value="578459">MODELO.</option>
+
+    <option value="72981649">MONTADOR DE MÓVEIS</option>
+
+    <option value="187747">MOTOBOY</option>
+
+    <option value="187748">MOTORISTA</option>
+
+    <option value="532571">MUSICO</option>
+
+    <option value="530049">MÉDICO</option>
+
+    <option value="552102">NUTRICIONISTA</option>
+
+    <option value="532818">ODONTOLOGO</option>
+
+    <option value="72981662">OLEIRO (FAB TELHAS E TIJOLOS)</option>
+
+    <option value="594234">OPERADOR DE CÂMERA</option>
+
+    <option value="187749">PADEIRO</option>
+
+    <option value="187750">PECUARISTA</option>
+
+    <option value="187751">PEDREIRO</option>
+
+    <option value="559587">PENSÃO INFORMAL</option>
+
+    <option value="188540">PESCADOR.</option>
+
+    <option value="187753">PESQUISADOR</option>
+
+    <option value="85635245">PILOTO DE AERONAVE</option>
+
+    <option value="187754">PINTOR</option>
+
+    <option value="72981675">PIPOQUEIRO</option>
+
+    <option value="72981687">PODÓLOGO</option>
+
+    <option value="72981697">POETA</option>
+
+    <option value="187755">PORTEIRO, VIGIA</option>
+
+    <option value="531800">PROFESSOR</option>
+
+    <option value="72981710">PROFISSIONAL DO SEXO</option>
+
+    <option value="532425">PROGRAMADOR</option>
+
+    <option value="594222">PROMOTOR DE EVENTOS</option>
+
+    <option value="2604654">PROTÉTICO</option>
+
+    <option value="551534">PSICÓLOGO</option>
+
+    <option value="551586">PUBLICITÁRIO</option>
+
+    <option value="72981722">QUIROPRAXISTA</option>
+
+    <option value="72981731">RAIZEIRO</option>
+
+    <option value="187756">RELOJOEIRO</option>
+
+    <option value="187759">REPRESETANTE COMERCIAL</option>
+
+    <option value="187783">SACOLEIRA</option>
+
+    <option value="72981740">SALVA-VIDAS</option>
+
+    <option value="187785">SAPATEIRO</option>
+
+    <option value="187788">SERRALHEIRO</option>
+
+    <option value="187789">SERVENTE DE OBRAS</option>
+
+    <option value="187791">SERVIÇOS GERAIS</option>
+
+    <option value="582532">SOCIO DE EMPRESA</option>
+
+    <option value="72981890">SOLDADOR</option>
+
+    <option value="187792">TAXISTA</option>
+
+    <option value="72981899">TELHADOR</option>
+
+    <option value="784607">TOPÓGRAFO</option>
+
+    <option value="187721">TRABALHADOR DOMÉSTICO</option>
+
+    <option value="187695">TRABALHADOR RURAL</option>
+
+    <option value="72981910">TRADUTOR</option>
+
+    <option value="187793">TRATORISTA</option>
+
+    <option value="72981922">VASSOUREIRO</option>
+
+    <option value="187692">VENDEDOR (DOMICÍLIO, AMBULANTES, BANCAS)</option>
+
+    <option value="552310">VETERINÁRIO</option>
+
+    <option value="72981927">VIDRACEIRO</option>
+
+    <option value="187787">VIGILANTE E GUARDA DE SEGURANÇA</option>
+
+    <option value="187796">ZELADOR</option>
+
+    <option value="72981936">ZOOTECNISTA</option>
+
+</select>
+
+
+					</div>
+					<div id="divOcupacaoNaoEditavel" style="display: none">
+						<input type="text" id="txtOcupacaoNaoEditavel" name="txtOcupacaoNaoEditavel" onchange="javascript:loadDescOcup(this);" disabled="disabled" size="35" maxlength="14" value="">
+					</div></td>
+			</tr>
+		</tbody></table>
+
+		<!--  define a visibilidade dos dados do conjuge -->
+		
+		
+		
+			
+			
+		
+
+		<table id="tabelaConjuge" style="display:inline" border="0" cellspacing="0" class="tbForm">
+			<tbody><tr>
+				<td align="center" class="header" colspan="2">Dados do Cônjuge</td>
+			</tr>
+			<tr>
+				<td class="tdtab12" width="150">CPF</td>
+				<td class="tdtab12" width="450"><input type="text" id="cpfConjuge" name="cpfConjuge" size="11" maxlength="11" style="vertical-align: middle" onkeypress="javascript:zerarConjuge();" value=""> <a href="JavaScript:consultaCPFConjuge()" title="Consultar" class="btn-azul" style="vertical-align: middle">Consultar</a></td>
+			</tr>
+			<tr>
+				<td class="tdtab12" width="150">Nome</td>
+				<td class="tdtab12" width="450"><input style="width: 450px;" disabled="disabled" type="text" id="nomeCompletoConjuge" name="nomeCompletoConjuge" size="35" maxlength="28" value="">
+				</td>
+			</tr>
+		</tbody></table>
+
+			</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+		  <div style="margin-top: 7px; width: 55px; height: 20px;">
+  		  </div>
+		  <div id="divAvancar">
+			  <a href="JavaScript:avancar();" style="margin-top: 5px; height: 55px; margin-right: 15px;" title="Avançar">
+                  <svg class="svg-inline--fa fa-chevron-right fa-w-10 fa-3x" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path></svg><!-- <i class="fas fa-chevron-right fa-3x"></i> -->
+			  </a>
+		  </div>
+		
+	</div>
+
+		</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+
+	</form>
+	
+	
+	<div class="container">	
+		<!-- Modal -->
+		<div class="modal fade" id="modalInfoCancelamento" role="dialog" data-backdrop="static">
+			<div class="modal-dialog">		    
+		    <!-- Modal content-->
+		    	<div class="modal-content">		        
+		        	<div class="modal-body">
+		          		<h8>Este cliente já está sendo atendido por outro convênio.</h8>
+		          		<br>
+		          		<h8>Deseja cancelar avaliações de risco ou propostas válidas a pedido do cliente?</h8>
+		        	</div>	
+		        	<div class="modal-footer">
+			        	<table>
+			        	     <tbody><tr>
+								<td class="tdtab12" width="150"></td>
+								<td class="tdtab12" width="150">
+								    <button type="button" class="btn btn-default" onclick="javascript:exibirMsgDeCancelamento();" style="color: white; background-color: #005ca9;" data-dismiss="modal">SIM</button>
+	                            </td>
+								<td class="tdtab12" width="150">
+								    <button type="button" class="btn btn-default" onclick="javascript:fecharMsgDeCancelamento();" data-dismiss="modal">NÃO</button>
+								</td>
+								<td class="tdtab12" width="150"></td>
+							</tr>
+						</tbody></table>
+		        	</div>
+		      	</div>		      
+			</div>
+		</div>	  
+	</div>
+	
+	<div class="container">	
+		<!-- Modal -->
+		<div class="modal fade" id="modalAlertaCancelamento" role="dialog" data-backdrop="static">
+			<div class="modal-dialog">		    
+		    <!-- Modal content-->
+		    	<div class="modal-content">		        
+		        	<div class="modal-body">
+		          		<h8>Atenção! A alteração de dados cadastrais do cliente pode ensejar erro de validação na avaliação de risco, que necessite de autorização gerencial para uma nova avaliação.Deseja prosseguir?</h8>
+		          	</div>	
+		        	<div class="modal-footer">
+			        	<table>
+			        	     <tbody><tr>
+								<td class="tdtab12" width="150"></td>
+								<td class="tdtab12" width="150">
+								    <button type="button" class="btn btn-default" onclick="javascript:exibirModalAlertaCancelamento();" style="color: white; background-color: #005ca9;" data-dismiss="modal">SIM</button>
+	                            </td>
+								<td class="tdtab12" width="150">
+								    <button type="button" class="btn btn-default" onclick="javascript:fecharModalAlertaCancelamento();" data-dismiss="modal">NÃO</button>
+								</td>
+								<td class="tdtab12" width="150"></td>
+							</tr>
+						</tbody></table>
+		        	</div>
+		      	</div>		      
+			</div>
+		</div>	  
+	</div>
+	
+
+
+
+
+
+</body></html>

@@ -10,3 +10,8 @@ allowBuilds:
   supabase: true
   "@tailwindcss/oxide": true
 
+
+# O @wxt-dev/module-react puxa @vitejs/plugin-react 6, que exige Vite 8; o WXT
+# 0.21 usa Vite 7. A 5.x é a que fecha com o Vite instalado aqui.
+overrides:
+  "@vitejs/plugin-react": "^5.2.0"

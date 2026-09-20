@@ -8,6 +8,8 @@ captura/preenchimento nos portais dos bancos (foco inicial no Caixa Aqui).
 
 ```
 apps/web          Next.js 16 (App Router) — UI e rotas de servidor
+apps/extension    extensão MV3 (WXT + React) — painel lateral e content script
+packages/portal   motor de leitura e preenchimento das telas dos bancos
 packages/core     domínio compartilhado: papéis, formatos (CPF/CNPJ, BRL), erros
 packages/db       schema Drizzle, migrations e repositórios com contexto de tenant
 supabase/         stack local (Postgres, Auth, Storage)
@@ -28,6 +30,20 @@ Os campos vêm de um catálogo único (`@corr/core/fields`), que declara onde ca
 mora: coluna nativa de `processes` (o que entra em listagem e soma) ou
 `process_field_values` (o que só interessa dentro de uma etapa). O mesmo catálogo vai
 alimentar o gerador de formulários em PDF e o preenchimento da extensão.
+
+## A extensão
+
+O motor que lê e escreve nas telas do banco (`packages/portal`) não conhece Chrome nem
+rede: recebe um `Document` e um perfil, e devolve o que fez campo a campo. Por isso é
+testado contra as telas reais do portal, anonimizadas em `fixtures/caixa/` — dá para mudar
+o preenchimento sem abrir o Caixa Aqui.
+
+A extensão nunca submete formulário: preenche, e quem confere e salva é o operador. Ela
+também não guarda credencial de banco nenhuma — o operador faz o login dele no portal.
+
+A autenticação com o sistema é por token gerado nas configurações, não por cookie: a
+extensão roda em outra origem e não receberia o cookie de sessão, e depender dele abriria
+a API para qualquer extensão instalada no navegador.
 
 ## Documentos e acesso de terceiros
 
@@ -92,6 +108,8 @@ Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 | `pnpm test` | Testes unitários (não precisam de banco) |
 | `pnpm test:db` | Testes de isolamento de tenant (exigem Postgres local migrado) |
 | `pnpm e2e` | Testes end-to-end no navegador (Playwright) |
+| `pnpm --filter @corr/extension build` | Compila a extensão em `apps/extension/.output` |
+| `node scripts/anonimizar-fixtures.mjs` | Regenera as fixtures a partir das capturas locais |
 | `pnpm typecheck` | `tsc --noEmit` em todos os pacotes |
 | `pnpm db:generate` | Gera migration a partir do schema Drizzle |
 | `pnpm db:custom --name=x` | Cria migration SQL manual (policies, funções, triggers) |
@@ -104,5 +122,5 @@ Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 - [x] **M1** — pessoas (dedupe por CPF), rendas, processos (tabela + Kanban), cadastros de apoio
 - [x] **M2** — catálogo de campos, fluxo configurável por etapa, auditoria campo-a-campo
 - [x] **M3** — documentos, checklist por fase, pendências, link de acesso para terceiros
-- [ ] **M4** — extensão MV3: captura e preenchimento no Caixa Aqui
+- [x] **M4** — extensão MV3: captura e preenchimento no Caixa Aqui
 - [ ] **M5** — formulários PDF, resumo do processo, dashboard com indicadores
