@@ -35,4 +35,7 @@ export type {
   Document,
   NewDocument,
   Pendency,
+  ApiToken,
+  FormTemplate,
+  SiteMapping,
 } from "./schema/index";

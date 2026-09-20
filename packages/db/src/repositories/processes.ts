@@ -327,3 +327,92 @@ export async function listProcessesForPerson(ctx: OrgContext, personId: string) 
       .orderBy(desc(processes.updatedAt));
   });
 }
+
+export interface AgrupamentoDoPainel {
+  label: string;
+  quantity: number;
+  totalCents: number;
+}
+
+/**
+ * Volume por banco, modalidade e fase.
+ *
+ * Soma no banco de dados, não na aplicação: trazer todos os processos para
+ * somar em memória funciona com cem e some com dez mil.
+ */
+export async function summarizeByBank(ctx: OrgContext): Promise<AgrupamentoDoPainel[]> {
+  return withOrg(ctx, async (tx) => {
+    const rows = await tx
+      .select({
+        label: sql<string>`coalesce(${banks.shortName}, 'Sem banco')`,
+        quantity: sql<number>`count(*)::int`,
+        totalCents: sql<string>`coalesce(sum(${processes.financedValueCents}), 0)`,
+      })
+      .from(processes)
+      .leftJoin(banks, eq(banks.id, processes.bankId))
+      .where(
+        and(
+          eq(processes.orgId, ctx.orgId),
+          notInArray(processes.status, [...CLOSED_STATUSES]),
+        ),
+      )
+      .groupBy(sql`coalesce(${banks.shortName}, 'Sem banco')`)
+      .orderBy(sql`count(*) desc`);
+
+    return rows.map((row) => ({ ...row, totalCents: Number(row.totalCents) }));
+  });
+}
+
+export async function summarizeByModality(ctx: OrgContext): Promise<AgrupamentoDoPainel[]> {
+  return withOrg(ctx, async (tx) => {
+    const rows = await tx
+      .select({
+        label: sql<string>`coalesce(${processes.modality}::text, 'sem_modalidade')`,
+        quantity: sql<number>`count(*)::int`,
+        totalCents: sql<string>`coalesce(sum(${processes.financedValueCents}), 0)`,
+      })
+      .from(processes)
+      .where(
+        and(
+          eq(processes.orgId, ctx.orgId),
+          notInArray(processes.status, [...CLOSED_STATUSES]),
+        ),
+      )
+      .groupBy(sql`coalesce(${processes.modality}::text, 'sem_modalidade')`)
+      .orderBy(sql`count(*) desc`);
+
+    return rows.map((row) => ({ ...row, totalCents: Number(row.totalCents) }));
+  });
+}
+
+export async function summarizeByStage(ctx: OrgContext): Promise<AgrupamentoDoPainel[]> {
+  return withOrg(ctx, async (tx) => {
+    const rows = await tx
+      .select({
+        label: sql<string>`${processes.stage}::text`,
+        quantity: sql<number>`count(*)::int`,
+        totalCents: sql<string>`coalesce(sum(${processes.financedValueCents}), 0)`,
+      })
+      .from(processes)
+      .where(
+        and(
+          eq(processes.orgId, ctx.orgId),
+          notInArray(processes.status, [...CLOSED_STATUSES]),
+        ),
+      )
+      .groupBy(processes.stage);
+
+    const porFase = new Map(rows.map((row) => [row.label, row]));
+
+    // Fase vazia continua na lista: um funil com buraco escondido engana quem
+    // olha, porque some justamente a etapa onde nada está entrando.
+    return PROCESS_STAGES.map((stage) => {
+      const row = porFase.get(stage);
+      return {
+        label: stage,
+        quantity: row?.quantity ?? 0,
+        totalCents: Number(row?.totalCents ?? 0),
+      };
+    });
+  });
+}

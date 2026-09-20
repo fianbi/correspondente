@@ -2,15 +2,26 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { AlertTriangle } from "lucide-react";
 import {
+  MODALITY_LABELS,
+  PROCESS_STAGE_LABELS,
   PROCESS_STATUS_LABELS,
   PROCESS_STATUS_TOKENS,
   formatBRL,
+  type Modality,
+  type ProcessStage,
   type ProcessStatus,
 } from "@corr/core";
-import { listExpiringProcesses, summarizeProcesses } from "@corr/db";
+import {
+  listExpiringProcesses,
+  summarizeByBank,
+  summarizeByModality,
+  summarizeByStage,
+  summarizeProcesses,
+} from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { BarList } from "@/components/charts/bar-list";
 
 export const metadata: Metadata = { title: "Painel" };
 
@@ -36,9 +47,12 @@ const TOKEN_TEXT_CLASSES: Record<string, string> = {
 
 export default async function PainelPage() {
   const ctx = await requireOrgContext();
-  const [summary, expiring] = await Promise.all([
+  const [summary, expiring, porBanco, porModalidade, porFase] = await Promise.all([
     summarizeProcesses(ctx),
     listExpiringProcesses(ctx, 30),
+    summarizeByBank(ctx),
+    summarizeByModality(ctx),
+    summarizeByStage(ctx),
   ]);
 
   const byStatus = new Map(summary.map((row) => [row.status, row]));
@@ -96,16 +110,44 @@ export default async function PainelPage() {
           })}
         </section>
 
-        <Card>
-          <CardHeader
-            title="Próximos passos"
-            description="O que ainda falta construir nesta tela."
-          />
-          <CardBody className="text-sm text-ink-muted">
-            Os gráficos por banco e por modalidade, o filtro por período (criação, aprovação,
-            assinatura) e o resumo diário entram junto com a auditoria campo-a-campo, na etapa M2.
-          </CardBody>
-        </Card>
+        <section className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader
+              title="Onde os processos estão"
+              description="Processos ativos por fase da esteira."
+            />
+            <BarList
+              items={porFase.map((linha) => ({
+                ...linha,
+                label: PROCESS_STAGE_LABELS[linha.label as ProcessStage] ?? linha.label,
+              }))}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Por banco"
+              description="Volume financiado em processos ativos."
+            />
+            <BarList
+              measure="value"
+              items={porBanco}
+              emptyMessage="Nenhum processo com banco definido."
+            />
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardHeader title="Por modalidade" description="Processos ativos." />
+            <BarList
+              items={porModalidade.map((linha) => ({
+                ...linha,
+                label:
+                  MODALITY_LABELS[linha.label as Modality] ??
+                  (linha.label === "sem_modalidade" ? "Sem modalidade" : linha.label),
+              }))}
+            />
+          </Card>
+        </section>
       </main>
     </>
   );

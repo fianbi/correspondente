@@ -15,6 +15,11 @@ const config: NextConfig = {
   typedRoutes: true,
   experimental: {
     authInterrupts: true,
+    serverActions: {
+      // Modelo de formulário do banco chega por server action; o limite padrão
+      // de 1 MB recusaria um PDF de poucas páginas com fontes embutidas.
+      bodySizeLimit: "10mb",
+    },
   },
   // Inlina no bundle do cliente o que veio do .env da raiz.
   env: {

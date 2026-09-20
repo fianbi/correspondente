@@ -22,6 +22,7 @@ import {
   listOrgMembers,
   listProcessDocuments,
   listProcessEvents,
+  listFormTemplates,
   listProcessPendencies,
   listRealEstateAgencies,
   listStageStates,
@@ -34,6 +35,7 @@ import type { DynamicOptions } from "@/components/fields/field-input";
 import { History } from "./history";
 import { StageForm, type RenderBlock } from "./stage-form";
 import { ProcessHeaderControls } from "./header-controls";
+import { ProcessDocuments } from "./process-documents";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 
@@ -104,10 +106,11 @@ export default async function ProcessoPage({
     flow.stages.find((s) => s.key === etapa)?.key ?? process.stage ?? flow.stages[0]?.key;
   const currentStage = flow.stages.find((s) => s.key === currentStageKey) ?? flow.stages[0];
 
-  const [documents, pendencies, links] = await Promise.all([
+  const [documents, pendencies, links, templates] = await Promise.all([
     listProcessDocuments(ctx, id),
     listProcessPendencies(ctx, id),
     listAccessLinks(ctx, id),
+    listFormTemplates(ctx),
   ]);
 
   const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
@@ -154,11 +157,15 @@ export default async function ProcessoPage({
         title={`Processo #${process.number}`}
         description={proponent ? `${proponent.fullName} · ${formatCpf(proponent.cpf)}` : undefined}
         action={
-          <ProcessHeaderControls
-            processId={id}
-            stage={process.stage}
-            status={process.status}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <ProcessHeaderControls processId={id} stage={process.stage} status={process.status} />
+            <ProcessDocuments
+              processId={id}
+              templates={templates
+                .filter((template) => Object.keys(template.fieldMap).length > 0)
+                .map((template) => ({ id: template.id, name: template.name }))}
+            />
+          </div>
         }
       />
 

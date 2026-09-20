@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertCircle, FileText, FolderOpen, Home, Settings, Users } from "lucide-react";
+import {
+  AlertCircle,
+  FileSignature,
+  FileText,
+  FolderOpen,
+  Home,
+  Settings,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -40,10 +48,22 @@ export function SidebarNav() {
 
       <div className="mt-auto">
         <Link
+          href="/configuracoes/formularios"
+          className={cn(
+            "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
+            pathname === "/configuracoes/formularios"
+              ? "bg-brand-50 font-medium text-brand-700"
+              : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+          )}
+        >
+          <FileSignature className="size-4 shrink-0" aria-hidden />
+          Formulários
+        </Link>
+        <Link
           href="/configuracoes/escritorio"
           className={cn(
             "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
-            pathname.startsWith("/configuracoes")
+            pathname === "/configuracoes/escritorio"
               ? "bg-brand-50 font-medium text-brand-700"
               : "text-ink-muted hover:bg-surface-muted hover:text-ink",
           )}

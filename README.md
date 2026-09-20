@@ -31,6 +31,13 @@ mora: coluna nativa de `processes` (o que entra em listagem e soma) ou
 `process_field_values` (o que só interessa dentro de uma etapa). O mesmo catálogo vai
 alimentar o gerador de formulários em PDF e o preenchimento da extensão.
 
+## Formulários e resumo em PDF
+
+O resumo do processo é gerado a partir dos dados, sem modelo. Já os formulários do banco
+partem do PDF em branco que a instituição distribui: o escritório liga cada campo do PDF
+a uma chave do catálogo uma vez, e a partir daí gerar o formulário de qualquer processo é
+instantâneo — em vez de alguém redigitar o cadastro inteiro a cada proposta.
+
 ## A extensão
 
 O motor que lê e escreve nas telas do banco (`packages/portal`) não conhece Chrome nem
@@ -123,4 +130,4 @@ Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 - [x] **M2** — catálogo de campos, fluxo configurável por etapa, auditoria campo-a-campo
 - [x] **M3** — documentos, checklist por fase, pendências, link de acesso para terceiros
 - [x] **M4** — extensão MV3: captura e preenchimento no Caixa Aqui
-- [ ] **M5** — formulários PDF, resumo do processo, dashboard com indicadores
+- [x] **M5** — formulários PDF, resumo do processo, painel com indicadores

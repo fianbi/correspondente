@@ -8,3 +8,4 @@ export * from "./documents";
 export * from "./pendencies";
 export * from "./access-links";
 export * from "./api-tokens";
+export * from "./form-templates";

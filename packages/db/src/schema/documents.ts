@@ -214,3 +214,32 @@ export const siteMappings = pgTable(
 
 export type ApiToken = typeof apiTokens.$inferSelect;
 export type SiteMapping = typeof siteMappings.$inferSelect;
+
+/**
+ * Modelo de formulário em PDF do banco.
+ *
+ * O arquivo em branco fica no Storage; `fieldMap` liga cada campo do PDF a uma
+ * chave do catálogo. Gerar o formulário preenchido vira, então, uma operação
+ * de dados — e não mais alguém redigitando o cadastro inteiro num PDF.
+ */
+export const formTemplates = pgTable(
+  "form_templates",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => orgs.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    storagePath: text("storage_path").notNull(),
+    /** Campo do PDF -> chave do catálogo. */
+    fieldMap: jsonb("field_map").$type<Record<string, string>>().notNull().default({}),
+    /** Campos do PDF detectados no upload, para a tela de mapeamento. */
+    detectedFields: jsonb("detected_fields").$type<string[]>().notNull().default([]),
+    createdBy: uuid("created_by").references(() => profiles.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (table) => [index("form_templates_org_idx").on(table.orgId, table.name)],
+);
+
+export type FormTemplate = typeof formTemplates.$inferSelect;
