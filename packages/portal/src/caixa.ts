@@ -65,7 +65,7 @@ function documentMappings(): FieldMapping[] {
 const DADOS_CADASTRAIS: ScreenProfile = {
   key: "cadastro_dados",
   label: "Cadastro de clientes — dados cadastrais",
-  urlPattern: "cadastroCliente",
+  urlHint: "cadastro",
   marker: '[name="nomeCompleto"]',
   mappings: [
     { dataKey: "person.cpf", selector: '[name="dataCpf"]', transform: "digits" },
@@ -100,7 +100,7 @@ const DADOS_CADASTRAIS: ScreenProfile = {
 const ENDERECO: ScreenProfile = {
   key: "cadastro_endereco",
   label: "Cadastro de clientes — endereço e contato",
-  urlPattern: "cadastroCliente",
+  urlHint: "cadastro",
   marker: '[name="cep"]',
   mappings: [
     { dataKey: "person.zipCode", selector: '[name="cep"]', transform: "digits" },
@@ -124,7 +124,7 @@ const ENDERECO: ScreenProfile = {
 const PESQUISA: ScreenProfile = {
   key: "pesquisa_cadastral",
   label: "Pesquisa cadastral simplificada",
-  urlPattern: "pesquisaCadastral",
+  urlHint: "pesquisa",
   marker: '[name="respostaCaptcha"]',
   // Só o CPF: o captcha é resolvido pelo operador, e é justamente por isso que
   // esta tela fica fora do caminho de cadastro.

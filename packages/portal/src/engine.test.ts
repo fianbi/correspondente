@@ -4,7 +4,15 @@ import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { CAIXA_PROFILE, toCaixaValues } from "./caixa";
-import { captureScreen, discoverFields, fillScreen, matchScreen } from "./engine";
+import {
+  bestScreenForFieldNames,
+  captureScreen,
+  discoverFields,
+  expectedFieldNames,
+  fillScreen,
+  matchScreen,
+  rankScreens,
+} from "./engine";
 
 /**
  * Os testes rodam contra as fixtures anonimizadas do portal real
@@ -64,9 +72,36 @@ describe("reconhecimento de tela", () => {
     expect(tela?.key).toBe("cadastro_endereco");
   });
 
-  it("URL de outro sistema não casa com perfil nenhum", () => {
+  it("reconhece a tela mesmo quando a URL não é a esperada", () => {
+    // Regressão: a primeira versão exigia um pedaço fixo na URL, escrito de
+    // palpite porque as capturas são arquivos salvos, sem endereço de origem.
+    // No portal de verdade o caminho era outro, e a extensão respondia "tela
+    // ainda não mapeada" em todas as telas.
     const doc = carregarFixture("cadastro-de-clientes-3.html");
-    expect(matchScreen(CAIXA_PROFILE.screens, "https://outro-banco.com/cadastro", doc)).toBeNull();
+    const tela = matchScreen(
+      CAIXA_PROFILE.screens,
+      "https://qualquer-endereco-que-o-banco-use.gov.br/x/y/z.do?id=9",
+      doc,
+    );
+
+    expect(tela?.key).toBe("cadastro_dados");
+  });
+
+  it("página sem nenhum campo do perfil não é reconhecida", () => {
+    const window = new Window({ url: "https://habitacao.caixa.gov.br/qualquer" });
+    window.document.write("<html><body><h1>Menu</h1><a href='#'>Entrar</a></body></html>");
+    const vazia = window.document as unknown as Document;
+
+    expect(matchScreen(CAIXA_PROFILE.screens, "https://habitacao.caixa.gov.br/cadastro", vazia)).toBeNull();
+  });
+
+  it("o ranking explica o que foi encontrado, para diagnóstico", () => {
+    const doc = carregarFixture("cadastro-de-clientes-4.html");
+    const ranking = rankScreens(CAIXA_PROFILE.screens, "https://x/y", doc);
+
+    expect(ranking[0]?.screen.key).toBe("cadastro_endereco");
+    expect(ranking[0]?.found).toBeGreaterThan(5);
+    expect(ranking[0]?.total).toBeGreaterThan(ranking[0]!.found - 1);
   });
 });
 
@@ -236,5 +271,52 @@ describe("modo de aprendizado", () => {
 
     const comRotulo = campos.filter((c) => c.label && c.label !== c.name);
     expect(comRotulo.length).toBeGreaterThan(5);
+  });
+});
+
+/**
+ * A extensão sonda cada frame da aba e recebe de volta só a lista de nomes de
+ * campo. É com essa lista que ela decide onde trabalhar — no SICAQ o
+ * documento de cima pode ter só o menu, com a tela real dentro de um frame.
+ */
+describe("escolha do frame pela lista de campos", () => {
+  function nomesDaFixture(nome: string): string[] {
+    const doc = carregarFixture(nome);
+    return [...doc.querySelectorAll("input[name], select[name], textarea[name]")]
+      .map((elemento) => elemento.getAttribute("name"))
+      .filter((n): n is string => Boolean(n));
+  }
+
+  it("reconhece a tela a partir só dos nomes dos campos", () => {
+    const resultado = bestScreenForFieldNames(
+      CAIXA_PROFILE.screens,
+      nomesDaFixture("cadastro-de-clientes-3.html"),
+    );
+
+    expect(resultado?.screen.key).toBe("cadastro_dados");
+    expect(resultado?.markerFound).toBe(true);
+  });
+
+  it("distingue a tela de endereço da de dados", () => {
+    const resultado = bestScreenForFieldNames(
+      CAIXA_PROFILE.screens,
+      nomesDaFixture("cadastro-de-clientes-4.html"),
+    );
+
+    expect(resultado?.screen.key).toBe("cadastro_endereco");
+  });
+
+  it("frame de menu, sem campos, não é escolhido", () => {
+    // É exatamente o caso que fazia a extensão responder "não mapeada": o
+    // frame de cima respondia primeiro, e ele não tem campo nenhum.
+    expect(bestScreenForFieldNames(CAIXA_PROFILE.screens, [])).toBeNull();
+    expect(bestScreenForFieldNames(CAIXA_PROFILE.screens, ["busca", "menu"])).toBeNull();
+  });
+
+  it("os campos esperados saem dos seletores do perfil", () => {
+    const nomes = expectedFieldNames(CAIXA_PROFILE.screens[0]!);
+    expect(nomes).toContain("nomeCompleto");
+    expect(nomes).toContain("cmbEstadoCivil");
+    expect(nomes.every((nome) => !nome.includes("["))).toBe(true);
   });
 });

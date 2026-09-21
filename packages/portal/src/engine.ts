@@ -210,17 +210,71 @@ export function reverseTransform(value: string, transform?: TransformName): stri
   }
 }
 
-/** Escolhe o perfil de tela que corresponde à página aberta. */
+export interface ScreenMatch {
+  screen: ScreenProfile;
+  /** Quantos campos do perfil existem mesmo na página. */
+  found: number;
+  total: number;
+  markerFound: boolean;
+  urlMatched: boolean;
+}
+
+/** Mínimo de campos encontrados para aceitar uma tela sem o marcador. */
+const MINIMO_DE_CAMPOS = 3;
+
+/**
+ * Avalia o quanto um perfil de tela corresponde à página aberta.
+ *
+ * A evidência é a página, não a URL: contam os campos do perfil que existem
+ * de fato no documento. Uma versão anterior exigia que a URL contivesse um
+ * pedaço fixo, e isso derrubava o reconhecimento inteiro quando o caminho do
+ * portal era diferente do esperado — que é o que aconteceu no uso real.
+ */
+export function scoreScreen(root: Document, url: string, screen: ScreenProfile): ScreenMatch {
+  const seletores = [...new Set(screen.mappings.map((mapping) => mapping.selector))];
+  const found = seletores.filter((seletor) => root.querySelector(seletor) !== null).length;
+
+  return {
+    screen,
+    found,
+    total: seletores.length,
+    markerFound: screen.marker ? root.querySelector(screen.marker) !== null : false,
+    urlMatched: screen.urlHint ? url.toLowerCase().includes(screen.urlHint.toLowerCase()) : false,
+  };
+}
+
+/** Ranking das telas para a página aberta, da mais provável para a menos. */
+export function rankScreens(
+  screens: ScreenProfile[],
+  url: string,
+  root: Document,
+): ScreenMatch[] {
+  return screens
+    .map((screen) => scoreScreen(root, url, screen))
+    .sort((a, b) => {
+      // Marcador vale mais que quantidade: é o campo escolhido justamente por
+      // identificar a tela sem ambiguidade.
+      if (a.markerFound !== b.markerFound) return a.markerFound ? -1 : 1;
+      if (a.found !== b.found) return b.found - a.found;
+      if (a.urlMatched !== b.urlMatched) return a.urlMatched ? -1 : 1;
+      return 0;
+    });
+}
+
+/**
+ * Escolhe o perfil de tela que corresponde à página aberta.
+ *
+ * Aceita quando o marcador está presente ou quando campos suficientes do
+ * perfil foram encontrados. A URL entra só como desempate.
+ */
 export function matchScreen(
   screens: ScreenProfile[],
   url: string,
   root: Document,
 ): ScreenProfile | null {
-  for (const screen of screens) {
-    if (!url.includes(screen.urlPattern)) continue;
-    if (screen.marker && !root.querySelector(screen.marker)) continue;
-    return screen;
-  }
+  const melhor = rankScreens(screens, url, root)[0];
+  if (!melhor) return null;
+  if (melhor.markerFound || melhor.found >= MINIMO_DE_CAMPOS) return melhor.screen;
   return null;
 }
 
@@ -291,4 +345,60 @@ function guessLabel(element: FieldElement): string {
   if (linhaAnterior) return linhaAnterior.replace(/\s+/g, " ").slice(0, 60);
 
   return element.getAttribute("name") ?? "";
+}
+
+/** Nomes de campo que um perfil de tela espera encontrar. */
+export function expectedFieldNames(screen: ScreenProfile): string[] {
+  const nomes = screen.mappings
+    .map((mapping) => mapping.selector.match(/\[name="([^"]+)"\]/)?.[1])
+    .filter((nome): nome is string => Boolean(nome));
+
+  return [...new Set(nomes)];
+}
+
+export interface FieldNameMatch {
+  screen: ScreenProfile;
+  found: number;
+  total: number;
+  markerFound: boolean;
+}
+
+/**
+ * Pontua uma tela a partir só da lista de nomes de campo presentes na página.
+ *
+ * Existe para o painel da extensão decidir em qual frame trabalhar: ele sonda
+ * cada frame e recebe de volta apenas os nomes, sem precisar carregar o
+ * documento inteiro para dentro do painel.
+ */
+export function scoreByFieldNames(
+  screen: ScreenProfile,
+  fieldNames: readonly string[],
+): FieldNameMatch {
+  const presentes = new Set(fieldNames);
+  const esperados = expectedFieldNames(screen);
+  const markerName = screen.marker?.match(/\[name="([^"]+)"\]/)?.[1];
+
+  return {
+    screen,
+    found: esperados.filter((nome) => presentes.has(nome)).length,
+    total: esperados.length,
+    markerFound: markerName ? presentes.has(markerName) : false,
+  };
+}
+
+/** Melhor tela para uma lista de campos, ou `null` se nenhuma convence. */
+export function bestScreenForFieldNames(
+  screens: ScreenProfile[],
+  fieldNames: readonly string[],
+): FieldNameMatch | null {
+  const ranking = screens
+    .map((screen) => scoreByFieldNames(screen, fieldNames))
+    .sort((a, b) => {
+      if (a.markerFound !== b.markerFound) return a.markerFound ? -1 : 1;
+      return b.found - a.found;
+    });
+
+  const melhor = ranking[0];
+  if (!melhor) return null;
+  return melhor.markerFound || melhor.found >= MINIMO_DE_CAMPOS ? melhor : null;
 }

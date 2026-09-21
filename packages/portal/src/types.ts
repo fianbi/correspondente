@@ -32,9 +32,15 @@ export type TransformName =
 export interface ScreenProfile {
   key: string;
   label: string;
-  /** Padrão que a URL da aba precisa conter para a tela ser reconhecida. */
-  urlPattern: string;
-  /** Seletor que confirma que a tela é essa mesmo (evita falso positivo). */
+  /**
+   * Pedaço da URL que reforça o reconhecimento, quando conhecido.
+   *
+   * É só um reforço, nunca um requisito: o portal muda de endereço sem avisar,
+   * e uma tela que o motor sabe preencher não pode deixar de ser reconhecida
+   * por causa de um caminho diferente do esperado.
+   */
+  urlHint?: string;
+  /** Seletor que, sozinho, já confirma a tela. */
   marker?: string;
   mappings: FieldMapping[];
 }

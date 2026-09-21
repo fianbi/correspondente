@@ -9,22 +9,7 @@ import {
   type DadosDoProcesso,
   type ProcessoResumo,
 } from "@/src/api";
-import type { PanelRequest, PanelResponse } from "@/src/messages";
-
-/** Conversa com o content script da aba ativa. */
-async function pedirAPagina(request: PanelRequest): Promise<PanelResponse> {
-  const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!aba?.id) return { kind: "erro", message: "Nenhuma aba aberta." };
-
-  try {
-    return await chrome.tabs.sendMessage(aba.id, request);
-  } catch {
-    return {
-      kind: "erro",
-      message: "Abra a tela do portal do banco nesta aba para a extensão agir.",
-    };
-  }
-}
+import { pedirAoQuadro, reconhecerPagina, type Reconhecimento } from "@/src/pagina";
 
 export function App() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -48,12 +33,17 @@ export function App() {
   }, []);
 
   if (!config || !org) {
-    return <Conexao erro={erro} aoConectar={(novo, nome) => {
-      setConfig(novo);
-      setOrg(nome);
-      setErro(null);
-      void api.perfil(novo).then(setPerfil).catch(() => setPerfil(null));
-    }} />;
+    return (
+      <Conexao
+        erro={erro}
+        aoConectar={(novo, nome) => {
+          setConfig(novo);
+          setOrg(nome);
+          setErro(null);
+          void api.perfil(novo).then(setPerfil).catch(() => setPerfil(null));
+        }}
+      />
+    );
   }
 
   return (
@@ -66,7 +56,12 @@ export function App() {
         <button
           type="button"
           className="link"
-          onClick={() => void limparConfig().then(() => { setConfig(null); setOrg(null); })}
+          onClick={() =>
+            void limparConfig().then(() => {
+              setConfig(null);
+              setOrg(null);
+            })
+          }
         >
           Desconectar
         </button>
@@ -134,7 +129,12 @@ function Conexao({
 
       {falha ? <p className="erro">{falha}</p> : null}
 
-      <button type="button" className="primario" disabled={testando || !token} onClick={() => void conectar()}>
+      <button
+        type="button"
+        className="primario"
+        disabled={testando || !token}
+        onClick={() => void conectar()}
+      >
         {testando ? "Conectando…" : "Conectar"}
       </button>
     </div>
@@ -145,23 +145,14 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
   const [busca, setBusca] = useState("");
   const [processos, setProcessos] = useState<ProcessoResumo[]>([]);
   const [selecionado, setSelecionado] = useState<DadosDoProcesso | null>(null);
-  const [tela, setTela] = useState<{ key: string | null; label: string | null }>({
-    key: null,
-    label: null,
-  });
+  const [pagina, setPagina] = useState<Reconhecimento | null>(null);
   const [resultado, setResultado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [semSobrescrever, setSemSobrescrever] = useState(true);
+  const [verDiagnostico, setVerDiagnostico] = useState(false);
 
   const reconhecer = useCallback(async () => {
-    const resposta = await pedirAPagina({ kind: "reconhecer", profile: perfil });
-    if (resposta.kind === "reconhecido") {
-      setTela({ key: resposta.screenKey, label: resposta.screenLabel });
-      setErro(resposta.screenKey ? null : "Tela do portal ainda não mapeada.");
-    } else if (resposta.kind === "erro") {
-      setErro(resposta.message);
-      setTela({ key: null, label: null });
-    }
+    setPagina(await reconhecerPagina(perfil));
   }, [perfil]);
 
   useEffect(() => {
@@ -179,13 +170,16 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
     void api.processos(config, busca).then(setProcessos).catch(() => setProcessos([]));
   }, [config, busca]);
 
+  const telaPronta = pagina?.screen != null && pagina.frameId != null;
+
   async function preencher() {
-    if (!selecionado) return;
+    if (!selecionado || !telaPronta) return;
     setErro(null);
 
-    const resposta = await pedirAPagina({
+    const resposta = await pedirAoQuadro(pagina!.frameId!, {
       kind: "preencher",
       profile: perfil,
+      screenKey: pagina!.screen!.key,
       values: selecionado.values,
       skipFilled: semSobrescrever,
     });
@@ -204,10 +198,15 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
   }
 
   async function capturar() {
-    if (!selecionado) return;
+    if (!selecionado || !telaPronta) return;
     setErro(null);
 
-    const resposta = await pedirAPagina({ kind: "capturar", profile: perfil });
+    const resposta = await pedirAoQuadro(pagina!.frameId!, {
+      kind: "capturar",
+      profile: perfil,
+      screenKey: pagina!.screen!.key,
+    });
+
     if (resposta.kind !== "capturado") {
       if (resposta.kind === "erro") setErro(resposta.message);
       return;
@@ -229,10 +228,37 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
   return (
     <>
       <section className="bloco">
-        <p className="rotulo">Tela aberta</p>
-        <p className={tela.key ? "destaque" : "discreto"}>
-          {tela.label ?? "Nenhuma tela reconhecida"}
-        </p>
+        <div className="linha">
+          <p className="rotulo">Tela aberta</p>
+          <button type="button" className="link" onClick={() => void reconhecer()}>
+            Verificar de novo
+          </button>
+        </div>
+
+        {telaPronta ? (
+          <>
+            <p className="destaque">{pagina!.screen!.label}</p>
+            <p className="discreto">
+              {pagina!.found} de {pagina!.total} campos do perfil encontrados nesta tela.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="discreto">Nenhuma tela do perfil reconhecida.</p>
+            <button
+              type="button"
+              className="link"
+              onClick={() => setVerDiagnostico((v) => !v)}
+            >
+              {verDiagnostico ? "Ocultar detalhes" : "Ver o que foi encontrado"}
+            </button>
+
+            {/* O diagnóstico é o que transforma "não mapeada" em informação
+                acionável: sem ele, não há como saber se o problema é a tela
+                errada, um frame sem campos ou um perfil desatualizado. */}
+            {verDiagnostico ? <Diagnostico pagina={pagina} perfil={perfil} /> : null}
+          </>
+        )}
       </section>
 
       <section className="bloco">
@@ -262,7 +288,9 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
               </button>
             </li>
           ))}
-          {processos.length === 0 ? <li className="discreto">Nenhum processo encontrado.</li> : null}
+          {processos.length === 0 ? (
+            <li className="discreto">Nenhum processo encontrado.</li>
+          ) : null}
         </ul>
       </section>
 
@@ -283,10 +311,15 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
           </label>
 
           <div className="acoes">
-            <button type="button" className="primario" disabled={!tela.key} onClick={() => void preencher()}>
+            <button
+              type="button"
+              className="primario"
+              disabled={!telaPronta}
+              onClick={() => void preencher()}
+            >
               Preencher a tela
             </button>
-            <button type="button" disabled={!tela.key} onClick={() => void capturar()}>
+            <button type="button" disabled={!telaPronta} onClick={() => void capturar()}>
               Trazer da tela
             </button>
           </div>
@@ -300,5 +333,48 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
       {resultado ? <p className="ok">{resultado}</p> : null}
       {erro ? <p className="erro">{erro}</p> : null}
     </>
+  );
+}
+
+/** O que a extensão viu em cada frame da aba, para destravar o mapeamento. */
+function Diagnostico({
+  pagina,
+  perfil,
+}: {
+  pagina: Reconhecimento | null;
+  perfil: PortalProfile;
+}) {
+  const quadros = pagina?.quadros ?? [];
+
+  if (quadros.length === 0) {
+    return (
+      <p className="discreto">
+        Nenhum documento pôde ser lido nesta aba. A extensão só enxerga páginas em{" "}
+        <code>{perfil.hostPattern}</code> — confira se a tela do portal está nesta aba e se o
+        endereço bate.
+      </p>
+    );
+  }
+
+  return (
+    <div className="diagnostico">
+      {quadros.map((quadro) => (
+        <div key={quadro.frameId} className="quadro">
+          <p className="mono">{quadro.url}</p>
+          <p className="discreto">
+            {quadro.fieldNames.length} campo(s) nesta parte da página
+            {quadro.frameId !== 0 ? " (dentro de um frame)" : ""}
+          </p>
+          {quadro.fieldNames.length > 0 ? (
+            <p className="mono discreto">{quadro.fieldNames.slice(0, 12).join(", ")}</p>
+          ) : null}
+        </div>
+      ))}
+
+      <p className="discreto">
+        Se os campos acima são os da tela que você quer preencher, o perfil precisa ser
+        atualizado — mande esta lista para quem cuida do sistema.
+      </p>
+    </div>
   );
 }

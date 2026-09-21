@@ -178,3 +178,34 @@ button.link {
   border-radius: 6px;
   font-size: 13px;
 }
+
+.linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.diagnostico {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.quadro {
+  border-left: 2px solid var(--line);
+  padding-left: 8px;
+}
+
+.quadro p {
+  margin: 0;
+}
+
+/* URL e nomes de campo quebram em qualquer lugar: no painel estreito, um
+   endereço longo empurraria o layout inteiro. */
+.mono {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
