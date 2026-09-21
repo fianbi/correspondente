@@ -209,3 +209,11 @@ button.link {
   font-size: 11px;
   overflow-wrap: anywhere;
 }
+
+select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 8px;
+  font: inherit;
+  background: #fff;
+}

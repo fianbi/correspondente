@@ -12,9 +12,14 @@
  * roda em duas passagens: primeiro descobre, em TODAS as capturas, o que foi
  * digitado; depois limpa cada arquivo com o que o conjunto revelou.
  *
+ * A gravação é atômica: ou todas as fixtures passam na conferência, ou nenhuma
+ * é escrita. Uma versão anterior abortava no meio e deixava metade do conjunto
+ * em disco, o que passou despercebido até um teste procurar uma tela que não
+ * existia mais.
+ *
  * Uso: node scripts/anonimizar-fixtures.mjs
  */
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,6 +40,20 @@ const IGNORAR = new Set([
 /** Campos cujo conteúdo é nome de pessoa: deles saem também as palavras soltas. */
 const CAMPOS_DE_NOME = /nome|conjuge|mae|pai|razao/i;
 
+/**
+ * Formatos que identificam alguém, procurados em qualquer texto visível.
+ *
+ * Ficam numa constante só porque a limpeza e a conferência precisam usar
+ * exatamente os mesmos: uma divergência entre as duas deixaria passar o que a
+ * conferência acha que já foi removido.
+ */
+const PADROES_SENSIVEIS = [
+  { re: /\d{3}\.\d{3}\.\d{3}-\d{2}/g, descricao: "CPF com máscara" },
+  { re: /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g, descricao: "CNPJ com máscara" },
+  { re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, descricao: "e-mail" },
+  { re: /\d{11,14}/g, descricao: "sequência longa de dígitos" },
+];
+
 function coletarSegredos(html, acumulador) {
   const { valores, palavras } = acumulador;
 
@@ -42,6 +61,10 @@ function coletarSegredos(html, acumulador) {
     const limpo = valor.trim();
     if (!limpo || ESTRUTURAIS.has(limpo.toLowerCase())) return;
     if (/^[\d.,/-]{1,4}$/.test(limpo)) return; // código curto, UF, mês
+    // Palavra comum digitada num campo (um "NADA" no complemento) não
+    // identifica ninguém, e apagá-la do documento inteiro destruiria texto
+    // legítimo do portal — "NADA CONSTA" viraria " CONSTA".
+    if (IGNORAR.has(limpo.toLowerCase())) return;
     // Valor curto é código de domínio ("F", "01"), não identifica ninguém — e
     // apagá-lo do documento inteiro mutilaria nomes de atributo.
     if (limpo.length < 4) return;
@@ -69,6 +92,23 @@ function coletarSegredos(html, acumulador) {
   for (const m of html.matchAll(/<textarea\b([^>]*)>([\s\S]*?)<\/textarea>/gi)) {
     adicionar(m[2], m[1]);
   }
+}
+
+/** Limpeza aplicada a um nó de texto. */
+function limparTexto(texto, segredos) {
+  let saida = texto;
+
+  for (const segredo of segredos) {
+    for (const variante of new Set([segredo, segredo.toUpperCase(), segredo.toLowerCase()])) {
+      saida = saida.replaceAll(variante, "");
+    }
+  }
+
+  for (const { re } of PADROES_SENSIVEIS) {
+    saida = saida.replace(re, "");
+  }
+
+  return saida;
 }
 
 function anonimizar(html, segredos) {
@@ -106,44 +146,37 @@ function anonimizar(html, segredos) {
   return saida;
 }
 
-/** Limpeza aplicada a um nó de texto. */
-function limparTexto(texto, segredos) {
-  let saida = texto;
+/** Nomes de campo presentes no HTML — a estrutura que a fixture precisa manter. */
+function camposDe(html) {
+  return new Set([...html.matchAll(/name\s*=\s*"([^"]+)"/gi)].map((m) => m[1]));
+}
 
-  for (const segredo of segredos) {
-    for (const variante of new Set([segredo, segredo.toUpperCase(), segredo.toLowerCase()])) {
-      saida = saida.replaceAll(variante, "");
+/** Só o texto visível do documento, sem tags nem atributos. */
+function textoVisivel(html) {
+  return [...html.matchAll(/>([^<]+)</g)].map((m) => m[1]).join(" ");
+}
+
+/**
+ * Falha alto em vez de gravar dado pessoal no repositório.
+ *
+ * Os formatos identificáveis (CPF, CNPJ, e-mail, sequência longa de dígitos)
+ * são proibidos em qualquer lugar do arquivo — inclusive em atributo. Já os
+ * valores digitados são procurados só no texto visível, que é o escopo que a
+ * limpeza cobre; procurá-los no documento inteiro acusaria coincidência com
+ * nome de atributo e nunca passaria.
+ */
+function conferir(html, arquivo, segredos) {
+  for (const { re, descricao } of PADROES_SENSIVEIS) {
+    const achado = html.match(new RegExp(re.source));
+    if (achado) {
+      throw new Error(`${arquivo}: ${descricao} remanescente (${achado[0].slice(0, 30)})`);
     }
   }
 
-  return saida
-    .replace(/\d{3}\.\d{3}\.\d{3}-\d{2}/g, "")
-    .replace(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g, "")
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "")
-    .replace(/\d{11,14}/g, "");
-}
-
-/** Nomes de campo presentes no HTML — a estrutura que a fixture precisa manter. */
-function camposDe(html) {
-  return new Set([...html.matchAll(/name\s*=\s*"([^"]+)"/gi)].map((m) => m[1]));
-}
-
-/** Falha alto em vez de gravar dado pessoal no repositório. */
-function conferir(html, arquivo, segredos) {
-  const suspeitos = [
-    [/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/, "CPF com máscara"],
-    [/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/, "e-mail"],
-    [/\b\d{11,14}\b/, "sequência longa de dígitos"],
-  ];
-
-  for (const [padrao, descricao] of suspeitos) {
-    const achado = html.match(padrao);
-    if (achado) throw new Error(`${arquivo}: ${descricao} remanescente (${achado[0].slice(0, 30)})`);
-  }
-
+  const visivel = textoVisivel(html).toLowerCase();
   for (const segredo of segredos) {
     if (segredo.length < 4) continue;
-    if (html.toLowerCase().includes(segredo.toLowerCase())) {
+    if (visivel.includes(segredo.toLowerCase())) {
       throw new Error(`${arquivo}: valor preenchido remanescente (${segredo.slice(0, 30)})`);
     }
   }
@@ -154,13 +187,28 @@ function conferir(html, arquivo, segredos) {
  * Foi esta conferência que pegou a limpeza mutilando nome de atributo.
  */
 function conferirEstrutura(original, anonimo, arquivo) {
-  const antes = camposDe(original);
+  // O script é removido de propósito, e uma página pode montar formulário por
+  // `document.write`. Contar `name=` dentro do script acusaria como "campo
+  // perdido" algo que nunca foi marcação.
+  const semScript = original
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "");
+
+  const antes = camposDe(semScript);
   const depois = camposDe(anonimo);
 
   const perdidos = [...antes].filter((nome) => !depois.has(nome));
   if (perdidos.length > 0) {
     throw new Error(`${arquivo}: campos perdidos na limpeza: ${perdidos.slice(0, 5).join(", ")}`);
   }
+}
+
+function nomeDeSaida(arquivo) {
+  return arquivo
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9.]+/g, "-");
 }
 
 function main() {
@@ -172,8 +220,6 @@ function main() {
     console.error("Salve as telas do portal ali (elas não entram no repositório) e rode de novo.");
     process.exit(1);
   }
-
-  mkdirSync(destino, { recursive: true });
 
   // Passagem 1: descobre em todas as capturas o que foi digitado.
   const acumulador = { valores: new Set(), palavras: new Set() };
@@ -189,24 +235,26 @@ function main() {
   );
   console.log(`${segredos.length} valores sensíveis identificados no conjunto das capturas.\n`);
 
-  // Passagem 2: limpa cada arquivo com o que o conjunto revelou.
+  // Passagem 2: limpa e confere TUDO antes de gravar qualquer coisa.
+  const prontos = [];
   for (const arquivo of arquivos) {
     const original = conteudos.get(arquivo);
     const anonimo = anonimizar(original, segredos);
     conferir(anonimo, arquivo, segredos);
     conferirEstrutura(original, anonimo, arquivo);
-
-    const nomeSaida = arquivo
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9.]+/g, "-");
-
-    writeFileSync(join(destino, nomeSaida), anonimo, "utf8");
-    console.log(`${arquivo} -> fixtures/caixa/${nomeSaida}`);
+    prontos.push({ arquivo, anonimo, saida: nomeDeSaida(arquivo) });
   }
 
-  console.log(`\n${arquivos.length} fixture(s) gerada(s).`);
+  // Passagem 3: publica o conjunto inteiro de uma vez.
+  rmSync(destino, { recursive: true, force: true });
+  mkdirSync(destino, { recursive: true });
+
+  for (const { arquivo, anonimo, saida } of prontos) {
+    writeFileSync(join(destino, saida), anonimo, "utf8");
+    console.log(`${arquivo} -> fixtures/caixa/${saida}`);
+  }
+
+  console.log(`\n${prontos.length} fixture(s) gerada(s).`);
 }
 
 main();

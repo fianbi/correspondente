@@ -65,7 +65,7 @@ function documentMappings(): FieldMapping[] {
 const DADOS_CADASTRAIS: ScreenProfile = {
   key: "cadastro_dados",
   label: "Cadastro de clientes — dados cadastrais",
-  urlHint: "cadastro",
+  urlHint: "cadastro_cliente",
   marker: '[name="nomeCompleto"]',
   mappings: [
     { dataKey: "person.cpf", selector: '[name="dataCpf"]', transform: "digits" },
@@ -100,7 +100,7 @@ const DADOS_CADASTRAIS: ScreenProfile = {
 const ENDERECO: ScreenProfile = {
   key: "cadastro_endereco",
   label: "Cadastro de clientes — endereço e contato",
-  urlHint: "cadastro",
+  urlHint: "cadastro_cliente",
   marker: '[name="cep"]',
   mappings: [
     { dataKey: "person.zipCode", selector: '[name="cep"]', transform: "digits" },
@@ -131,11 +131,78 @@ const PESQUISA: ScreenProfile = {
   mappings: [{ dataKey: "person.cpf", selector: '[name="dataCpf"]', transform: "digits" }],
 };
 
+/**
+ * Renda formal — uma ocorrência por fonte pagadora.
+ *
+ * Diferente das outras telas, esta não preenche com dados da pessoa e sim de
+ * UMA renda dela: o portal cadastra uma fonte por vez, então o painel pergunta
+ * qual antes de preencher.
+ */
+const RENDA_FORMAL: ScreenProfile = {
+  key: "renda_formal",
+  label: "Cadastro de clientes — renda formal",
+  urlHint: "cadastro_cliente",
+  marker: '[name="valorRendaBruta"]',
+  needsIncome: true,
+  mappings: [
+    { dataKey: "income.kind", selector: '[name="cmbCaracteristicaRenda"]' },
+    { dataKey: "income.sourceKind", selector: '[name="cmbCnpj_cpf"]' },
+    {
+      dataKey: "income.sourceDocument",
+      selector: '[name="numeroCnpj"]',
+      when: { selector: '[name="cmbCnpj_cpf"]', equals: "2" },
+    },
+    {
+      dataKey: "income.sourceDocument",
+      selector: '[name="numeroCpf"]',
+      when: { selector: '[name="cmbCnpj_cpf"]', equals: "1" },
+    },
+    { dataKey: "income.sourceName", selector: '[name="fontePagadora"]', transform: "upper" },
+    { dataKey: "income.occupation", selector: '[name="cmbOcupacao"]' },
+    { dataKey: "income.startDate", selector: '[name="dataAdmissao"]', transform: "date_br" },
+    { dataKey: "income.grossCents", selector: '[name="valorRendaBruta"]', transform: "money_br" },
+    { dataKey: "income.netCents", selector: '[name="valorRendaLiquida"]', transform: "money_br" },
+    { dataKey: "income.proofType", selector: '[name="cmbComprovanteRenda"]' },
+    { dataKey: "income.proofReference", selector: '[name="dtRefCompr"]' },
+    { dataKey: "income.previousJobYears", selector: '[name="empregoAnos"]' },
+    { dataKey: "income.previousJobMonths", selector: '[name="empregoMeses"]' },
+  ],
+};
+
+const RENDA_INFORMAL: ScreenProfile = {
+  key: "renda_informal",
+  label: "Cadastro de clientes — renda informal",
+  urlHint: "cadastro_cliente",
+  marker: '[name="rendaLiquidaMensal"]',
+  needsIncome: true,
+  mappings: [
+    { dataKey: "income.sourceName", selector: '[name="nomeAtividade"]', transform: "upper" },
+    { dataKey: "income.startDate", selector: '[name="dataDeInicio"]', transform: "date_br" },
+    {
+      dataKey: "income.netCents",
+      selector: '[name="rendaLiquidaMensal"]',
+      transform: "money_br",
+    },
+  ],
+};
+
+const AGENCIA: ScreenProfile = {
+  key: "agencia_relacionamento",
+  label: "Cadastro de clientes — agência de relacionamento",
+  urlHint: "cadastro_cliente",
+  marker: '[name="cmbAgenciaRelacionamento"]',
+  mappings: [
+    { dataKey: "agency.uf", selector: '[name="cmbUFAgenciaRelacionamento"]' },
+    { dataKey: "agency.city", selector: '[name="cmbMunicipioAgenciaRelacionamento"]' },
+    { dataKey: "agency.number", selector: '[name="cmbAgenciaRelacionamento"]' },
+  ],
+};
+
 export const CAIXA_PROFILE: PortalProfile = {
   key: "caixa_aqui",
   label: "Caixa Aqui (SICAQ)",
   hostPattern: "caixa.gov.br",
-  screens: [DADOS_CADASTRAIS, ENDERECO, PESQUISA],
+  screens: [DADOS_CADASTRAIS, ENDERECO, RENDA_FORMAL, RENDA_INFORMAL, AGENCIA, PESQUISA],
 };
 
 /** Valores de domínio traduzidos para os códigos que o portal espera. */
@@ -193,5 +260,55 @@ export function toCaixaValues(person: Record<string, unknown>): Record<string, s
     "person.residenceProofYear": texto(person.residenceProofYear),
     "person.phone": texto(person.phone),
     "person.email": texto(person.email),
+  };
+}
+
+/**
+ * Traduz UMA renda da pessoa para os campos da tela de renda do portal.
+ *
+ * O tipo de fonte não existe no nosso cadastro: ele é deduzido do documento da
+ * fonte pagadora — 14 dígitos é CNPJ, 11 é CPF. Deduzir aqui evita pedir ao
+ * operador um dado que já está implícito no que ele digitou.
+ */
+export function toCaixaIncomeValues(income: Record<string, unknown>): Record<string, string | null> {
+  const texto = (valor: unknown): string | null =>
+    valor === null || valor === undefined || valor === "" ? null : String(valor);
+
+  const documento = texto(income.sourceDocument)?.replace(/\D+/g, "") ?? null;
+  const tipoDeFonte = documento === null ? null : documento.length === 14 ? "2" : "1";
+
+  const mes = income.proofMonth ? String(income.proofMonth).padStart(2, "0") : null;
+  const ano = texto(income.proofYear);
+
+  return {
+    "income.kind": income.kind
+      ? (portais.CAIXA_INCOME_KIND[income.kind as keyof typeof portais.CAIXA_INCOME_KIND] ?? null)
+      : null,
+    "income.sourceKind": tipoDeFonte,
+    "income.sourceDocument": documento,
+    "income.sourceName": texto(income.sourceName),
+    "income.occupation": texto(income.occupation),
+    "income.startDate": texto(income.startDate),
+    "income.grossCents": texto(income.grossCents),
+    "income.netCents": texto(income.netCents),
+    "income.proofType": income.proofType
+      ? (portais.CAIXA_INCOME_PROOF[income.proofType as keyof typeof portais.CAIXA_INCOME_PROOF] ??
+        null)
+      : null,
+    // O portal aceita a competência como MM/AAAA num campo só.
+    "income.proofReference": mes && ano ? `${mes}/${ano}` : null,
+    "income.previousJobYears": texto(income.previousJobYears),
+    "income.previousJobMonths": texto(income.previousJobMonths),
+  };
+}
+
+/** Agência de relacionamento, que vem da agência do processo. */
+export function toCaixaAgencyValues(
+  agency: { number?: string | null; city?: string | null; uf?: string | null } | null,
+): Record<string, string | null> {
+  return {
+    "agency.number": agency?.number ?? null,
+    "agency.city": agency?.city ?? null,
+    "agency.uf": agency?.uf ?? null,
   };
 }

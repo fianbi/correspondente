@@ -150,6 +150,7 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
   const [erro, setErro] = useState<string | null>(null);
   const [semSobrescrever, setSemSobrescrever] = useState(true);
   const [verDiagnostico, setVerDiagnostico] = useState(false);
+  const [rendaEscolhida, setRendaEscolhida] = useState<string | null>(null);
 
   const reconhecer = useCallback(async () => {
     setPagina(await reconhecerPagina(perfil));
@@ -172,15 +173,22 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
 
   const telaPronta = pagina?.screen != null && pagina.frameId != null;
 
+  // A tela de renda do portal cadastra uma fonte por vez: sem escolher qual,
+  // preencher seria escrever a primeira da lista sem avisar o operador.
+  const precisaDeRenda = pagina?.screen?.needsIncome === true;
+  const rendas = selecionado?.incomes ?? [];
+  const renda = rendas.find((item) => item.id === rendaEscolhida) ?? null;
+  const faltaEscolherRenda = precisaDeRenda && renda === null;
+
   async function preencher() {
-    if (!selecionado || !telaPronta) return;
+    if (!selecionado || !telaPronta || faltaEscolherRenda) return;
     setErro(null);
 
     const resposta = await pedirAoQuadro(pagina!.frameId!, {
       kind: "preencher",
       profile: perfil,
       screenKey: pagina!.screen!.key,
-      values: selecionado.values,
+      values: { ...selecionado.values, ...(renda?.values ?? {}) },
       skipFilled: semSobrescrever,
     });
 
@@ -301,6 +309,28 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
             #{selecionado.number} {selecionado.personName}
           </p>
 
+          {precisaDeRenda ? (
+            <label>
+              Renda a preencher
+              <select
+                value={rendaEscolhida ?? ""}
+                onChange={(e) => setRendaEscolhida(e.target.value || null)}
+              >
+                <option value="">Selecione a fonte…</option>
+                {rendas.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label} ({item.kind})
+                  </option>
+                ))}
+              </select>
+              {rendas.length === 0 ? (
+                <span className="discreto">
+                  Esta pessoa não tem renda cadastrada no sistema.
+                </span>
+              ) : null}
+            </label>
+          ) : null}
+
           <label className="checkbox">
             <input
               type="checkbox"
@@ -314,7 +344,7 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
             <button
               type="button"
               className="primario"
-              disabled={!telaPronta}
+              disabled={!telaPronta || faltaEscolherRenda}
               onClick={() => void preencher()}
             >
               Preencher a tela
@@ -362,11 +392,12 @@ function Diagnostico({
         <div key={quadro.frameId} className="quadro">
           <p className="mono">{quadro.url}</p>
           <p className="discreto">
-            {quadro.fieldNames.length} campo(s) nesta parte da página
-            {quadro.frameId !== 0 ? " (dentro de um frame)" : ""}
+            {quadro.fieldNames.length} campo(s) visível(is)
+            {quadro.hiddenCount > 0 ? ` e ${quadro.hiddenCount} de controle` : ""}
+            {quadro.frameId !== 0 ? " · dentro de um frame" : ""}
           </p>
           {quadro.fieldNames.length > 0 ? (
-            <p className="mono discreto">{quadro.fieldNames.slice(0, 12).join(", ")}</p>
+            <p className="mono discreto">{quadro.fieldNames.join(", ")}</p>
           ) : null}
         </div>
       ))}

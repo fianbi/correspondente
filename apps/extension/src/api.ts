@@ -21,11 +21,19 @@ export interface ProcessoResumo {
   status: string;
 }
 
+export interface RendaDoProcesso {
+  id: string;
+  label: string;
+  kind: "formal" | "informal";
+  values: Record<string, string | null>;
+}
+
 export interface DadosDoProcesso {
   processId: string;
   number: number;
   personName: string;
   values: Record<string, string | null>;
+  incomes: RendaDoProcesso[];
 }
 
 const CONFIG_KEY = "corr.config";

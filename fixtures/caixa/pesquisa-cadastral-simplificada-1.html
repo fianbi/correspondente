@@ -1,0 +1,171 @@
+
+<!-- saved from url=(0099)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/consulta_cadastral/consulta_cadastral1 -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+<title>Caixa Aqui - Pesquisa Cadastral Simplificada</title>
+
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+<body bgcolor="#FFFFFF" onload="JavaScript:onLoad();">
+<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+<form id="main" name="main" method="post" onsubmit="return validate();" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/consulta_cadastral/consulta_cadastral2">
+<input type="submit" style="visibility:hidden;" name="bot_submit">
+<input type="hidden" id="tpPessoa" value="">
+<input type="hidden" value="" id="captcha">
+	<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Pesquisa Cadastral Simplificada
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+	  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+	
+	
+	
+	<table style="WIDTH: 600px;" cellspacing="0" cellpadding="0" class="tbForm">
+		<tbody><tr>
+			<td class="header" colspan="4" align="center">Dados Cadastrais</td>
+		</tr>
+		
+		<tr>
+			<td colspan="2" width="50%">
+				<input type="radio" id="rdPessoa" name="rdPessoa" value="F" onclick="javascript:habilitaCampo(0);">
+				&nbsp;&nbsp;Pessoa Física
+			</td>
+			<!-- W3C: O atributo id="rdPessoa"  foi retirado da tag <input> abaixo por duplicidade de ids -->
+			<td colspan="2" width="50%">
+			<input type="radio" name="rdPessoa" value="J" onclick="javascript:habilitaCampo(1);">&nbsp;&nbsp;Pessoa Jurídica</td>
+		</tr>
+		
+		<tr>
+			<td class="" colspan="4" style="text-align: center;">
+				<div id="spanCPF" style="display:block;">CPF 
+					<input type="text" name="dataCpf" value="" id="dataCpf" maxlength="14" onkeydown="Mascara(this,Cpf);" style="vertical-align: middle" onkeypress="Mascara(this,Cpf);" onkeyup="Mascara(this,Cpf);">
+						<a href="javascript:document.main.bot_submit.click();" class="btn-azul" title="Consultar" style="vertical-align: middle">Consultar</a>			
+				</div>
+				<div id="spanCNPJ" style="display:none;">CNPJ
+					<input type="text" name="dataCnpj" value="" id="dataCnpj" maxlength="18" onkeydown="Mascara(this,Cnpj);" style="vertical-align: middle" onkeypress="Mascara(this,Cnpj);" onkeyup="Mascara(this,Cnpj);">
+						<a href="javascript:document.main.bot_submit.click();" class="btn-azul" title="Consultar" style="vertical-align: middle">Consultar</a>			
+				</div>
+
+			</td>
+		</tr>
+	</tbody></table>
+	<div id="captchaContainer" style="display: block;">
+		<p id="imgCaptcha" style="text-align: center;">
+			<img src="data:image/png;base64, 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" alt="Captcha" style="width:180px;height:50px">
+			<a href="javascript:geraNovoCaptcha();" title="Atualizar Captcha">
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+					<path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"></path>
+				  	<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"></path>
+				</svg>
+			</a>
+		</p>		
+		<div>Digite abaixo os caracteres apresentados:</div>
+		<p></p>
+		<input id="respostaCaptcha" type="text" name="respostaCaptcha" value="">
+	</div>
+	
+	
+		</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+		  <div style="margin-top: 7px; width: 55px; height: 20px;">
+  		  </div>
+		  <div id="divAvancar">
+			  <a href="javascript:document.main.bot_submit.click();" style="margin-top: 5px; height: 55px; margin-right: 15px;" title="Avançar">
+                  <svg class="svg-inline--fa fa-chevron-right fa-w-10 fa-3x" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path></svg><!-- <i class="fas fa-chevron-right fa-3x"></i> -->
+			  </a>
+		  </div>
+		
+	</div>
+
+	</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+
+</form>
+
+
+</body></html>

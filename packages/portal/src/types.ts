@@ -42,6 +42,13 @@ export interface ScreenProfile {
   urlHint?: string;
   /** Seletor que, sozinho, já confirma a tela. */
   marker?: string;
+  /**
+   * A tela preenche UMA renda da pessoa, não a pessoa inteira.
+   *
+   * O portal cadastra uma fonte pagadora por vez; o painel precisa perguntar
+   * qual antes de preencher, senão escreveria a primeira da lista sem avisar.
+   */
+  needsIncome?: boolean;
   mappings: FieldMapping[];
 }
 

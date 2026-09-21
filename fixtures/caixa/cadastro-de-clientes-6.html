@@ -1,0 +1,531 @@
+
+<!-- saved from url=(0095)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente4 -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+<title>Caixa Aqui - Cadastro de Clientes</title>
+
+
+
+</head>
+<body bgcolor="#FFFFFF" onload="javascript:init();">
+	<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+	<form name="main" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente5" onsubmit="javascript:return validate();" method="post">
+
+		<input type="hidden" id="index" name="index" value=""> 
+		<input type="hidden" id="descOcupacao" name="descOcupacao" value="">
+
+		<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Cadastro de Clientes
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+		  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="javascript:voltar();" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+
+		<table class="tbForm" cellspacing="0">
+			<tbody><tr>
+				<td align="center" class="header" colspan="2">
+					Renda Informal
+				</td>
+			</tr>
+			
+			<tr>
+				<td width="200" class="tdtab12R">Nome da Atividade</td>
+				<td width="300" class="tdtab12"> 
+						<select name="nomeAtividade" id="nomeAtividade" size="nomeAtividade" onchange="javascript:changed(true);">
+
+    <option value=""></option>
+
+    <option value="187689">ACOUGUEIRO</option>
+
+    <option value="72980821">ACUPUNTURISTA</option>
+
+    <option value="72981095">ADESTRADOR DE ANIMAIS</option>
+
+    <option value="72981131">ADMINISTRADOR</option>
+
+    <option value="518729">ADVOGADO</option>
+
+    <option value="72981142">AFIADOR</option>
+
+    <option value="187690">AGRICULTOR</option>
+
+    <option value="551315">AGRONOMO</option>
+
+    <option value="72981148">ALAMBIQUEIRO</option>
+
+    <option value="187691">ALFAIATE</option>
+
+    <option value="547893">ANALISTA DE SISTEMA</option>
+
+    <option value="530056">ARQUITETO</option>
+
+    <option value="72981171">ARTISTA DE CIRCO</option>
+
+    <option value="594629">ARTISTA DE DANÇA</option>
+
+    <option value="187694">ARTISTA VISUAL</option>
+
+    <option value="72981178">ASTROLOGO E NUMEROLOGO</option>
+
+    <option value="2885158">ATIVIDADES RELIGIOSAS</option>
+
+    <option value="72981183">ATLETA</option>
+
+    <option value="594534">ATOR</option>
+
+    <option value="187698">AUXILIAR GERAL</option>
+
+    <option value="187699">BABA</option>
+
+    <option value="187702">BARBEIRO</option>
+
+    <option value="72981223">BIOLOGO</option>
+
+    <option value="72981229">BIOMEDICO</option>
+
+    <option value="187704">BORDADOR</option>
+
+    <option value="187705">BORRACHEIRO</option>
+
+    <option value="187708">CABELEIREIRO(A)</option>
+
+    <option value="551327">CAMAREIRO(A)</option>
+
+    <option value="187731">CAMINHONEIRO AUTONOMO</option>
+
+    <option value="551340">CANTOR(A)</option>
+
+    <option value="187710">CARPINTEIRO</option>
+
+    <option value="72981250">CARREGADOR DE MERCADORIAS</option>
+
+    <option value="187711">CARROCEIRO</option>
+
+    <option value="594226">CARTOGRAFO</option>
+
+    <option value="72981272">CATADORES DE MATERIAL RECICLAVEL</option>
+
+    <option value="72981281">CERAMISTA</option>
+
+    <option value="72981292">CHAVEIRO</option>
+
+    <option value="187712">COBRADOR</option>
+
+    <option value="594564">COMENTARISTA DE RADIO E TELEVISAO</option>
+
+    <option value="594668">COMPOSITOR</option>
+
+    <option value="187713">CONFEITEIRO(A)</option>
+
+    <option value="594320">CONSERTADOR DE APARELHO ELETRONICO ELETRODOMESTICO</option>
+
+    <option value="548201">CONSULTOR</option>
+
+    <option value="530063">CONTADOR</option>
+
+    <option value="187714">CORRETOR</option>
+
+    <option value="187715">COSTUREIRO(A)</option>
+
+    <option value="187717">COZINHEIRO(A)</option>
+
+    <option value="72981314">CROCHETEIRO A MAO</option>
+
+    <option value="72981330">CUIDADOR DE IDOSOS</option>
+
+    <option value="187718">DECORADOR(A)</option>
+
+    <option value="187719">DEDETIZADOR</option>
+
+    <option value="701108">DEPOSITOS PCI PAI</option>
+
+    <option value="908743">DESENHISTA</option>
+
+    <option value="187720">DESPACHANTE</option>
+
+    <option value="187722">DIGITADOR</option>
+
+    <option value="551380">ECONOMISTA</option>
+
+    <option value="187724">ELETRICISTA</option>
+
+    <option value="187703">ENCANADOR</option>
+
+    <option value="187725">ENFERMEIRO(A)</option>
+
+    <option value="518730">ENGENHEIRO</option>
+
+    <option value="72981341">ENGRAXATE</option>
+
+    <option value="72981358">ESOTERICO E PARANORMAL</option>
+
+    <option value="72981345">ESTETICISTA</option>
+
+    <option value="187726">ESTOFADOR</option>
+
+    <option value="72981429">EXTRATIVISTA</option>
+
+    <option value="72981434">FARMACEUTICO</option>
+
+    <option value="187727">FAXINEIRO(A)</option>
+
+    <option value="187728">FEIRANTE</option>
+
+    <option value="784603">FISIOTERAPEUTA</option>
+
+    <option value="551383">FONAUDIOLOGO</option>
+
+    <option value="187730">FOTOGRAFO(A)</option>
+
+    <option value="187737">FUNILEIRO</option>
+
+    <option value="72981475">GANDULA</option>
+
+    <option value="187733">GARCOM GARCONETE</option>
+
+    <option value="578245">GEOLOGO</option>
+
+    <option value="72981490">GESSEIRO</option>
+
+    <option value="72981506">GUARDADOR DE VEÍCULOS (FLANELINHA)</option>
+
+    <option value="187735">GUIA DE TURISMO</option>
+
+    <option value="72981528">INTERPRETE</option>
+
+    <option value="187736">JARDINEIRO</option>
+
+    <option value="72981549">JOALHEIRO E OURIVES</option>
+
+    <option value="72981563">JORNALEIRO</option>
+
+    <option value="551392">JORNALISTA</option>
+
+    <option value="72981582">LADRILHEIRO</option>
+
+    <option value="187738">LAVADOR DE VEÍCULOS</option>
+
+    <option value="72981593">LAVADOR E PASSADOR DE ROUPAS</option>
+
+    <option value="72981607">LIMPADOR DE FACHADAS</option>
+
+    <option value="187741">MANICURE, PEDICURE</option>
+
+    <option value="72981611">MANOBRISTA</option>
+
+    <option value="187742">MAQUIADOR</option>
+
+    <option value="187745">MARCENEIRO</option>
+
+    <option value="72981622">MASSAGISTA</option>
+
+    <option value="187746">MECÂNICO</option>
+
+    <option value="72981634">MINHOCULTOR</option>
+
+    <option value="578459">MODELO.</option>
+
+    <option value="72981649">MONTADOR DE MÓVEIS</option>
+
+    <option value="187747">MOTOBOY</option>
+
+    <option value="187748">MOTORISTA</option>
+
+    <option value="532571">MUSICO</option>
+
+    <option value="530049">MÉDICO</option>
+
+    <option value="552102">NUTRICIONISTA</option>
+
+    <option value="532818">ODONTOLOGO</option>
+
+    <option value="72981662">OLEIRO (FAB TELHAS E TIJOLOS)</option>
+
+    <option value="594234">OPERADOR DE CÂMERA</option>
+
+    <option value="187749">PADEIRO</option>
+
+    <option value="187750">PECUARISTA</option>
+
+    <option value="187751">PEDREIRO</option>
+
+    <option value="559587">PENSÃO INFORMAL</option>
+
+    <option value="188540">PESCADOR.</option>
+
+    <option value="187753">PESQUISADOR</option>
+
+    <option value="85635245">PILOTO DE AERONAVE</option>
+
+    <option value="187754">PINTOR</option>
+
+    <option value="72981675">PIPOQUEIRO</option>
+
+    <option value="72981687">PODÓLOGO</option>
+
+    <option value="72981697">POETA</option>
+
+    <option value="187755">PORTEIRO, VIGIA</option>
+
+    <option value="531800">PROFESSOR</option>
+
+    <option value="72981710">PROFISSIONAL DO SEXO</option>
+
+    <option value="532425">PROGRAMADOR</option>
+
+    <option value="594222">PROMOTOR DE EVENTOS</option>
+
+    <option value="2604654">PROTÉTICO</option>
+
+    <option value="551534">PSICÓLOGO</option>
+
+    <option value="551586">PUBLICITÁRIO</option>
+
+    <option value="72981722">QUIROPRAXISTA</option>
+
+    <option value="72981731">RAIZEIRO</option>
+
+    <option value="187756">RELOJOEIRO</option>
+
+    <option value="187759">REPRESETANTE COMERCIAL</option>
+
+    <option value="187783">SACOLEIRA</option>
+
+    <option value="72981740">SALVA-VIDAS</option>
+
+    <option value="187785">SAPATEIRO</option>
+
+    <option value="187788">SERRALHEIRO</option>
+
+    <option value="187789">SERVENTE DE OBRAS</option>
+
+    <option value="187791">SERVIÇOS GERAIS</option>
+
+    <option value="582532">SOCIO DE EMPRESA</option>
+
+    <option value="72981890">SOLDADOR</option>
+
+    <option value="187792">TAXISTA</option>
+
+    <option value="72981899">TELHADOR</option>
+
+    <option value="784607">TOPÓGRAFO</option>
+
+    <option value="187721">TRABALHADOR DOMÉSTICO</option>
+
+    <option value="187695">TRABALHADOR RURAL</option>
+
+    <option value="72981910">TRADUTOR</option>
+
+    <option value="187793">TRATORISTA</option>
+
+    <option value="72981922">VASSOUREIRO</option>
+
+    <option value="187692">VENDEDOR (DOMICÍLIO, AMBULANTES, BANCAS)</option>
+
+    <option value="552310">VETERINÁRIO</option>
+
+    <option value="72981927">VIDRACEIRO</option>
+
+    <option value="187787">VIGILANTE E GUARDA DE SEGURANÇA</option>
+
+    <option value="187796">ZELADOR</option>
+
+    <option value="72981936">ZOOTECNISTA</option>
+
+</select>
+
+
+					</td>
+			</tr>
+			<tr>
+				<td width="200" class="tdtab12R">Data de Início</td>
+				<td width="225" class="tdtab12"> 
+						<input type="text" id="dataDeInicio" onchange="javascript:changed(true);" name="dataDeInicio" size="8" maxlength="10" onkeyup="validaAno1(this)" onkeypress="mascara_data(event,this);" value="">
+					</td>
+			</tr>
+			<tr>
+				<td width="200" class="tdtab12R">Renda Líquida Mensal</td>
+				<td width="225" class="tdtab12"> 
+						<input type="text" id="rendaLiquidaMensal" onchange="javascript:changed(true);" onfocus="ganhaFocusDinheiro(this)" onkeydown="Formata(this,12,event,2)" name="rendaLiquidaMensal" size="14" maxlength="12" value="">
+					</td>
+			</tr>
+<!-- 			<tr> -->
+<!-- 				<td class="tdtab12" width="180">Documentos de Comprova&ccedil;&atilde;o  -->
+
+<!-- 				</td> -->
+<!-- 				<td class="tdtab12" nowrap="nowrap" width="310"> -->
+<!-- 					<input name="agua" id="agua" type="checkbox" disabled="disabled" />&Aacute;GUA E -->
+<!-- 						ESGOTO, ENERGIA EL&Eacute;TRICA, TELEFONE <br />  -->
+<!-- 					<input name="fatura" id="fatura" type="checkbox" disabled="disabled" />FATURA -->
+<!-- 						CART&Atilde;O, EXTRATO C/C<br />  -->
+<!-- 					<input name="prev" id="prev" -->
+<!-- 						type="checkbox" disabled="disabled" />PREVID&Ecirc;NCIA, -->
+<!-- 						CONS&Oacute;RCIO, SEGURO, PLANO DE SA&Uacute;DE<br />  -->
+<!-- 					<input name="tv" id="tv" type="checkbox" disabled="disabled" /> TV A -->
+<!-- 						CABO, INTERNET, ASSINATURA JORNAIS/REVISTAS<br /></td> -->
+<!-- 			</tr> -->
+			<tr>
+				<!-- W3C: O atributo id="6"  foi retirado da tag <td> abaixo -->
+				<td class="tdfon10b" colspan="2" style="border: 0px; padding-left: 0; padding-top: 8px; text-align: right; background-color: #FFFFFF">
+					<div id="inserir" style="text-align: center;">
+						<a class="btn-azul" href="JavaScript:adicionaRendaInformal();" title="Inserir renda não comprovada / informal"> Salvar </a>
+					</div>
+
+					<div id="alterar" style="display: none;">
+						<a href="JavaScript:editaRendaInformal();" title="Salvar Alteração" class="btn-azul"> Salvar Alteração </a>
+						&nbsp; <a href="JavaScript:cancelar();" title="Cancelar a alteração" class="btn-azul"> Cancelar a
+							alteração </a>
+					</div> <input type="hidden" name="ocorrencia" id="ocorrencia" value=""></td>
+			</tr>
+		</tbody></table>
+
+		<table id="informal_topo" style="width: 597px;" cellspacing="0" cellpadding="0">
+			<tbody><tr>
+				<!-- W3C: O atributo id="0" foi retirado da tag <td> abaixo -->
+				<td class="header" colspan="6" align="center">Lista de Rendas Informais</td>
+			</tr>
+		</tbody></table>
+
+		
+			<table id="informal" class="tbBrancoRendas" style="margin-top: 0px;" cellspacing="0" cellpadding="0">
+				
+				
+									
+					<tbody><tr>
+						<td class="textoAzul">Atividade</td>
+						<td class="tdfon10tb" colspan="3">CORRETOR
+						</td>
+					</tr>
+					<tr>
+						<td class="textoAzul">Data Início</td>
+						<td class="tdfon10" colspan="3">01/01/2015</td>						
+					</tr>
+					<tr>
+						<td class="textoAzul">Renda Liquida</td>
+						<td class="tdfon10" colspan="3">1500,00</td>
+					</tr>					
+					<tr>								
+						<td class="tdfon10tb" colspan="4" align="right" style="BORDER-BOTTOM: 0px; BORDER-LEFT: 0px; BORDER-RIGHT: 0px">
+						     	
+								<a class="btn-laranja" href="JavaScript:alterarRendaInformal('0');" title="Excluir">
+	                             Alterar
+	                       		</a>
+	                       	
+								
+								<a class="btn-azul" href="JavaScript:removeRendaInformal('0');" title="Excluir">
+	                             Excluir
+	                       		</a>
+	                       	
+						</td>						
+					</tr>
+
+					
+					
+
+				
+			</tbody></table>
+		
+
+
+
+			</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+		  <div style="margin-top: 7px; width: 55px; height: 20px;">
+  		  </div>
+		  <div id="divAvancar">
+			  <a href="JavaScript:avancar()" style="margin-top: 5px; height: 55px; margin-right: 15px;" title="Avançar">
+                  <svg class="svg-inline--fa fa-chevron-right fa-w-10 fa-3x" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path></svg><!-- <i class="fas fa-chevron-right fa-3x"></i> -->
+			  </a>
+		  </div>
+		
+	</div>
+
+		</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+	</form>
+
+
+</body></html>

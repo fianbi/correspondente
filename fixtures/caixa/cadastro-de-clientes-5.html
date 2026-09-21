@@ -1,0 +1,760 @@
+
+<!-- saved from url=(0095)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente3 -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+<title>Caixa Aqui - Cadastro de Clientes</title>
+
+
+
+
+</head>
+<body bgcolor="#FFFFFF" onload="init()">
+
+<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Cadastro de Clientes
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="javascript:voltar();" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+<form name="main" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente4" method="post">
+
+    <input type="hidden" id="index" name="index" value="">
+    <input type="hidden" id="tipoFonte" name="tipoFonte" value="">
+    <input type="hidden" id="cpfCnpj" name="cpfCnpj" value="">
+    <input type="hidden" id="descOcupacao" name="descOcupacao" value="">
+
+	<input type="hidden" id="_cmbCnpj_cpf" name="_cmbCnpj_cpf">
+	<input type="hidden" id="_numeroCpfCnpj" name="_numeroCpfCnpj">
+	<input type="hidden" id="_fontePagadora" name="_fontePagadora">
+	<input type="hidden" id="_cmbOcupacao" name="_cmbOcupacao">
+	<input type="hidden" id="_cmbCaracteristicaRenda" name="_cmbCaracteristicaRenda">
+	<input type="hidden" id="descCaracteristica" name="descCaracteristica">
+	<input type="hidden" id="_dataAdmissao" name="_dataAdmissao">
+    <input type="hidden" id="_empregoAnteriorAnos" name="_empregoAnteriorAnos">
+    <input type="hidden" id="_empregoAnteriorMeses" name="_empregoAnteriorMeses">
+
+    <input type="hidden" id="_iImposRendaRetFonte" name="_iImposRendaRetFonte">
+    <input type="hidden" id="_dtRefCompr" name="_dtRefCompr">
+    <input type="hidden" id="_cmbComprovanteRenda" name="_cmbComprovanteRenda">
+
+    <input type="hidden" id="_opcao" name="_opcao">
+    <input type="hidden" id="_changed" name="_changed">
+
+   
+	<table class="tbForm" cellpadding="0" cellspacing="0">
+		<tbody><tr>
+		    <td class="header" colspan="4">Renda Formal</td>
+		</tr>
+		<tr>
+		    <td width="200">Característica da Renda</td>
+			<td width="300" colspan="3">     
+			    <select name="cmbCaracteristicaRenda" id="cmbCaracteristicaRenda" size="1" onchange="JavaScript:carregaCaracteristicaRenda(this)">
+
+    <option value=""></option>
+
+    <option value="2">SEM RENDA</option>
+
+    <option value="6">COMPROVADA</option>
+
+</select>
+
+                           	                               
+			</td>
+		</tr>
+		
+		
+			 <tr>
+			     <td width="130">Tipo de Fonte</td>
+			     <td width="370" colspan="3">
+			            <select name="cmbCnpj_cpf" id="cmbCnpj_cpf" size="1" onchange="javascript:changed(true); docTipoFontePagadora();">
+
+    <option value=""></option>
+
+    <option value="1">FÍSICA</option>
+
+    <option value="2">JURÍDICA</option>
+
+</select>
+
+
+			     </td>
+			 </tr>
+			 <tr id="trNumeroCnpj" hidden="" style="display: none;">
+			    <td width="370">CNPJ</td> 
+			 	<td width="370" colspan="3">
+					<input type="text" id="numeroCnpj" onchange="javascript:changed(true);" name="numeroCnpj" onkeydown="Mascara(this,Cnpj);" onkeypress="Mascara(this,Cnpj);" onkeyup="Mascara(this,Cnpj);" size="18" maxlength="18" value="">
+			         <a class="btn-azul" id="botao_consultar_fonte_pagadora_cnpj" href="JavaScript:consultaFontePagadora();">
+						Consultar
+			         </a>
+			    </td>
+			</tr>
+			<tr id="trNumeroCpf" style="display: table-row;">
+			   <td width="370">CPF</td> 
+			   <td width="370" colspan="3">
+					<input type="text" id="numeroCpf" onchange="javascript:changed(true);" name="numeroCpf" size="15" maxlength="14" onkeydown="Mascara(this,Cpf);" onkeypress="Mascara(this,Cpf);" style="vertical-align: middle" onkeyup="Mascara(this,Cpf);" value="">
+			         <a id="botao_consultar_fonte_pagadora_cpf" href="JavaScript:consultaFontePagadora();" title="Consultar" class="btn-azul" style="vertical-align: middle">
+			         	Consultar
+			         </a>
+			   </td>
+			</tr>
+			<tr>
+			     <td width="130">Nome da Fonte Pagadora</td>
+			     <td width="370" colspan="3">
+			         <input disabled="disabled" type="text" id="fontePagadora" onchange="javascript:changed(true);" name="fontePagadora" size="45" maxlength="32" value="">
+			     </td>
+			</tr>
+			<tr>
+			     <td width="130">Ocupação</td>
+			     <td width="370" colspan="3">
+			            <select name="cmbOcupacao" id="cmbOcupacao" size="1" onchange="javascript:changed(true);">
+
+    <option value=""></option>
+
+    <option value="125">ADMINISTRADOR</option>
+
+    <option value="131">ADVOGADO</option>
+
+    <option value="405">AGENCIADOR DE PROPAGANDA</option>
+
+    <option value="292">AGENTE ADMINISTRATIVO</option>
+
+    <option value="595">AGENTE DE SERVICOS FUNERARIOS E EMBALSAMADOR</option>
+
+    <option value="594">AGENTE DE VIAGEM E GUIA DE TURISMO</option>
+
+    <option value="103">AGRONOMO</option>
+
+    <option value="591">ALFAIATE</option>
+
+    <option value="126">ANALISTA DE SISTEMAS</option>
+
+    <option value="923">APOSENTADO EXCETO FUNCIONARIO PUBLICO</option>
+
+    <option value="102">ARQUITETO</option>
+
+    <option value="134">ASSISTENTE SOCIAL</option>
+
+    <option value="128">ASTRONOMO E METEOROLOGISTA</option>
+
+    <option value="168">ATLETA PROFISSIONAL E TECNICO EM DESPORTOS</option>
+
+    <option value="162">ATOR E DIRETOR DE ESPETACULOS PUBLICOS</option>
+
+    <option value="123">ATUARIO E MATEMATICO</option>
+
+    <option value="394">AUXILIAR DE ESCRITORIO E ASSEMELHADOS</option>
+
+    <option value="596">AUXILIAR DE LABORATORIO</option>
+
+    <option value="395">BANCARIO E ECONOMIARIO</option>
+
+    <option value="135">BIBLIOTECARIO ARQUIVISTA MUSEOLOGO E ARQUEOLOGO</option>
+
+    <option value="116">BIOLOGO E BIOMEDICO</option>
+
+    <option value="931">BOLSISTA ESTAGIARIO E ASSEMELHADOS</option>
+
+    <option value="544">BOMBEIRO E INSTALADOR DE GAS AGUA ESGOTO E ASSEMELHADOS</option>
+
+    <option value="511">CABELEIREIRO BARBEIRO MANICURE PEDICURE MAQUILADOR ESTETICISTA E MASSAGISTA</option>
+
+    <option value="163">CANTOR E COMPOSITOR</option>
+
+    <option value="907">CAPITALISTA RECEBENDO RENDIMENTO DE APLICACAO DE CAPITAL EM ATIVOS FINANCEIROS</option>
+
+    <option value="391">CHEFE INTERMEDIARIO</option>
+
+    <option value="183">COMANDANTE DE EMBARCACOES</option>
+
+    <option value="182">COMISSARIO DE BORDO</option>
+
+    <option value="136">COMUNICOLOGO</option>
+
+    <option value="124">CONTADOR</option>
+
+    <option value="533">CONTRAMESTRE DE EMBARCACOES</option>
+
+    <option value="165">COREOGRAFO E BAILARINO</option>
+
+    <option value="403">CORRETOR DE IMOVEIS, SEGUROS, TITULOS E VALORES</option>
+
+    <option value="193">DECORADOR</option>
+
+    <option value="214">DELEGADO DE POLICIA</option>
+
+    <option value="491">DEMONSTRADOR</option>
+
+    <option value="192">DESENHISTA COMERCIAL</option>
+
+    <option value="105">DESENHISTA INDUSTRIAL</option>
+
+    <option value="158">DESENHISTA TECNICO</option>
+
+    <option value="593">DESPACHANTE INCLUSIVE O ADUANEIRO</option>
+
+    <option value="212">DIPLOMATA</option>
+
+    <option value="301">DIRETOR DE EMPRESAS</option>
+
+    <option value="144">DIRETOR DE ESTABELECIMENTO DE ENSINO</option>
+
+    <option value="121">ECONOMISTA</option>
+
+    <option value="703">ELETRICISTA E ASSEMELHADOS</option>
+
+    <option value="542">ELETRICISTA MANUTENCAO VEICULO AUTO MAQ APARELHOS ELETRICO ELETRONICO E TELECOM</option>
+
+    <option value="598">EMPREGADO DOMESTICO</option>
+
+    <option value="161">EMPRESARIO E PRODUTOR DE ESPETACULOS PUBLICOS</option>
+
+    <option value="113">ENFERMEIRO E NUTRICIONISTA</option>
+
+    <option value="101">ENGENHEIRO</option>
+
+    <option value="191">ESCULTOR, PINTOR E ASSEMELHADOS</option>
+
+    <option value="949">ESPOLIO</option>
+
+    <option value="122">ESTATISTICO</option>
+
+    <option value="597">ESTIVADOR CARREGADOR EMBALADOR E ASSEMELHADOS</option>
+
+    <option value="117">FARMACEUTICO</option>
+
+    <option value="413">FEIRANTE</option>
+
+    <option value="213">FISCAL</option>
+
+    <option value="106">FISICO</option>
+
+    <option value="114">FISIOTERAPEUTA E TERAPEUTA OCUPACIONAL</option>
+
+    <option value="118">FONOAUDIOLOGO</option>
+
+    <option value="922">FUNCIONARIO PUBLICO CIVIL APOSENTADO</option>
+
+    <option value="605">GARIMPEIRO</option>
+
+    <option value="127">GEOGRAFO</option>
+
+    <option value="107">GEOLOGO</option>
+
+    <option value="303">GERENTE</option>
+
+    <option value="521">GOVERNANTA DE HOTEL CAMAREIRO PORTEIRO COZINHEIRO E GARCOM</option>
+
+    <option value="717">JOALHEIROS E OURIVES</option>
+
+    <option value="412">JORNALEIRO</option>
+
+    <option value="171">JORNALISTA</option>
+
+    <option value="543">LANTERNEIRO E PINTOR DE VEICULOS METALICOS</option>
+
+    <option value="404">LEILOEIRO, AVALIADOR E ASSEMELHADOS</option>
+
+    <option value="166">LOCUTOR E COMENTARISTA DE RADIO E TELEVISAO E RADIALISTA</option>
+
+    <option value="535">MAQUINISTA E FOGUISTA DE EMBARCACOES, LOCOMOTIVAS E ASSEMELH</option>
+
+    <option value="534">MARINHEIRO E ASSEMELHADOS</option>
+
+    <option value="541">MECANICO DE MANUTENCAO DE VEICULOS AUTOMOTORES E MAQUINAS</option>
+
+    <option value="702">MECANICO MANUTENCAO MONTADOR PREPARADOR OPERADOR DE MAQ E APARELHOS PROD INDUST</option>
+
+    <option value="111">MEDICO</option>
+
+    <option value="701">MESTRE E CONTRAMESTRE</option>
+
+    <option value="295">MILITAR EM GERAL</option>
+
+    <option value="921">MILITAR REFORMADO</option>
+
+    <option value="492">MODELO DE MODAS</option>
+
+    <option value="532">MOTORISTA DE VEICULOS DE TRANSPORTE DE CARGA</option>
+
+    <option value="531">MOTORISTA DE VEICULOS DE TRANSPORTE DE PASSAGEIROS</option>
+
+    <option value="164">MUSICO</option>
+
+    <option value="291">OCUPANTE DE CARGO DE DIRECAO E ASSESSORAMENTO INTERMEDIARIO</option>
+
+    <option value="215">OCUPANTE DE CARGO DE DIRECAO E ASSESSORAMENTO SUPERIOR</option>
+
+    <option value="115">ODONTOLOGO</option>
+
+    <option value="216">OFICIAIS DAS FORCAS ARMADAS E FORCAS AUXILIARES</option>
+
+    <option value="167">OPERADOR DE CAMERAS DE CINEMA E TELEVISAO</option>
+
+    <option value="145">OUTROS TRABALHADORES DE NIVEL SUPERIOR LIGADOS AO ENSINO</option>
+
+    <option value="924">PENSIONISTA</option>
+
+    <option value="181">PILOTO DE AERONAVES</option>
+
+    <option value="203">PODER EXECUTIVO PRESIDENTE MINISTRO GOVERNADOR SECRETARIO E MEMBROS DO MP</option>
+
+    <option value="205">PODER JUDICIARIO MINISTRO DE TRIBUNAL SUPERIOR DESEMBARGADOR E JUIZ</option>
+
+    <option value="201">PODER LEGISLATIVO SENADOR DEPUTADO FEDERAL DEPUTADO ESTADUAL E VEREADOR</option>
+
+    <option value="501">PORTEIRO DE EDIFICIO ASCENSORISTA GARAGISTA E FAXINEIRO</option>
+
+    <option value="211">PROCURADOR E ASSEMELHADOS</option>
+
+    <option value="143">PROFESSORES DE ENSINO DE PRIMEIRO E SEGUNDO GRAUS</option>
+
+    <option value="142">PROFESSORES DE ENSINO SUPERIOR</option>
+
+    <option value="456">PROFISSAO CRIADA PARA TESTE</option>
+
+    <option value="138">PROFISSIONAIS DE LETRAS E DE ARTES</option>
+
+    <option value="901">PROPRIETARIO DE ESTABELECIMENTO AGRICOLA DA PECUARIA FLORESTAL</option>
+
+    <option value="902">PROPRIETARIO DE ESTABELECIMENTO COMERCIAL</option>
+
+    <option value="904">PROPRIETARIO DE ESTABELECIMENTO DE PRESTACAO DE SERVICOS</option>
+
+    <option value="903">PROPRIETARIO DE ESTABELECIMENTO INDUSTRIAL</option>
+
+    <option value="906">PROPRIETARIO DE IMOVEL, RECEBENDO RENDIMENTO DE ALUGUEL</option>
+
+    <option value="905">PROPRIETARIO DE MICROEMPRESA</option>
+
+    <option value="592">PROTETICO</option>
+
+    <option value="132">PSICOLOGO</option>
+
+    <option value="172">PUBLICITARIO</option>
+
+    <option value="104">QUIMICO</option>
+
+    <option value="137">RELACOES PUBLICAS</option>
+
+    <option value="910">SACERDOTES OU MEMBROS DE ORDENS OU SEITAS RELIGIOSAS</option>
+
+    <option value="393">SECRETARIO ESTENOGRAFO DATILOGRAFO RECEPCIONISTA TELEFONISTA E ASSEMELHADOS</option>
+
+    <option value="396">SECURITARIO</option>
+
+    <option value="293">SERVENTUARIO DE JUSTICA</option>
+
+    <option value="297">SERVIDOR PUBLICO ESTADUAL</option>
+
+    <option value="296">SERVIDOR PUBLICO FEDERAL</option>
+
+    <option value="298">SERVIDOR PUBLICO MUNICIPAL</option>
+
+    <option value="133">SOCIOLOGO</option>
+
+    <option value="401">SUPERVISOR, INSPETOR E AGENTE DE COMPRAS E VENDAS</option>
+
+    <option value="294">TABELIAO</option>
+
+    <option value="152">TECNICO DE BIOLOGIA</option>
+
+    <option value="151">TECNICO DE CONTABILIDADE E DE ESTATISTICA</option>
+
+    <option value="156">TECNICO DE ELETRICIDADE, ELETRONICA E TELECOMUNICACOES</option>
+
+    <option value="157">TECNICO DE LABORATORIO E RAIO X</option>
+
+    <option value="155">TECNICO DE MECANICA</option>
+
+    <option value="154">TECNICO DE QUIMICA</option>
+
+    <option value="153">TECNICO EM AGRONOMIA E AGRIMENSURA</option>
+
+    <option value="108">TECNOLOGO</option>
+
+    <option value="601">TRABALHADOR AGRICOLA</option>
+
+    <option value="602">TRABALHADOR DA PECUARIA</option>
+
+    <option value="604">TRABALHADOR DA PESCA</option>
+
+    <option value="711">TRABALHADOR DE ARTES GRAFICAS</option>
+
+    <option value="709">TRABALHADOR DE CONSTRUCAO CIVIL</option>
+
+    <option value="713">TRABALHADOR DE FABRICACAO DE ARTEFATOS DE MADEIRA</option>
+
+    <option value="715">TRABALHADOR DE FABRICACAO DE CALCADOS E ARTEFATOS DE COURO</option>
+
+    <option value="714">TRABALHADOR DE FABRICACAO DE PAPEL E PAPELAO</option>
+
+    <option value="716">TRABALHADOR DE FABRICACAO DE PRODUTOS DE BORRACHA E PLASTICO</option>
+
+    <option value="712">TRABALHADOR DE FABRICACAO DE PRODUTOS TEXTEIS EXCETO ROUPAS</option>
+
+    <option value="705">TRABALHADOR DE FABRICACAO DE ROUPAS</option>
+
+    <option value="710">TRABALHADOR DE FABRICACAO E PREPARACAO DE ALIMENTOS E BEBIDA</option>
+
+    <option value="704">TRABALHADOR DE INSTALACOES DE PROCESSAMENTO QUIMICO</option>
+
+    <option value="706">TRABALHADOR DE TRATAMENTO DE FUMO E DE FABRICACAO DE CIGARROS E CHARUTOS</option>
+
+    <option value="708">TRABALHADOR DE USINAGEM DE METAIS</option>
+
+    <option value="392">TRABALHADOR DOS SERVICOS DE CONTABILIDADE DE CAIXA E TRABALHADORES ASSEMELHADOS</option>
+
+    <option value="603">TRABALHADOR FLORESTAL</option>
+
+    <option value="707">TRABALHADOR METALURGICO E SIDERURGICO</option>
+
+    <option value="517">TRABALHADORES DOS SERVICOS DE PROTECAO E SEGURANCA EXCETO MILITAR</option>
+
+    <option value="411">VENDEDOR DE COMERCIO VAREJISTA E ATACADISTA</option>
+
+    <option value="402">VENDEDOR PRACISTA REPRESENTANTE COMERCIAL CAIXEIRO VIAJANTE E ASSEMELHADOS</option>
+
+    <option value="112">VETERINARIO E ZOOTECNISTA</option>
+
+</select>
+
+
+			      </td>
+			</tr>
+			
+			<tr>
+			     <td width="130">Data de Admissão</td>
+			     <td width="135" colspan="3">
+			         <input type="text" name="dataAdmissao" id="dataAdmissao" onchange="javascript:changed(true);" size="8" maxlength="10" onkeyup="validaAno1(this);validaDataAdm();" onkeypress="mascara_data(event,this);return validateIfIsNumber(event);" value="">
+			     </td>
+			</tr>
+			<tr>
+			     <td width="130">Bruta</td>
+			     <td width="135">
+			         <input type="text" id="valorRendaBruta" name="valorRendaBruta" onchange="javascript:changed(true);" size="10" maxlength="12" value="" onkeydown="Formata(this,12,event,2)" onfocus="ganhaFocusDinheiro(this)" onkeypress="return validateIfIsNumber(event);">
+			     </td>
+			     <td width="130">Líquida</td>
+			     <td width="135">
+			         <input type="text" id="valorRendaLiquida" name="valorRendaLiquida" onchange="javascript:changed(true);" size="10" maxlength="12" value="" onkeydown="Formata(this,12,event,2)" onfocus="ganhaFocusDinheiro(this)" onkeypress="return validateIfIsNumber(event);">
+			     </td>
+			</tr>			
+		
+		
+	</tbody></table>
+	
+	
+		<div id="divCamposComprovanteRenda" style="display:none;">		      
+		                  
+			 <table class="tbForm" border="1" cellspacing="0" style="border:none; margin: -7px 0px;">
+			  	<tbody><tr style="border-top-style:none;">
+					<td style="border-top-style:none;">Documento de Comprovante de Renda</td>
+					<td colspan="3" align="right" style="border-top-style:none;">
+						<select name="cmbComprovanteRenda" id="cmbComprovanteRenda" size="1" onchange="JavaScript:changeComprovanteRenda(this);habilitaIRRF();">
+
+    <option value=""></option>
+
+    <option value="65220851">COMPROVANTE DE RECEBIMENTO NO EXTERIOR</option>
+
+    <option value="64522009">CONTRACHEQUE/HOLLERITH</option>
+
+    <option value="262903176">HISTORICO DE CONTRACHEQUE</option>
+
+    <option value="64522097">CONTRATO DE ALUGUEL</option>
+
+    <option value="64522120">CONTRATO DE ESTÁGIO</option>
+
+    <option value="64524568">DECLARAÇÃO DE IMPOSTO DE RENDA</option>
+
+    <option value="64522404">DECLARAÇÃO EMPREGADOR/PREVIDENCIÁRIA</option>
+
+    <option value="64524328">DECORE</option>
+
+    <option value="64522451">DECORE C/ DARF</option>
+
+    <option value="64522484">EXTRATO APLICAÇÃO FINANCEIRA / POUPANÇA</option>
+
+    <option value="64522568">EXTRATO DE BENEFÍCIO PREVIDENCIÁRIO</option>
+
+    <option value="64522614">EXTRATO DE CONTA SALÁRIO/APOSENTADORIA</option>
+
+    <option value="64522635">EXTRATO DE FGTS</option>
+
+    <option value="64522681">NOTAS FISCAIS DE VENDAS (ATIVIDADE RURAL)</option>
+
+    <option value="65129926">RECIBO PAGAMENTO AUTONOMO (RPA)</option>
+
+    <option value="65129980">RECOLHIMENTO ISS</option>
+
+    <option value="65130033">SENTENÇA JUDICIAL</option>
+
+</select>
+
+
+					</td>
+				</tr>
+			
+				<tr>
+					<td>Data do Comprovante de Renda</td>
+					<td colspan="3" align="left">
+						
+						
+						
+						
+							<input type="text" name="dtRefCompr" onkeyup="validaAno2(this)" onkeypress="mascara_data2(this.value,event);return validateIfIsNumber(event);" size="8" maxlength="7" id="dtRefCompr" onfocus="if(this.value == '0,00') {this.value=''}">
+						
+					</td>
+				</tr>
+			
+				<tr>
+					<td nowrap="nowrap">Imposto de Renda Retido</td>
+					<td colspan="3" align="left">
+						
+						
+							<input type="text" id="iImposRendaRetFonte" name="iImposRendaRetFonte" readonly="readonly" maxlength="12" value="" onkeydown="Formata(this,12,event,2)" size="30" onfocus="if(this.value == '0,00') {this.value=''}" onkeypress="return validateIfIsNumber(event);">
+						
+					</td>
+				</tr>				
+				<tr>
+					<td>Tempo no emprego anterior</td>
+					<td>
+					    <input type="text" id="empregoAnos" name="empregoAnos" size="3" maxlength="2" value="" onkeypress="return validateIfIsNumber(event);"> Anos					
+					    <input type="text" id="empregoMeses" name="empregoMeses" size="3" maxlength="2" value="" onkeypress="return validateIfIsNumber(event);" onkeyup="validaMeses(this)"> Meses
+					</td>
+				</tr>
+				
+				<tr>
+					<td>Ano de desligamento do emprego anterior</td>
+					<td>
+					    <input type="text" id="anoDesligamento" name="anoDesligamento" size="4" maxlength="4" value="" onkeypress="return validateIfIsNumber(event);" onkeyup="validaAno3(this)"> 
+					</td>
+				</tr>
+			</tbody></table>
+		</div>
+	
+	<table class="tbBotoes">
+        <tbody><tr>
+            <td colspan="4">
+                <input type="hidden" id="ocorrencia" name="ocorrencia" value="">
+            </td>
+        </tr>
+        
+        <tr>
+            <td>
+                <div id="inserir" style="text-align: center;">
+                     <a href="JavaScript:adicionaRendaFormal();" class="btn-azul" title="Salvar">
+                        Salvar
+                     </a>
+                 </div>
+	
+                  <div id="alterar" style="display:none;">  
+                                                 
+                         <a class="btn-azul" href="JavaScript:editaRendaFormal();" title="Salvar Alteração">
+                             Salvar Alteração
+                         </a>
+                        <a class="btn-laranja" href="JavaScript:cancelar();">
+                        	Cancelar a alteração</a>
+                  </div>
+	         </td>
+	    </tr>
+	  </tbody></table>
+	                        
+	  
+	  
+      <table id="comprovada_topo" border="0" cellspacing="0" cellpadding="0" style="width: 597px;">
+          <tbody><tr id="trComp00">
+              <td id="tdComp0" class="header" colspan="4">Lista de Rendas Formais </td>
+          </tr>
+      </tbody></table>
+	
+	  
+          <table id="comprovada" style="margin-top: 0;" class="tbBrancoRendas" cellspacing="0" cellpadding="0">
+                 
+                 
+                 
+                 
+               	 
+                 	
+                <tbody><tr id="tr0">
+                    <td id="td0_0" width="300" class="textoAzul">Jurídica</td>
+                    <td id="td1_1" width="370" class="tdfon10" colspan="3"></td>
+                </tr>
+                <tr id="tr2">
+                    <td id="td2_0" width="300" class="textoAzul">Ocupação</td>
+                    <td id="td2_1" width="370" class="tdfon10" colspan="3">PROPRIETARIO DE ESTABELECIMENTO DE PRESTACAO DE SE</td>
+                </tr>
+                <tr id="tr3">
+                    <td id="td3_0" width="300" class="textoAzul">Admissão</td>
+                    <td id="td3_1" width="370" class="tdfon10" colspan="3">01/01/2018</td>
+                </tr>
+                
+               
+               
+               <tr id="tr4">
+                   <td id="td4_0" width="300" class="textoAzul">Característica da Renda</td>
+                   <td id="td4_1" width="370" class="tdfon10" colspan="3">COMPROVADA</td>
+               </tr>
+               
+                 	
+               
+                <tr id="tr5">
+                    <td id="td5_0" width="300" class="textoAzul">Bruta</td>
+                    <td id="td5_1" width="135" class="tdfon10">5000,00</td>
+                    <td id="td5_2" width="100" class="textoAzul">Líquida</td>
+                    <td id="td5_3" width="135" class="tdfon10">4500,00</td>
+                </tr>
+               
+               
+               
+               <tr id="tr6">
+                   <td id="td6_0" width="300" class="textoAzul">Comprovante de Renda</td>
+                 		<td id="td6_1" width="370" class="tdfon10" colspan="3">CONTRACHEQUE/HOLLERITH</td>
+               </tr>
+               
+               <tr id="tr7">
+                   <td id="td7_0" width="300" class="textoAzul">Data da Comprovação de Renda</td>
+                   <td id="td7_1" width="370" class="tdfon10" colspan="3">6/2026</td>
+               </tr>
+               
+               <tr id="tr8b">
+                   <td id="td8b_0" width="300" class="textoAzul">Valor do Imposto de Renda</td>
+                   <td id="td8b_1" width="370" class="tdfon10" colspan="3">0,00</td>
+              	</tr>
+              	
+              	<tr id="tr8b">
+                   <td id="td8b_0" width="300" class="textoAzul">Tempo no emprego anterior</td>
+                   <td id="td8b_1" width="370" class="tdfon10" colspan="3"></td>
+              	</tr>
+              	
+              	<tr id="tr8b">
+                   <td id="td8b_0" width="300" class="textoAzul">Ano de desligamento do emprego anterior</td>
+                   <td id="td8b_1" width="370" class="tdfon10" colspan="3">0</td>
+              	</tr>
+
+               <tr id="tr9">
+                   <td id="td9_1" class="tdfon10" colspan="4" align="right" style="BORDER-BOTTOM: 0px; BORDER-LEFT: 0px; BORDER-RIGHT: 0px">   
+                      	
+                       <a class="btn-laranja" href="JavaScript:alterarRendaFormal('0');" title="Excluir">
+                             Alterar
+                       </a>
+                                         
+                      	
+                       <a class="btn-azul" href="JavaScript:removeRendaFormal('0');" title="Excluir">
+                             Excluir
+                       </a>
+                       
+                   </td>
+               </tr>
+               
+               <tr id="tr10">
+                   <td id="td10_0" class="tdfon10b" colspan="4" style="border: 0 none;">
+                       <input type="hidden" name="_ocorrencia" id="ocorrencia0" value="">
+                   </td>
+               </tr>                     
+
+				
+                     
+                     
+                 
+             </tbody></table>
+	 
+</form>
+		</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+		  <div style="margin-top: 7px; width: 55px; height: 20px;">
+  		  </div>
+		  <div id="divAvancar">
+			  <a href="JavaScript:avancar()" style="margin-top: 5px; height: 55px; margin-right: 15px;" title="Avançar">
+                  <svg class="svg-inline--fa fa-chevron-right fa-w-10 fa-3x" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-right" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"></path></svg><!-- <i class="fas fa-chevron-right fa-3x"></i> -->
+			  </a>
+		  </div>
+		
+	</div>
+
+	</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+
+
+</body></html>

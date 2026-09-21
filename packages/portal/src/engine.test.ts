@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 import { beforeEach, describe, expect, it } from "vitest";
-import { CAIXA_PROFILE, toCaixaValues } from "./caixa";
+import { CAIXA_PROFILE, toCaixaAgencyValues, toCaixaIncomeValues, toCaixaValues } from "./caixa";
 import {
   bestScreenForFieldNames,
   captureScreen,
@@ -318,5 +318,110 @@ describe("escolha do frame pela lista de campos", () => {
     expect(nomes).toContain("nomeCompleto");
     expect(nomes).toContain("cmbEstadoCivil");
     expect(nomes.every((nome) => !nome.includes("["))).toBe(true);
+  });
+});
+
+/**
+ * Telas de renda e agência. Foram adicionadas depois de o uso real revelar
+ * que a extensão dizia "tela não mapeada" justamente na tela de renda — que
+ * de fato não estava no perfil.
+ */
+describe("tela de renda formal", () => {
+  const TELA = CAIXA_PROFILE.screens.find((tela) => tela.key === "renda_formal")!;
+
+  const RENDA = {
+    kind: "formal",
+    sourceName: "Empresa Exemplo Ltda",
+    sourceDocument: "11222333000181",
+    occupation: "ADVOGADO",
+    startDate: "2019-03-11",
+    grossCents: 750000,
+    netCents: 610000,
+    proofType: "contracheque",
+    proofMonth: 8,
+    proofYear: 2026,
+    previousJobYears: 2,
+    previousJobMonths: 4,
+  };
+
+  it("é reconhecida pela própria tela, sem depender da URL", () => {
+    const doc = carregarFixture("cadastro-de-clientes-5.html");
+    const tela = matchScreen(CAIXA_PROFILE.screens, "https://caixaaqui.caixa.gov.br/x", doc);
+    expect(tela?.key).toBe("renda_formal");
+  });
+
+  it("preenche fonte pagadora, valores e comprovante", () => {
+    const doc = carregarFixture("cadastro-de-clientes-5.html");
+    fillScreen(doc, TELA, toCaixaIncomeValues(RENDA));
+
+    const valor = (name: string) =>
+      doc.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${name}"]`)?.value;
+
+    expect(valor("fontePagadora")).toBe("EMPRESA EXEMPLO LTDA");
+    expect(valor("valorRendaBruta")).toBe("7500,00");
+    expect(valor("valorRendaLiquida")).toBe("6100,00");
+    expect(valor("dataAdmissao")).toBe("11/03/2019");
+    // Competência vai num campo só, como MM/AAAA.
+    expect(valor("dtRefCompr")).toBe("08/2026");
+    // "Contracheque" é o código 64522009 no SICAQ.
+    expect(valor("cmbComprovanteRenda")).toBe("64522009");
+  });
+
+  it("deduz se a fonte é física ou jurídica pelo documento", () => {
+    const doc = carregarFixture("cadastro-de-clientes-5.html");
+    fillScreen(doc, TELA, toCaixaIncomeValues(RENDA));
+
+    // 14 dígitos = CNPJ = JURÍDICA (código 2), e aí o número vai no campo de
+    // CNPJ, não no de CPF.
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbCnpj_cpf"]')?.value).toBe("2");
+    expect(doc.querySelector<HTMLInputElement>('[name="numeroCnpj"]')?.value).toBe(
+      "11222333000181",
+    );
+    expect(doc.querySelector<HTMLInputElement>('[name="numeroCpf"]')?.value).toBe("");
+  });
+
+  it("fonte pessoa física cai no campo de CPF", () => {
+    const doc = carregarFixture("cadastro-de-clientes-5.html");
+    fillScreen(doc, TELA, toCaixaIncomeValues({ ...RENDA, sourceDocument: "11144477735" }));
+
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbCnpj_cpf"]')?.value).toBe("1");
+    expect(doc.querySelector<HTMLInputElement>('[name="numeroCpf"]')?.value).toBe("11144477735");
+    expect(doc.querySelector<HTMLInputElement>('[name="numeroCnpj"]')?.value).toBe("");
+  });
+
+  it("a tela é marcada como dependente de uma renda escolhida", () => {
+    // Sem isso, o painel preencheria a primeira fonte da lista sem avisar.
+    expect(TELA.needsIncome).toBe(true);
+  });
+});
+
+describe("tela de renda informal", () => {
+  it("é reconhecida e preenche atividade e valor", () => {
+    const doc = carregarFixture("cadastro-de-clientes-6.html");
+    const tela = matchScreen(CAIXA_PROFILE.screens, "https://caixaaqui.caixa.gov.br/x", doc);
+    expect(tela?.key).toBe("renda_informal");
+
+    fillScreen(doc, tela!, toCaixaIncomeValues({
+      kind: "informal",
+      sourceName: "Acougueiro",
+      startDate: "2021-05-02",
+      netCents: 320000,
+    }));
+
+    expect(doc.querySelector<HTMLInputElement>('[name="rendaLiquidaMensal"]')?.value).toBe("3200,00");
+    expect(doc.querySelector<HTMLInputElement>('[name="dataDeInicio"]')?.value).toBe("02/05/2021");
+  });
+});
+
+describe("tela de agência de relacionamento", () => {
+  it("é reconhecida e preenche a agência do processo", () => {
+    const doc = carregarFixture("cadastro-de-clientes-9.html");
+    const tela = matchScreen(CAIXA_PROFILE.screens, "https://caixaaqui.caixa.gov.br/x", doc);
+    expect(tela?.key).toBe("agencia_relacionamento");
+
+    fillScreen(doc, tela!, toCaixaAgencyValues({ number: "2352", city: null, uf: "SP" }));
+
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbUFAgenciaRelacionamento"]')?.value).toBe("SP");
+    expect(doc.querySelector<HTMLSelectElement>('[name="cmbAgenciaRelacionamento"]')?.value).toBe("2352");
   });
 });

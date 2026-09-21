@@ -13,7 +13,10 @@ import type { PanelRequest, PanelResponse } from "./messages";
 export interface QuadroSondado {
   frameId: number;
   url: string;
+  /** Campos que o operador vê na tela — os que interessam para mapear. */
   fieldNames: string[];
+  /** Campos de controle do portal, contados mas não listados. */
+  hiddenCount: number;
 }
 
 export interface Reconhecimento {
@@ -36,13 +39,26 @@ async function sondarQuadros(tabId: number): Promise<QuadroSondado[]> {
   const resultados = await chrome.scripting.executeScript({
     target: { tabId, allFrames: true },
     func: () => {
-      const campos = Array.from(
+      const elementos = Array.from(
         document.querySelectorAll("input[name], select[name], textarea[name]"),
-      )
-        .map((elemento) => elemento.getAttribute("name"))
-        .filter((nome): nome is string => Boolean(nome));
+      );
 
-      return { url: location.href, fieldNames: Array.from(new Set(campos)) };
+      const visiveis: string[] = [];
+      let ocultos = 0;
+
+      for (const elemento of elementos) {
+        const nome = elemento.getAttribute("name");
+        if (!nome) continue;
+
+        const tipo = (elemento.getAttribute("type") ?? "").toLowerCase();
+        // Campo oculto é controle interno do portal (_changed, _opcao…). Ele
+        // conta para o total, mas listá-lo primeiro esconderia justamente os
+        // campos que servem para mapear a tela.
+        if (tipo === "hidden") ocultos += 1;
+        else if (!visiveis.includes(nome)) visiveis.push(nome);
+      }
+
+      return { url: location.href, fieldNames: visiveis, hiddenCount: ocultos };
     },
   });
 
@@ -52,6 +68,7 @@ async function sondarQuadros(tabId: number): Promise<QuadroSondado[]> {
       frameId: resultado.frameId,
       url: resultado.result!.url,
       fieldNames: resultado.result!.fieldNames,
+      hiddenCount: resultado.result!.hiddenCount,
     }));
 }
 

@@ -1,0 +1,1541 @@
+
+<!-- saved from url=(0123)https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente12b_renda_dependentes_avancar -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" class="fontawesome-i2svg-active fontawesome-i2svg-complete"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="msapplication-config" content="/caixaaquistatic/images/browserconfig.xml">
+
+
+
+
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<meta http-equiv="refresh" content="30000;URL=/caixaaqui/CaixaAquiController/menu_negocios">
+
+
+<title>Caixa Aqui - Cadastro de Clientes</title>
+
+
+
+
+</head>
+<body bgcolor="#FFFFFF" onload="javascript:init();">
+
+	<!-- W3C: O atributo name="divaguarde" foi retirado da tag <div> abaixo -->
+<div id="div-aguarde" class="loader-hidde">
+	<div id="loader-content" style="margin: 150px auto;  width: 60px;">
+		<img alt="Loader" src="#">
+		<label class="">Aguarde</label>
+	</div>
+</div>
+
+
+
+	<center>
+<div style="display: block;">
+    <div id="header">
+	    <div class="logo-pequeno" style="width: 80px; float: left;">
+		    <img src="#" alt="Caixa Aqui" border="0" width="80" height="47" style="margin-top: 15px;">
+	    </div>
+		<div class="bordaDoTitulo" style="width: 550px; height: 50px; text-align: center;  margin-right: 120px; margin-top: 15px;">
+
+		  	<div class="titulo-pagina" style="width: 522px; text-align: center;	float: left; text-align: center;">
+			  Cadastro de Clientes
+		    </div>
+			<b class="c tl"> </b> <b class="c tr"> </b> <b class="c bl"> </b> <b class="c br"> </b>
+
+		</div>
+  	</div>
+</div>
+<div id="div-container">
+
+
+	  <div class="nav-btn" style="margin-right: 8px;">
+  	<div>
+  		<a id="aMenuLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/menu_negocios" class="btn-azul" style="margin-top: 7px; width: 55px;">Menu</a>
+  	</div>
+  	<div>
+	  	<a href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente11b" style="margin-top: 5px; width: 55px;" title="Voltar">
+            <svg class="svg-inline--fa fa-chevron-left fa-w-10 fa-3x" style="font-size: 36px;" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="chevron-left" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" data-fa-i2svg=""><path fill="currentColor" d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"></path></svg><!-- <i class="fas fa-chevron-left fa-3x" style="font-size: 36px;"></i> -->
+    	</a>
+  	</div>
+	<div>
+	    <a id="aSairLink" href="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/logout" class="btn-laranja" style="margin-top: 5px; width: 55px;">Sair</a>
+	</div>
+  </div>
+  <div id="div-content" style="display: block;  float: left;  width: 600px;">
+
+				
+	<form name="main" action="https://caixaaqui.caixa.gov.br/caixaaqui/CaixaAquiController/cadastro_cliente/cadastro_cliente10" method="post">
+
+		<input type="hidden" id="nomeLocalidadeAgRelacionamento" name="nomeLocalidadeAgRelacionamento">
+		<input type="hidden" id="nomeAgenciaRelacionamento" name="nomeAgenciaRelacionamento">
+	               
+		<table border="0" cellpadding="0" cellspacing="0" class="tbForm">
+			<tbody><tr>
+				<td align="center" class="header" colspan="2">Agência de Relacionamento (Definida pelo Cliente)</td>
+			</tr>
+ 
+				
+				
+				
+				
+			<tr>
+				<td width="200" class="tdtab12R">UF</td>
+				<td width="225" class="tdtab12">
+					<select name="cmbUFAgenciaRelacionamento" id="cmbUFAgenciaRelacionamento" size="1" onchange="JavaScript:carregaListaMunicipios()">
+
+    <option value=""></option>
+
+    <option value="AC">AC</option>
+
+    <option value="AL">AL</option>
+
+    <option value="AM">AM</option>
+
+    <option value="AP">AP</option>
+
+    <option value="BA">BA</option>
+
+    <option value="CE">CE</option>
+
+    <option value="DF">DF</option>
+
+    <option value="ES">ES</option>
+
+    <option value="GO">GO</option>
+
+    <option value="MA">MA</option>
+
+    <option value="MG">MG</option>
+
+    <option value="MS">MS</option>
+
+    <option value="MT">MT</option>
+
+    <option value="PA">PA</option>
+
+    <option value="PB">PB</option>
+
+    <option value="PE">PE</option>
+
+    <option value="PI">PI</option>
+
+    <option value="PR">PR</option>
+
+    <option value="RJ">RJ</option>
+
+    <option value="RN">RN</option>
+
+    <option value="RO">RO</option>
+
+    <option value="RR">RR</option>
+
+    <option value="RS">RS</option>
+
+    <option value="SC">SC</option>
+
+    <option value="SE">SE</option>
+
+    <option value="SP">SP</option>
+
+    <option value="TO">TO</option>
+
+</select>
+
+
+				</td>
+			</tr>
+			
+			<tr>
+				<td width="200" class="tdtab12R">Município</td>
+				<td width="225" class="tdtab12">
+					<select name="cmbMunicipioAgenciaRelacionamento" id="cmbMunicipioAgenciaRelacionamento" size="1" onchange="JavaScript:carregaListaAgencias();">
+
+    <option value=""></option>
+
+    <option value="000009030">ADAMANTINA</option>
+
+    <option value="000009031">ADOLFO</option>
+
+    <option value="000009034">AGUAI</option>
+
+    <option value="000009035">AGUAS DA PRATA</option>
+
+    <option value="000009036">AGUAS DE LINDOIA</option>
+
+    <option value="000009037">AGUAS DE SANTA BARBARA</option>
+
+    <option value="000009038">AGUAS DE SAO PEDRO</option>
+
+    <option value="000009039">AGUDOS</option>
+
+    <option value="000009042">ALAMBARI</option>
+
+    <option value="000009047">ALFREDO MARCONDES</option>
+
+    <option value="000009048">ALTAIR</option>
+
+    <option value="000009049">ALTINOPOLIS</option>
+
+    <option value="000009050">ALTO ALEGRE</option>
+
+    <option value="000009052">ALUMINIO</option>
+
+    <option value="000009053">ALVARES FLORENCE</option>
+
+    <option value="000009054">ALVARES MACHADO</option>
+
+    <option value="000009055">ALVARO DE CARVALHO</option>
+
+    <option value="000009056">ALVINLANDIA</option>
+
+    <option value="000009060">AMERICANA</option>
+
+    <option value="000009061">AMERICO BRASILIENSE</option>
+
+    <option value="000009062">AMERICO DE CAMPOS</option>
+
+    <option value="000009063">AMPARO</option>
+
+    <option value="000009065">ANALANDIA</option>
+
+    <option value="000009068">ANDRADINA</option>
+
+    <option value="000009069">ANGATUBA</option>
+
+    <option value="000009070">ANHEMBI</option>
+
+    <option value="000009071">ANHUMAS</option>
+
+    <option value="000009073">APARECIDA</option>
+
+    <option value="000009074">APARECIDA D'OESTE</option>
+
+    <option value="000009078">APIAI</option>
+
+    <option value="000009083">ARACARIGUAMA</option>
+
+    <option value="000009084">ARACATUBA</option>
+
+    <option value="000009085">ARACOIABA DA SERRA</option>
+
+    <option value="000009086">ARAMINA</option>
+
+    <option value="000009087">ARANDU</option>
+
+    <option value="000009088">ARAPEI</option>
+
+    <option value="000009089">ARARAQUARA</option>
+
+    <option value="000009090">ARARAS</option>
+
+    <option value="000009093">ARCO-IRIS</option>
+
+    <option value="000009094">AREALVA</option>
+
+    <option value="000009095">AREIAS</option>
+
+    <option value="000009096">AREIOPOLIS</option>
+
+    <option value="000009097">ARIRANHA</option>
+
+    <option value="000009100">ARTUR NOGUEIRA</option>
+
+    <option value="000009101">ARUJA</option>
+
+    <option value="000009102">ASPASIA</option>
+
+    <option value="000009103">ASSIS</option>
+
+    <option value="000009105">ATIBAIA</option>
+
+    <option value="000009107">AURIFLAMA</option>
+
+    <option value="000009108">AVAI</option>
+
+    <option value="000009109">AVANHANDAVA</option>
+
+    <option value="000009110">AVARE</option>
+
+    <option value="000009114">BADY BASSITT</option>
+
+    <option value="000009117">BALBINOS</option>
+
+    <option value="000009118">BALSAMO</option>
+
+    <option value="000009119">BANANAL</option>
+
+    <option value="000009122">BARAO DE ANTONINA</option>
+
+    <option value="000009124">BARBOSA</option>
+
+    <option value="000009125">BARIRI</option>
+
+    <option value="000009126">BARRA BONITA</option>
+
+    <option value="000009127">BARRA DO CHAPEU</option>
+
+    <option value="000009128">BARRA DO TURVO</option>
+
+    <option value="000009131">BARRETOS</option>
+
+    <option value="000009132">BARRINHA</option>
+
+    <option value="000009133">BARUERI</option>
+
+    <option value="000009134">BASTOS</option>
+
+    <option value="000009135">BATATAIS</option>
+
+    <option value="000009138">BAURU</option>
+
+    <option value="000009139">BEBEDOURO</option>
+
+    <option value="000009142">BENTO DE ABREU</option>
+
+    <option value="000009143">BERNARDINO DE CAMPOS</option>
+
+    <option value="000009144">BERTIOGA</option>
+
+    <option value="000009145">BILAC</option>
+
+    <option value="000009146">BIRIGUI</option>
+
+    <option value="000009147">BIRITIBA-MIRIM</option>
+
+    <option value="000009149">BOA ESPERANCA DO SUL</option>
+
+    <option value="000009152">BOCAINA</option>
+
+    <option value="000009153">BOFETE</option>
+
+    <option value="000009154">BOITUVA</option>
+
+    <option value="000009156">BOM JESUS DOS PERDOES</option>
+
+    <option value="000009158">BOM SUCESSO DE ITARARE</option>
+
+    <option value="000009160">BORA</option>
+
+    <option value="000009161">BORACEIA</option>
+
+    <option value="000009162">BORBOREMA</option>
+
+    <option value="000009163">BOREBI</option>
+
+    <option value="000009166">BOTUCATU</option>
+
+    <option value="000009169">BRAGANCA PAULISTA</option>
+
+    <option value="000009172">BRAUNA</option>
+
+    <option value="000009173">BREJO ALEGRE</option>
+
+    <option value="000009175">BRODOWSKI</option>
+
+    <option value="000009177">BROTAS</option>
+
+    <option value="000009179">BURI</option>
+
+    <option value="000009180">BURITAMA</option>
+
+    <option value="000009181">BURITIZAL</option>
+
+    <option value="000009182">CABRALIA PAULISTA</option>
+
+    <option value="000009183">CABREUVA</option>
+
+    <option value="000009184">CACAPAVA</option>
+
+    <option value="000009186">CACHOEIRA PAULISTA</option>
+
+    <option value="000009187">CACONDE</option>
+
+    <option value="000009188">CAFELANDIA</option>
+
+    <option value="000009190">CAIABU</option>
+
+    <option value="000009192">CAIEIRAS</option>
+
+    <option value="000009193">CAIUA</option>
+
+    <option value="000009194">CAJAMAR</option>
+
+    <option value="000009195">CAJATI</option>
+
+    <option value="000009196">CAJOBI</option>
+
+    <option value="000009197">CAJURU</option>
+
+    <option value="000009203">CAMPINA DO MONTE ALEGRE</option>
+
+    <option value="000009205">CAMPINAS</option>
+
+    <option value="000009206">CAMPO LIMPO PAULISTA</option>
+
+    <option value="000009208">CAMPOS DO JORDAO</option>
+
+    <option value="000009209">CAMPOS NOVOS PAULISTA</option>
+
+    <option value="000009210">CANANEIA</option>
+
+    <option value="000009211">CANAS</option>
+
+    <option value="000009213">CANDIDO MOTA</option>
+
+    <option value="000009214">CANDIDO RODRIGUES</option>
+
+    <option value="000009216">CANITAR</option>
+
+    <option value="000009217">CAPAO BONITO</option>
+
+    <option value="000009218">CAPELA DO ALTO</option>
+
+    <option value="000009219">CAPIVARI</option>
+
+    <option value="000009223">CARAGUATATUBA</option>
+
+    <option value="000009224">CARAPICUIBA</option>
+
+    <option value="000009226">CARDOSO</option>
+
+    <option value="000009229">CASA BRANCA</option>
+
+    <option value="000009230">CASSIA DOS COQUEIROS</option>
+
+    <option value="000009231">CASTILHO</option>
+
+    <option value="000009232">CATANDUVA</option>
+
+    <option value="000009233">CATIGUA</option>
+
+    <option value="000009236">CEDRAL</option>
+
+    <option value="000009237">CERQUEIRA CESAR</option>
+
+    <option value="000009238">CERQUILHO</option>
+
+    <option value="000009239">CESARIO LANGE</option>
+
+    <option value="000009241">CHARQUEADA</option>
+
+    <option value="000009242">CHAVANTES</option>
+
+    <option value="000009245">CLEMENTINA</option>
+
+    <option value="000009247">COLINA</option>
+
+    <option value="000009248">COLOMBIA</option>
+
+    <option value="000009250">CONCHAL</option>
+
+    <option value="000009251">CONCHAS</option>
+
+    <option value="000009252">CORDEIROPOLIS</option>
+
+    <option value="000009253">COROADOS</option>
+
+    <option value="000009255">CORONEL MACEDO</option>
+
+    <option value="000009258">CORUMBATAI</option>
+
+    <option value="000009259">COSMOPOLIS</option>
+
+    <option value="000009260">COSMORAMA</option>
+
+    <option value="000009262">COTIA</option>
+
+    <option value="000009263">CRAVINHOS</option>
+
+    <option value="000009264">CRISTAIS PAULISTA</option>
+
+    <option value="000009266">CRUZALIA</option>
+
+    <option value="000009267">CRUZEIRO</option>
+
+    <option value="000009268">CUBATAO</option>
+
+    <option value="000009270">CUNHA</option>
+
+    <option value="000009273">DESCALVADO</option>
+
+    <option value="000009274">DIADEMA</option>
+
+    <option value="000009275">DIRCE REIS</option>
+
+    <option value="000009277">DIVINOLANDIA</option>
+
+    <option value="000009278">DOBRADA</option>
+
+    <option value="000009279">DOIS CORREGOS</option>
+
+    <option value="000009280">DOLCINOPOLIS</option>
+
+    <option value="000009282">DOURADO</option>
+
+    <option value="000009283">DRACENA</option>
+
+    <option value="000009284">DUARTINA</option>
+
+    <option value="000009285">DUMONT</option>
+
+    <option value="000009287">ECHAPORA</option>
+
+    <option value="000009289">ELDORADO</option>
+
+    <option value="000009291">ELIAS FAUSTO</option>
+
+    <option value="000009292">ELISIARIO</option>
+
+    <option value="000009294">EMBAUBA</option>
+
+    <option value="000009295">EMBU DAS ARTES</option>
+
+    <option value="000009296">EMBU-GUACU</option>
+
+    <option value="000009297">EMILIANOPOLIS</option>
+
+    <option value="000009300">ENGENHEIRO COELHO</option>
+
+    <option value="000009306">ESPIRITO SANTO DO PINHAL</option>
+
+    <option value="000009307">ESPIRITO SANTO DO TURVO</option>
+
+    <option value="000009308">ESTIVA GERBI</option>
+
+    <option value="000009309">ESTRELA D'OESTE</option>
+
+    <option value="000009310">ESTRELA DO NORTE</option>
+
+    <option value="000009311">EUCLIDES DA CUNHA PAULISTA</option>
+
+    <option value="000009313">FARTURA</option>
+
+    <option value="000009317">FERNANDO PRESTES</option>
+
+    <option value="000009318">FERNANDOPOLIS</option>
+
+    <option value="000009319">FERNAO</option>
+
+    <option value="000009320">FERRAZ DE VASCONCELOS</option>
+
+    <option value="000009321">FLORA RICA</option>
+
+    <option value="000009322">FLOREAL</option>
+
+    <option value="000009324">FLORIDA PAULISTA</option>
+
+    <option value="000019892">FLORINEA</option>
+
+    <option value="000009326">FLORINEA</option>
+
+    <option value="000009327">FRANCA</option>
+
+    <option value="000009328">FRANCISCO MORATO</option>
+
+    <option value="000009329">FRANCO DA ROCHA</option>
+
+    <option value="000009331">GABRIEL MONTEIRO</option>
+
+    <option value="000009332">GALIA</option>
+
+    <option value="000009333">GARCA</option>
+
+    <option value="000009335">GASTAO VIDIGAL</option>
+
+    <option value="000009336">GAVIAO PEIXOTO</option>
+
+    <option value="000009337">GENERAL SALGADO</option>
+
+    <option value="000009338">GETULINA</option>
+
+    <option value="000009339">GLICERIO</option>
+
+    <option value="000009343">GUAICARA</option>
+
+    <option value="000009344">GUAIMBE</option>
+
+    <option value="000009345">GUAIRA</option>
+
+    <option value="000009347">GUAPIACU</option>
+
+    <option value="000009348">GUAPIARA</option>
+
+    <option value="000009350">GUARA</option>
+
+    <option value="000009351">GUARACAI</option>
+
+    <option value="000009352">GUARACI</option>
+
+    <option value="000009354">GUARANI D'OESTE</option>
+
+    <option value="000009355">GUARANTA</option>
+
+    <option value="000009358">GUARARAPES</option>
+
+    <option value="000009359">GUARAREMA</option>
+
+    <option value="000009360">GUARATINGUETA</option>
+
+    <option value="000009361">GUAREI</option>
+
+    <option value="000009362">GUARIBA</option>
+
+    <option value="000009365">GUARUJA</option>
+
+    <option value="000009366">GUARULHOS</option>
+
+    <option value="000009367">GUATAPARA</option>
+
+    <option value="000009368">GUZOLANDIA</option>
+
+    <option value="000009369">HERCULANDIA</option>
+
+    <option value="000009370">HOLAMBRA</option>
+
+    <option value="000009372">HORTOLANDIA</option>
+
+    <option value="000009373">IACANGA</option>
+
+    <option value="000009374">IACRI</option>
+
+    <option value="000009375">IARAS</option>
+
+    <option value="000009376">IBATE</option>
+
+    <option value="000009378">IBIRA</option>
+
+    <option value="000009379">IBIRAREMA</option>
+
+    <option value="000009380">IBITINGA</option>
+
+    <option value="000009384">IBIUNA</option>
+
+    <option value="000009385">ICEM</option>
+
+    <option value="000009387">IEPE</option>
+
+    <option value="000009389">IGARACU DO TIETE</option>
+
+    <option value="000009391">IGARAPAVA</option>
+
+    <option value="000009392">IGARATA</option>
+
+    <option value="000009393">IGUAPE</option>
+
+    <option value="000009394">ILHA COMPRIDA</option>
+
+    <option value="000009396">ILHA SOLTEIRA</option>
+
+    <option value="000009397">ILHABELA</option>
+
+    <option value="000009399">INDAIATUBA</option>
+
+    <option value="000009400">INDIANA</option>
+
+    <option value="000009401">INDIAPORA</option>
+
+    <option value="000009403">INUBIA PAULISTA</option>
+
+    <option value="000009404">IPAUSSU</option>
+
+    <option value="000009406">IPERO</option>
+
+    <option value="000009407">IPEUNA</option>
+
+    <option value="000009408">IPIGUA</option>
+
+    <option value="000009409">IPORANGA</option>
+
+    <option value="000009410">IPUA</option>
+
+    <option value="000009411">IRACEMAPOLIS</option>
+
+    <option value="000009413">IRAPUA</option>
+
+    <option value="000009414">IRAPURU</option>
+
+    <option value="000009415">ITABERA</option>
+
+    <option value="000009417">ITAI</option>
+
+    <option value="000009419">ITAJOBI</option>
+
+    <option value="000009420">ITAJU</option>
+
+    <option value="000009421">ITANHAEM</option>
+
+    <option value="000009422">ITAOCA</option>
+
+    <option value="000009423">ITAPECERICA DA SERRA</option>
+
+    <option value="000009424">ITAPETININGA</option>
+
+    <option value="000009426">ITAPEVA</option>
+
+    <option value="000009427">ITAPEVI</option>
+
+    <option value="000009428">ITAPIRA</option>
+
+    <option value="000009429">ITAPIRAPUA PAULISTA</option>
+
+    <option value="000009430">ITAPOLIS</option>
+
+    <option value="000009431">ITAPORANGA</option>
+
+    <option value="000009432">ITAPUI</option>
+
+    <option value="000009433">ITAPURA</option>
+
+    <option value="000009434">ITAQUAQUECETUBA</option>
+
+    <option value="000009436">ITARARE</option>
+
+    <option value="000009437">ITARIRI</option>
+
+    <option value="000009438">ITATIBA</option>
+
+    <option value="000009439">ITATINGA</option>
+
+    <option value="000009440">ITIRAPINA</option>
+
+    <option value="000009441">ITIRAPUA</option>
+
+    <option value="000009442">ITOBI</option>
+
+    <option value="000009444">ITU</option>
+
+    <option value="000009445">ITUPEVA</option>
+
+    <option value="000009446">ITUVERAVA</option>
+
+    <option value="000009448">JABORANDI</option>
+
+    <option value="000009449">JABOTICABAL</option>
+
+    <option value="000009451">JACAREI</option>
+
+    <option value="000009452">JACI</option>
+
+    <option value="000009455">JACUPIRANGA</option>
+
+    <option value="000009457">JAGUARIUNA</option>
+
+    <option value="000009458">JALES</option>
+
+    <option value="000009460">JAMBEIRO</option>
+
+    <option value="000009461">JANDIRA</option>
+
+    <option value="000009466">JARDINOPOLIS</option>
+
+    <option value="000009467">JARINU</option>
+
+    <option value="000009469">JAU</option>
+
+    <option value="000009470">JERIQUARA</option>
+
+    <option value="000009471">JOANOPOLIS</option>
+
+    <option value="000009472">JOAO RAMALHO</option>
+
+    <option value="000009475">JOSE BONIFACIO</option>
+
+    <option value="000009477">JULIO MESQUITA</option>
+
+    <option value="000009478">JUMIRIM</option>
+
+    <option value="000009479">JUNDIAI</option>
+
+    <option value="000009482">JUNQUEIROPOLIS</option>
+
+    <option value="000009483">JUQUIA</option>
+
+    <option value="000009485">JUQUITIBA</option>
+
+    <option value="000009493">LAGOINHA</option>
+
+    <option value="000009494">LARANJAL PAULISTA</option>
+
+    <option value="000009497">LAVINIA</option>
+
+    <option value="000009498">LAVRINHAS</option>
+
+    <option value="000009499">LEME</option>
+
+    <option value="000009500">LENCOIS PAULISTA</option>
+
+    <option value="000009501">LIMEIRA</option>
+
+    <option value="000009502">LINDOIA</option>
+
+    <option value="000009503">LINS</option>
+
+    <option value="000009505">LORENA</option>
+
+    <option value="000009506">LOURDES</option>
+
+    <option value="000009507">LOUVEIRA</option>
+
+    <option value="000009508">LUCELIA</option>
+
+    <option value="000009509">LUCIANOPOLIS</option>
+
+    <option value="000009510">LUIS ANTONIO</option>
+
+    <option value="000009512">LUIZIANIA</option>
+
+    <option value="000009513">LUPERCIO</option>
+
+    <option value="000009515">LUTECIA</option>
+
+    <option value="000009516">MACATUBA</option>
+
+    <option value="000009517">MACAUBAL</option>
+
+    <option value="000009518">MACEDONIA</option>
+
+    <option value="000009520">MAGDA</option>
+
+    <option value="000009522">MAIRINQUE</option>
+
+    <option value="000009523">MAIRIPORA</option>
+
+    <option value="000009525">MANDURI</option>
+
+    <option value="000009527">MARABA PAULISTA</option>
+
+    <option value="000009528">MARACAI</option>
+
+    <option value="000009529">MARAPOAMA</option>
+
+    <option value="000009532">MARIAPOLIS</option>
+
+    <option value="000009533">MARILIA</option>
+
+    <option value="000009534">MARINOPOLIS</option>
+
+    <option value="000009538">MARTINOPOLIS</option>
+
+    <option value="000009539">MATAO</option>
+
+    <option value="000009540">MAUA</option>
+
+    <option value="000009541">MENDONCA</option>
+
+    <option value="000009542">MERIDIANO</option>
+
+    <option value="000009543">MESOPOLIS</option>
+
+    <option value="000009544">MIGUELOPOLIS</option>
+
+    <option value="000009545">MINEIROS DO TIETE</option>
+
+    <option value="000009546">MIRA ESTRELA</option>
+
+    <option value="000009547">MIRACATU</option>
+
+    <option value="000009549">MIRANDOPOLIS</option>
+
+    <option value="000009550">MIRANTE DO PARANAPANEMA</option>
+
+    <option value="000009551">MIRASSOL</option>
+
+    <option value="000009552">MIRASSOLANDIA</option>
+
+    <option value="000009553">MOCOCA</option>
+
+    <option value="000009557">MOGI DAS CRUZES</option>
+
+    <option value="000009558">MOGI GUACU</option>
+
+    <option value="000009559">MOGI MIRIM</option>
+
+    <option value="000009560">MOMBUCA</option>
+
+    <option value="000009561">MONCOES</option>
+
+    <option value="000009562">MONGAGUA</option>
+
+    <option value="000009564">MONTE ALEGRE DO SUL</option>
+
+    <option value="000009565">MONTE ALTO</option>
+
+    <option value="000009566">MONTE APRAZIVEL</option>
+
+    <option value="000009567">MONTE AZUL PAULISTA</option>
+
+    <option value="000009569">MONTE CASTELO</option>
+
+    <option value="000009570">MONTE MOR</option>
+
+    <option value="000009572">MONTEIRO LOBATO</option>
+
+    <option value="000009574">MORRO AGUDO</option>
+
+    <option value="000009576">MORUNGABA</option>
+
+    <option value="000009578">MOTUCA</option>
+
+    <option value="000009580">MURUTINGA DO SUL</option>
+
+    <option value="000009581">NANTES</option>
+
+    <option value="000009582">NARANDIBA</option>
+
+    <option value="000009583">NATIVIDADE DA SERRA</option>
+
+    <option value="000009584">NAZARE PAULISTA</option>
+
+    <option value="000009585">NEVES PAULISTA</option>
+
+    <option value="000009586">NHANDEARA</option>
+
+    <option value="000009587">NIPOA</option>
+
+    <option value="000009591">NOVA ALIANCA</option>
+
+    <option value="000009594">NOVA CAMPINA</option>
+
+    <option value="000009595">NOVA CANAA PAULISTA</option>
+
+    <option value="000009596">NOVA CASTILHO</option>
+
+    <option value="000009597">NOVA EUROPA</option>
+
+    <option value="000009598">NOVA GRANADA</option>
+
+    <option value="000009599">NOVA GUATAPORANGA</option>
+
+    <option value="000009600">NOVA INDEPENDENCIA</option>
+
+    <option value="000009603">NOVA LUZITANIA</option>
+
+    <option value="000009604">NOVA ODESSA</option>
+
+    <option value="000009607">NOVAIS</option>
+
+    <option value="000009609">NOVO HORIZONTE</option>
+
+    <option value="000009610">NUPORANGA</option>
+
+    <option value="000009612">OCAUCU</option>
+
+    <option value="000009613">OLEO</option>
+
+    <option value="000009614">OLIMPIA</option>
+
+    <option value="000009617">ONDA VERDE</option>
+
+    <option value="000009618">ORIENTE</option>
+
+    <option value="000009619">ORINDIUVA</option>
+
+    <option value="000009620">ORLANDIA</option>
+
+    <option value="000009621">OSASCO</option>
+
+    <option value="000009622">OSCAR BRESSANE</option>
+
+    <option value="000009623">OSVALDO CRUZ</option>
+
+    <option value="000009624">OURINHOS</option>
+
+    <option value="000009626">OURO VERDE</option>
+
+    <option value="000009627">OUROESTE</option>
+
+    <option value="000009628">PACAEMBU</option>
+
+    <option value="000009630">PALESTINA</option>
+
+    <option value="000009631">PALMARES PAULISTA</option>
+
+    <option value="000009632">PALMEIRA D'OESTE</option>
+
+    <option value="000009634">PALMITAL</option>
+
+    <option value="000009635">PANORAMA</option>
+
+    <option value="000009636">PARAGUACU PAULISTA</option>
+
+    <option value="000009637">PARAIBUNA</option>
+
+    <option value="000009638">PARAISO</option>
+
+    <option value="000009641">PARANAPANEMA</option>
+
+    <option value="000009643">PARANAPUA</option>
+
+    <option value="000009644">PARAPUA</option>
+
+    <option value="000009645">PARDINHO</option>
+
+    <option value="000009646">PARIQUERA-ACU</option>
+
+    <option value="000009647">PARISI</option>
+
+    <option value="000009651">PATROCINIO PAULISTA</option>
+
+    <option value="000009652">PAULICEIA</option>
+
+    <option value="000009653">PAULINIA</option>
+
+    <option value="000009654">PAULISTANIA</option>
+
+    <option value="000009655">PAULO DE FARIA</option>
+
+    <option value="000009657">PEDERNEIRAS</option>
+
+    <option value="000009658">PEDRA BELA</option>
+
+    <option value="000009660">PEDRANOPOLIS</option>
+
+    <option value="000009661">PEDREGULHO</option>
+
+    <option value="000009662">PEDREIRA</option>
+
+    <option value="000009663">PEDRINHAS PAULISTA</option>
+
+    <option value="000009665">PEDRO DE TOLEDO</option>
+
+    <option value="000009666">PENAPOLIS</option>
+
+    <option value="000009667">PEREIRA BARRETO</option>
+
+    <option value="000009668">PEREIRAS</option>
+
+    <option value="000009669">PERUIBE</option>
+
+    <option value="000009670">PIACATU</option>
+
+    <option value="000009672">PIEDADE</option>
+
+    <option value="000009673">PILAR DO SUL</option>
+
+    <option value="000009674">PINDAMONHANGABA</option>
+
+    <option value="000009675">PINDORAMA</option>
+
+    <option value="000009676">PINHALZINHO</option>
+
+    <option value="000009679">PIQUEROBI</option>
+
+    <option value="000009680">PIQUETE</option>
+
+    <option value="000009681">PIRACAIA</option>
+
+    <option value="000009682">PIRACICABA</option>
+
+    <option value="000009684">PIRAJU</option>
+
+    <option value="000009685">PIRAJUI</option>
+
+    <option value="000009687">PIRANGI</option>
+
+    <option value="000009689">PIRAPORA DO BOM JESUS</option>
+
+    <option value="000009690">PIRAPOZINHO</option>
+
+    <option value="000009691">PIRASSUNUNGA</option>
+
+    <option value="000009692">PIRATININGA</option>
+
+    <option value="000009693">PITANGUEIRAS</option>
+
+    <option value="000009694">PLANALTO</option>
+
+    <option value="000009697">PLATINA</option>
+
+    <option value="000009698">POA</option>
+
+    <option value="000009699">POLONI</option>
+
+    <option value="000009701">POMPEIA</option>
+
+    <option value="000009702">PONGAI</option>
+
+    <option value="000009703">PONTAL</option>
+
+    <option value="000009704">PONTALINDA</option>
+
+    <option value="000009705">PONTES GESTAL</option>
+
+    <option value="000009706">POPULINA</option>
+
+    <option value="000009707">PORANGABA</option>
+
+    <option value="000009708">PORTO FELIZ</option>
+
+    <option value="000009709">PORTO FERREIRA</option>
+
+    <option value="000009711">POTIM</option>
+
+    <option value="000009712">POTIRENDABA</option>
+
+    <option value="000009714">PRACINHA</option>
+
+    <option value="000009716">PRADOPOLIS</option>
+
+    <option value="000009717">PRAIA GRANDE</option>
+
+    <option value="000009718">PRATANIA</option>
+
+    <option value="000009719">PRESIDENTE ALVES</option>
+
+    <option value="000009720">PRESIDENTE BERNARDES</option>
+
+    <option value="000009721">PRESIDENTE EPITACIO</option>
+
+    <option value="000009722">PRESIDENTE PRUDENTE</option>
+
+    <option value="000009723">PRESIDENTE VENCESLAU</option>
+
+    <option value="000009725">PROMISSAO</option>
+
+    <option value="000009727">QUADRA</option>
+
+    <option value="000009728">QUATA</option>
+
+    <option value="000009729">QUEIROZ</option>
+
+    <option value="000009730">QUELUZ</option>
+
+    <option value="000009731">QUINTANA</option>
+
+    <option value="000009733">RAFARD</option>
+
+    <option value="000009734">RANCHARIA</option>
+
+    <option value="000009736">REDENCAO DA SERRA</option>
+
+    <option value="000009737">REGENTE FEIJO</option>
+
+    <option value="000009738">REGINOPOLIS</option>
+
+    <option value="000009739">REGISTRO</option>
+
+    <option value="000009740">RESTINGA</option>
+
+    <option value="000009742">RIBEIRA</option>
+
+    <option value="000009743">RIBEIRAO BONITO</option>
+
+    <option value="000009744">RIBEIRAO BRANCO</option>
+
+    <option value="000009745">RIBEIRAO CORRENTE</option>
+
+    <option value="000009746">RIBEIRAO DO SUL</option>
+
+    <option value="000009747">RIBEIRAO DOS INDIOS</option>
+
+    <option value="000009748">RIBEIRAO GRANDE</option>
+
+    <option value="000009749">RIBEIRAO PIRES</option>
+
+    <option value="000009750">RIBEIRAO PRETO</option>
+
+    <option value="000009753">RIFAINA</option>
+
+    <option value="000009754">RINCAO</option>
+
+    <option value="000009755">RINOPOLIS</option>
+
+    <option value="000009756">RIO CLARO</option>
+
+    <option value="000009757">RIO DAS PEDRAS</option>
+
+    <option value="000009758">RIO GRANDE DA SERRA</option>
+
+    <option value="000009759">RIOLANDIA</option>
+
+    <option value="000009760">RIVERSUL</option>
+
+    <option value="000009763">ROSANA</option>
+
+    <option value="000019892">FLORINEA</option>
+
+    <option value="000009764">ROSEIRA</option>
+
+    <option value="000009765">RUBIACEA</option>
+
+    <option value="000009767">RUBINEIA</option>
+
+    <option value="000009770">SABINO</option>
+
+    <option value="000009771">SAGRES</option>
+
+    <option value="000009772">SALES</option>
+
+    <option value="000009773">SALES OLIVEIRA</option>
+
+    <option value="000009774">SALESOPOLIS</option>
+
+    <option value="000009776">SALMOURAO</option>
+
+    <option value="000009777">SALTINHO</option>
+
+    <option value="000009778">SALTO</option>
+
+    <option value="000009779">SALTO DE PIRAPORA</option>
+
+    <option value="000009781">SALTO GRANDE</option>
+
+    <option value="000009782">SANDOVALINA</option>
+
+    <option value="000009783">SANTA ADELIA</option>
+
+    <option value="000009784">SANTA ALBERTINA</option>
+
+    <option value="000009786">SANTA BARBARA D'OESTE</option>
+
+    <option value="000009787">SANTA BRANCA</option>
+
+    <option value="000009788">SANTA CLARA D'OESTE</option>
+
+    <option value="000009789">SANTA CRUZ DA CONCEICAO</option>
+
+    <option value="000009790">SANTA CRUZ DA ESPERANCA</option>
+
+    <option value="000009792">SANTA CRUZ DAS PALMEIRAS</option>
+
+    <option value="000009793">SANTA CRUZ DO RIO PARDO</option>
+
+    <option value="000009795">SANTA ERNESTINA</option>
+
+    <option value="000009797">SANTA FE DO SUL</option>
+
+    <option value="000009798">SANTA GERTRUDES</option>
+
+    <option value="000009799">SANTA ISABEL</option>
+
+    <option value="000009801">SANTA LUCIA</option>
+
+    <option value="000009803">SANTA MARIA DA SERRA</option>
+
+    <option value="000009805">SANTA MERCEDES</option>
+
+    <option value="000009806">SANTA RITA D'OESTE</option>
+
+    <option value="000009807">SANTA RITA DO PASSA QUATRO</option>
+
+    <option value="000009809">SANTA ROSA DE VITERBO</option>
+
+    <option value="000009810">SANTA SALETE</option>
+
+    <option value="000009812">SANTANA DA PONTE PENSA</option>
+
+    <option value="000009813">SANTANA DE PARNAIBA</option>
+
+    <option value="000009815">SANTO ANASTACIO</option>
+
+    <option value="000009816">SANTO ANDRE</option>
+
+    <option value="000009817">SANTO ANTONIO DA ALEGRIA</option>
+
+    <option value="000009819">SANTO ANTONIO DE POSSE</option>
+
+    <option value="000009820">SANTO ANTONIO DO ARACANGUA</option>
+
+    <option value="000009821">SANTO ANTONIO DO JARDIM</option>
+
+    <option value="000009823">SANTO ANTONIO DO PINHAL</option>
+
+    <option value="000009825">SANTO EXPEDITO</option>
+
+    <option value="000009826">SANTOPOLIS DO AGUAPEI</option>
+
+    <option value="000009827">SANTOS</option>
+
+    <option value="000009830">SAO BENTO DO SAPUCAI</option>
+
+    <option value="000009831">SAO BERNARDO DO CAMPO</option>
+
+    <option value="000009833">SAO CAETANO DO SUL</option>
+
+    <option value="000009834">SAO CARLOS</option>
+
+    <option value="000009835">SAO FRANCISCO</option>
+
+    <option value="000009838">SAO JOAO DA BOA VISTA</option>
+
+    <option value="000009839">SAO JOAO DAS DUAS PONTES</option>
+
+    <option value="000009840">SAO JOAO DE IRACEMA</option>
+
+    <option value="000009843">SAO JOAO DO PAU D'ALHO</option>
+
+    <option value="000009845">SAO JOAQUIM DA BARRA</option>
+
+    <option value="000009846">SAO JOSE DA BELA VISTA</option>
+
+    <option value="000009848">SAO JOSE DO BARREIRO</option>
+
+    <option value="000009849">SAO JOSE DO RIO PARDO</option>
+
+    <option value="000009850">SAO JOSE DO RIO PRETO</option>
+
+    <option value="000009851">SAO JOSE DOS CAMPOS</option>
+
+    <option value="000009852">SAO LOURENCO DA SERRA</option>
+
+    <option value="000009854">SAO LUIS DO PARAITINGA</option>
+
+    <option value="000019893">SAO LUIZ DO PARAITINGA</option>
+
+    <option value="000009856">SAO MANUEL</option>
+
+    <option value="000009858">SAO MIGUEL ARCANJO</option>
+
+    <option value="000009859">SAO PAULO</option>
+
+    <option value="000009860">SAO PEDRO</option>
+
+    <option value="000009861">SAO PEDRO DO TURVO</option>
+
+    <option value="000009862">SAO ROQUE</option>
+
+    <option value="000009864">SAO SEBASTIAO</option>
+
+    <option value="000009865"></option>
+
+    <option value="000009868">SAO SIMAO</option>
+
+    <option value="000009869">SAO VICENTE</option>
+
+    <option value="000009871">SARAPUI</option>
+
+    <option value="000009872">SARUTAIA</option>
+
+    <option value="000009873">SEBASTIANOPOLIS DO SUL</option>
+
+    <option value="000009874">SERRA AZUL</option>
+
+    <option value="000009875">SERRA NEGRA</option>
+
+    <option value="000009876">SERRANA</option>
+
+    <option value="000009877">SERTAOZINHO</option>
+
+    <option value="000009878">SETE BARRAS</option>
+
+    <option value="000009879">SEVERINIA</option>
+
+    <option value="000009881">SILVEIRAS</option>
+
+    <option value="000009884">SOCORRO</option>
+
+    <option value="000009887">SOROCABA</option>
+
+    <option value="000009889">SUD MENNUCCI</option>
+
+    <option value="000009892">SUMARE</option>
+
+    <option value="000009894">SUZANAPOLIS</option>
+
+    <option value="000009895">SUZANO</option>
+
+    <option value="000009898">TABAPUA</option>
+
+    <option value="000009899">TABATINGA</option>
+
+    <option value="000009900">TABOAO DA SERRA</option>
+
+    <option value="000009901">TACIBA</option>
+
+    <option value="000009902">TAGUAI</option>
+
+    <option value="000009903">TAIACU</option>
+
+    <option value="000009905">TAIUVA</option>
+
+    <option value="000009907">TAMBAU</option>
+
+    <option value="000009908">TANABI</option>
+
+    <option value="000009910">TAPIRAI</option>
+
+    <option value="000009911">TAPIRATIBA</option>
+
+    <option value="000009912">TAQUARAL</option>
+
+    <option value="000009913">TAQUARITINGA</option>
+
+    <option value="000009914">TAQUARITUBA</option>
+
+    <option value="000009915">TAQUARIVAI</option>
+
+    <option value="000009916">TARABAI</option>
+
+    <option value="000009917">TARUMA</option>
+
+    <option value="000009918">TATUI</option>
+
+    <option value="000009919">TAUBATE</option>
+
+    <option value="000009921">TEJUPA</option>
+
+    <option value="000009922">TEODORO SAMPAIO</option>
+
+    <option value="000009925">TERRA ROXA</option>
+
+    <option value="000009928">TIETE</option>
+
+    <option value="000009929">TIMBURI</option>
+
+    <option value="000009931">TORRE DE PEDRA</option>
+
+    <option value="000009932">TORRINHA</option>
+
+    <option value="000009933">TRABIJU</option>
+
+    <option value="000009934">TREMEMBE</option>
+
+    <option value="000009936">TRES FRONTEIRAS</option>
+
+    <option value="000009939">TUIUTI</option>
+
+    <option value="000009941">TUPA</option>
+
+    <option value="000009943">TUPI PAULISTA</option>
+
+    <option value="000009945">TURIUBA</option>
+
+    <option value="000009946">TURMALINA</option>
+
+    <option value="000009948">UBARANA</option>
+
+    <option value="000009949">UBATUBA</option>
+
+    <option value="000009950">UBIRAJARA</option>
+
+    <option value="000009951">UCHOA</option>
+
+    <option value="000009952">UNIAO PAULISTA</option>
+
+    <option value="000009954">URANIA</option>
+
+    <option value="000009955">URU</option>
+
+    <option value="000009956">URUPES</option>
+
+    <option value="000009960">VALENTIM GENTIL</option>
+
+    <option value="000009961">VALINHOS</option>
+
+    <option value="000009962">VALPARAISO</option>
+
+    <option value="000009964">VARGEM</option>
+
+    <option value="000009965">VARGEM GRANDE DO SUL</option>
+
+    <option value="000009966">VARGEM GRANDE PAULISTA</option>
+
+    <option value="000009968">VARZEA PAULISTA</option>
+
+    <option value="000009970">VERA CRUZ</option>
+
+    <option value="000009976">VINHEDO</option>
+
+    <option value="000009977">VIRADOURO</option>
+
+    <option value="000009978">VISTA ALEGRE DO ALTO</option>
+
+    <option value="000009979">VITORIA BRASIL</option>
+
+    <option value="000009981">VOTORANTIM</option>
+
+    <option value="000009982">VOTUPORANGA</option>
+
+    <option value="000009983">ZACARIAS</option>
+
+</select>
+
+
+				</td>
+			</tr>
+			
+			<tr>
+				<td width="200" class="tdtab12R">Código e Nome das Agências</td>
+				<td width="225" class="tdtab12">
+					<select name="cmbAgenciaRelacionamento" id="cmbAgenciaRelacionamento" size="1" onchange="">
+
+    <option value=""></option>
+
+    <option value="2352">2352 , SP</option>
+
+</select>
+
+ 
+				</td>
+			</tr>
+			
+				
+				
+		</tbody></table>
+          
+			<table class="tbBotoes" cellpadding="0" cellspacing="0">       
+				
+				
+				<tbody><tr>
+					<td style="padding: 6px 0 0 0; text-align: center;">
+								
+							<a href="javascript:concluirCadastro();" title="Concluir Cadastro" class="btn-azul">Concluir Cadastro</a>
+						
+					</td>
+				</tr>
+	  			<tr>
+					<td style="padding: 6px 0 0 0; text-align: center;">
+						<span id="spanMensagem" style="display: none; ">
+							Enviando Cadastro de Cliente. Aguarde...
+						</span>
+					</td>
+				</tr>  
+			</tbody></table>
+		
+	</form>
+			
+		</div>
+	<div class="nav-btn" style="text-align: right;">
+		
+	</div>
+
+	</div> 
+<table border="0" cellspacing="0" style="margin: 30px auto; width: 415px;">
+	<tbody><tr>
+		<td align="center">
+			<font class="titRodape">Código do Convênio</font>
+		</td>
+		<td align="center">
+			<font>00067575-0</font>
+		</td>
+		<td align="center">
+			<font class="titRodape">Identificação do Operador</font>
+		</td>
+		<td align="center">
+			<font></font>
+		</td>
+	</tr>
+
+</tbody></table>
+
+</center>
+
+
+
+	
+
+
+</body></html>

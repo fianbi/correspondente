@@ -1,6 +1,6 @@
 import { NotFoundError } from "@corr/core";
-import { toCaixaValues } from "@corr/portal";
-import { getPerson, getProcess } from "@corr/db";
+import { toCaixaAgencyValues, toCaixaIncomeValues, toCaixaValues } from "@corr/portal";
+import { getPerson, getProcess, listAgencies, listPersonIncomes } from "@corr/db";
 import { contextFromRequest, json, preflight, unauthorized } from "../../../_auth";
 
 export async function OPTIONS(request: Request) {
@@ -21,13 +21,30 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   try {
     const processo = await getProcess(ctx, id);
-    const pessoa = await getPerson(ctx, processo.personId);
+    const [pessoa, rendas, agencias] = await Promise.all([
+      getPerson(ctx, processo.personId),
+      listPersonIncomes(ctx, processo.personId),
+      listAgencies(ctx),
+    ]);
+
+    const agencia = agencias.find((item) => item.id === processo.agencyId) ?? null;
 
     return json(request, {
       processId: processo.id,
       number: processo.number,
       personName: pessoa.fullName,
-      values: toCaixaValues(pessoa as unknown as Record<string, unknown>),
+      values: {
+        ...toCaixaValues(pessoa as unknown as Record<string, unknown>),
+        ...toCaixaAgencyValues(agencia),
+      },
+      // A tela de renda do portal cadastra uma fonte por vez: a extensão
+      // precisa da lista para o operador escolher qual está preenchendo.
+      incomes: rendas.map((renda) => ({
+        id: renda.id,
+        label: renda.sourceName ?? (renda.kind === "formal" ? "Renda formal" : "Renda informal"),
+        kind: renda.kind,
+        values: toCaixaIncomeValues(renda as unknown as Record<string, unknown>),
+      })),
     });
   } catch (error) {
     if (error instanceof NotFoundError) return json(request, { error: error.message }, 404);
