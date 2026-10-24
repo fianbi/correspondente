@@ -89,7 +89,14 @@ async function main() {
     if (error) throw error;
     userId = data.users.find((user) => user.email === email)?.id;
     if (!userId) throw created.error;
-    console.log(`usuário ${email} já existia`);
+
+    // Sincroniza a senha com o .env.local. Sem isso, trocar a senha no
+    // ambiente não teria efeito nenhum: o usuário já existe e o seed
+    // simplesmente seguiria em frente com a senha antiga.
+    const atualizado = await auth.auth.admin.updateUserById(userId, { password });
+    if (atualizado.error) throw atualizado.error;
+
+    console.log(`usuário ${email} já existia — senha sincronizada com o ambiente`);
   } else {
     userId = created.data.user.id;
     console.log(`usuário ${email} criado`);
