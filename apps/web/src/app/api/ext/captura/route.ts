@@ -55,8 +55,14 @@ export async function POST(request: Request) {
     found: true,
     created: criadaId !== null,
     spouseCreated,
-    // Pessoa recém-criada: o que a tela trouxe entrou na criação.
-    applied: criadaId !== null ? chavesAceitas(values) : resultado.applied,
+    // Pessoa recém-criada: o que a tela trouxe entrou na criação, fora o
+    // que o sistema não aceitou.
+    applied:
+      criadaId !== null
+        ? chavesAceitas(values).filter((chave) => !resultado.ignored.includes(chave))
+        : resultado.applied,
+    // Campos que a tela mostrou num formato que o cadastro não aceita.
+    ignored: resultado.ignored,
     incomesAdded: rendasNovas,
     personId: pessoa.id,
   });

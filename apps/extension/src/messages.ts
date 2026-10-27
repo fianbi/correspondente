@@ -44,5 +44,8 @@ export type PanelResponse =
 export interface CapturaDaPagina {
   kind: "captura-auto";
   momento: "carregou" | "enviou" | "saiu";
-  captura: AutoCapture;
+  /** `null`: a página tem formulário, mas nenhuma tela do perfil bate. */
+  captura: AutoCapture | null;
+  /** Endereço do documento lido, para o diagnóstico. */
+  url?: string;
 }

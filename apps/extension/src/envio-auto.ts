@@ -1,6 +1,7 @@
 import { api, lerConfig } from "./api";
 import {
   CHAVE_DESLIGADA,
+  CHAVE_DIAGNOSTICO,
   chaveDaAba,
   CHAVE_ULTIMA,
   decidirEnvio,
@@ -8,9 +9,11 @@ import {
   ESTADO_INICIAL,
   saiuDoCadastro,
   TELAS_QUE_ABREM_CADASTRO,
+  type Diagnostico,
   type EstadoCaptura,
   type UltimaCaptura,
 } from "./captura-auto";
+import type { AutoCapture } from "@corr/portal";
 import type { CapturaDaPagina } from "./messages";
 
 /**
@@ -45,13 +48,15 @@ async function registrar(ultima: UltimaCaptura): Promise<void> {
 }
 
 async function processar(
-  mensagem: CapturaDaPagina,
+  mensagem: CapturaDaPagina & { captura: AutoCapture },
   tabId: number,
   frameId: number,
-): Promise<void> {
+): Promise<string> {
   const config = await lerConfig();
-  if (!config) return;
-  if ((await chrome.storage.local.get(CHAVE_DESLIGADA))[CHAVE_DESLIGADA]) return;
+  if (!config) return "sem endereço do sistema";
+  if ((await chrome.storage.local.get(CHAVE_DESLIGADA))[CHAVE_DESLIGADA]) {
+    return "captura automática desligada";
+  }
 
   const agora = Date.now();
   const estado = await lerEstado(tabId);
@@ -65,14 +70,21 @@ async function processar(
     // de quem é o cadastro em curso.
     if (mensagem.captura.cpf) {
       await gravarEstado(tabId, { ...estado, ...origem, cpf: mensagem.captura.cpf, cpfEm: agora });
+      return "CPF guardado para as próximas telas";
     }
-    return;
+    return "tela aberta; envia ao salvar ou sair";
   }
 
   const decisao = decidirEnvio(estado, mensagem.captura, agora);
   await gravarEstado(tabId, { ...decisao.estado, ...origem });
   const envio = decisao.envio;
-  if (!envio) return;
+  if (!envio) {
+    if (!decisao.estado.cpf) return "sem CPF: passe pela tela \"CPF do Cliente\" ou de dados cadastrais";
+    if (mensagem.captura.screenKey === null) return "CPF guardado para as próximas telas";
+    const vazia =
+      Object.keys(mensagem.captura.values).length === 0 && mensagem.captura.incomes.length === 0;
+    return vazia ? "tela sem dados preenchidos" : "mesmo conteúdo já enviado";
+  }
 
   const base = { em: agora, screenKey: envio.screenKey, cpfFinal: envio.cpf.slice(-4) };
   try {
@@ -85,11 +97,13 @@ async function processar(
       incomesAdded: incomesAdded ?? 0,
       created: resposta.created === true,
       spouseCreated: resposta.spouseCreated === true,
+      ignored: resposta.ignored ?? [],
       // Sem nome na tela não há como criar: a tela de dados cadastrais cria.
       erro: found
         ? null
         : "CPF ainda sem cadastro; ele é criado quando a tela de dados cadastrais tiver o nome.",
     });
+    return found ? "enviado" : "enviado; CPF sem cadastro";
   } catch (falha) {
     // Rede ou servidor: o mesmo conteúdo pode ir na próxima leitura.
     await gravarEstado(tabId, esquecerEnvio(await lerEstado(tabId), envio.chave));
@@ -98,7 +112,29 @@ async function processar(
       applied: [],
       erro: falha instanceof Error ? falha.message : "Falha ao enviar.",
     });
+    return `falha: ${falha instanceof Error ? falha.message : "erro desconhecido"}`;
   }
+}
+
+/**
+ * Cada leitura que chega, com o que se fez dela. É o que permite entender, no
+ * uso real, por que uma tela não foi para o sistema sem abrir o DevTools.
+ */
+async function anotar(mensagem: CapturaDaPagina, resultado: string): Promise<void> {
+  const item: Diagnostico = {
+    em: Date.now(),
+    momento: mensagem.momento,
+    url: mensagem.url ?? null,
+    screenKey: mensagem.captura?.screenKey ?? null,
+    cpfFinal: mensagem.captura?.cpf?.slice(-4) ?? null,
+    campos: mensagem.captura ? Object.keys(mensagem.captura.values).length : 0,
+    resultado,
+  };
+  const anteriores =
+    ((await chrome.storage.local.get(CHAVE_DIAGNOSTICO))[CHAVE_DIAGNOSTICO] as
+      | Diagnostico[]
+      | undefined) ?? [];
+  await chrome.storage.local.set({ [CHAVE_DIAGNOSTICO]: [item, ...anteriores].slice(0, 15) });
 }
 
 // O envio do formulário e a saída da página chegam quase juntos. Em fila, o
@@ -112,7 +148,13 @@ export function ouvirCapturaAutomatica(): void {
     if (recebida?.kind !== "captura-auto" || tabId === undefined) return false;
 
     fila = fila
-      .then(() => processar(recebida as CapturaDaPagina, tabId, remetente.frameId ?? 0))
+      .then(async () => {
+        const lida = recebida as CapturaDaPagina;
+        const resultado = lida.captura
+          ? await processar(lida as CapturaDaPagina & { captura: AutoCapture }, tabId, remetente.frameId ?? 0)
+          : "tela não reconhecida pelo perfil";
+        await anotar(lida, resultado);
+      })
       .catch(() => undefined)
       .finally(() => responder({ ok: true }));
     // Resposta assíncrona: mantém o service worker vivo até o envio terminar.

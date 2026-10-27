@@ -142,6 +142,7 @@ export const api = {
       incomesAdded?: number;
       created?: boolean;
       spouseCreated?: boolean;
+      ignored?: string[];
     }>(config, "/captura", {
       method: "POST",
       body: JSON.stringify(envio),

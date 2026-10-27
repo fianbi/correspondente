@@ -64,7 +64,15 @@ function observarCapturaAutomatica() {
 
   const avisar = (momento: CapturaDaPagina["momento"]) => {
     const captura = readForAutoCapture(document, profile);
-    if (!captura) return;
+    if (!captura) {
+      // Formulário que nenhuma tela do perfil reconhece: vale avisar ao sair,
+      // para o painel mostrar que a tela passou sem captura. Menus e frames
+      // de navegação (sem campos) ficam de fora.
+      if (momento !== "carregou" && contarCampos() >= 3) {
+        enviar({ kind: "captura-auto", momento, captura: null, url: location.href });
+      }
+      return;
+    }
 
     // O submit e a saída da página leem o mesmo conteúdo; um aviso basta. O
     // background confere de novo, entre páginas e frames.
@@ -77,14 +85,7 @@ function observarCapturaAutomatica() {
     if (momento !== "carregou" && chave === ultimaChave) return;
     if (momento !== "carregou") ultimaChave = chave;
 
-    const mensagem: CapturaDaPagina = { kind: "captura-auto", momento, captura };
-    try {
-      chrome.runtime.sendMessage(mensagem).catch(() => undefined);
-    } catch {
-      // Extensão recarregada com a aba aberta: este script ficou órfão e o
-      // Chrome recusa a chamada na hora ("Extension context invalidated"). A
-      // página segue sem ele; a aba recarregada já vem com o script novo.
-    }
+    enviar({ kind: "captura-auto", momento, captura, url: location.href });
   };
 
   avisar("carregou");
@@ -131,4 +132,20 @@ function atender(mensagem: PanelRequest): PanelResponse {
   }
 
   return { kind: "capturado", values: captureScreen(document, tela) };
+}
+
+function enviar(mensagem: CapturaDaPagina) {
+  try {
+    chrome.runtime.sendMessage(mensagem).catch(() => undefined);
+  } catch {
+    // Extensão recarregada com a aba aberta: este script ficou órfão e o
+    // Chrome recusa a chamada na hora ("Extension context invalidated"). A
+    // página segue sem ele; a aba recarregada já vem com o script novo.
+  }
+}
+
+function contarCampos(): number {
+  return document.querySelectorAll(
+    "input[name]:not([type=hidden]), select[name], textarea[name]",
+  ).length;
 }

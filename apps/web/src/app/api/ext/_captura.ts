@@ -1,6 +1,11 @@
 import "server-only";
 
-import { personIncomeInputSchema, personInputSchema, type OrgContext } from "@corr/core";
+import {
+  personIncomeInputSchema,
+  personInputSchema,
+  type OrgContext,
+  type PersonInput,
+} from "@corr/core";
 import {
   addPersonIncome,
   createPerson,
@@ -45,8 +50,22 @@ const CAMPOS_ACEITOS: Record<string, string> = {
 const EM_CENTAVOS = new Set(["rentCents", "condoFeeCents", "alimonyCents"]);
 
 export type ResultadoCaptura =
-  | { ok: true; applied: string[] }
+  | { ok: true; applied: string[]; ignored: string[] }
   | { ok: false; error: string };
+
+/** Colunas do cadastro da pessoa, na forma que o schema espera. */
+const COLUNAS_DA_PESSOA = Object.keys(personInputSchema.shape);
+
+/**
+ * Valida um campo sozinho, sobre um cadastro mínimo e válido. Um valor que o
+ * portal mostra num formato que o sistema não aceita (data, PIS, e-mail)
+ * fica de fora sem levar junto os outros campos da mesma tela.
+ */
+function validarCampo(cpf: string, coluna: string, valor: unknown): { ok: boolean; valor?: unknown } {
+  const parsed = personInputSchema.safeParse({ cpf, fullName: "VALIDACAO", [coluna]: valor });
+  if (!parsed.success) return { ok: false };
+  return { ok: true, valor: (parsed.data as Record<string, unknown>)[coluna] };
+}
 
 /**
  * Traz para o cadastro da pessoa o que estava na tela do portal.
@@ -56,40 +75,47 @@ export type ResultadoCaptura =
  * aceitas, e o CPF nunca é sobrescrito: ele é a identidade do cadastro, e
  * deixar a tela do banco trocá-lo transformaria uma pessoa em outra sem
  * ninguém perceber.
+ *
+ * Cada campo é validado sozinho e gravado por cima do cadastro como está no
+ * banco, sem revalidar o resto: um cadastro antigo incompleto (casado sem o
+ * nome do cônjuge, por exemplo) não pode travar a captura das outras telas.
  */
 export async function aplicarCaptura(
   ctx: OrgContext,
   personId: string,
   recebidos: Record<string, string | null>,
 ): Promise<ResultadoCaptura> {
-  const pessoa = await getPerson(ctx, personId);
-
-  const atualizacao: Record<string, unknown> = { ...pessoa };
-  // O banco guarda centavos; o schema espera reais, como o formulário manda.
-  for (const coluna of EM_CENTAVOS) {
-    if (typeof atualizacao[coluna] === "number") atualizacao[coluna] = (atualizacao[coluna] as number) / 100;
-  }
+  const pessoa = (await getPerson(ctx, personId)) as unknown as Record<string, unknown>;
+  const novos: Record<string, unknown> = {};
   const aplicados: string[] = [];
+  const ignorados: string[] = [];
 
   for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
     const valor = recebidos[chave];
     if (valor === undefined || valor === null || valor === "") continue;
     // Só preenche o que está vazio: o cadastro do escritório é a fonte, o
     // portal complementa. Sobrescrever calado desfaria conferência humana.
-    if (atualizacao[coluna]) continue;
-    atualizacao[coluna] = EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor;
+    if (pessoa[coluna] !== null && pessoa[coluna] !== undefined && pessoa[coluna] !== "") continue;
+
+    const validado = validarCampo(
+      pessoa.cpf as string,
+      coluna,
+      EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor,
+    );
+    if (!validado.ok) {
+      ignorados.push(chave);
+      continue;
+    }
+    novos[coluna] = validado.valor;
     aplicados.push(chave);
   }
 
   if (aplicados.length > 0) {
-    const parsed = personInputSchema.safeParse({ ...atualizacao, cpf: pessoa.cpf });
-    if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
-    }
-    await updatePerson(ctx, pessoa.id, parsed.data);
+    const atual = Object.fromEntries(COLUNAS_DA_PESSOA.map((coluna) => [coluna, pessoa[coluna] ?? null]));
+    await updatePerson(ctx, personId, { ...atual, ...novos } as PersonInput);
   }
 
-  return { ok: true, applied: aplicados };
+  return { ok: true, applied: aplicados, ignored: ignorados };
 }
 
 /**
@@ -144,34 +170,32 @@ export function chavesAceitas(recebidos: Record<string, string | null>): string[
   return Object.keys(CAMPOS_ACEITOS).filter((chave) => Boolean(recebidos[chave]));
 }
 
-/** Só as colunas aceitas, já no formato que o schema da pessoa lê. */
-function camposDaTela(recebidos: Record<string, string | null>): Record<string, unknown> {
-  const campos: Record<string, unknown> = {};
-  for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
-    const valor = recebidos[chave];
-    if (valor === undefined || valor === null || valor === "") continue;
-    campos[coluna] = EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor;
-  }
-  return campos;
-}
-
 /**
  * Cria quem ainda não existe no escritório.
  *
  * O cadastro nasce da tela de dados cadastrais do portal, que mostra o CPF e
  * o nome completo; sem nome não há cadastro, e quem cria é a tela seguinte
- * que o trouxer. Devolve o id, ou `null` quando a tela não basta.
+ * que o trouxer. Os outros campos entram como na captura: cada um validado
+ * sozinho. Devolve o id, ou `null` quando a tela não basta.
  */
 export async function criarPessoaDaTela(
   ctx: OrgContext,
   cpf: string,
   recebidos: Record<string, string | null>,
 ): Promise<string | null> {
-  const parsed = personInputSchema.safeParse({ ...camposDaTela(recebidos), cpf });
-  if (!parsed.success) return null;
+  const minimo = personInputSchema.safeParse({ cpf, fullName: recebidos["person.fullName"] ?? "" });
+  if (!minimo.success) return null;
+
+  const campos: Record<string, unknown> = {};
+  for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
+    const valor = recebidos[chave];
+    if (valor === undefined || valor === null || valor === "" || coluna === "fullName") continue;
+    const validado = validarCampo(cpf, coluna, EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor);
+    if (validado.ok) campos[coluna] = validado.valor;
+  }
 
   try {
-    return (await createPerson(ctx, parsed.data)).id;
+    return (await createPerson(ctx, { ...minimo.data, ...campos } as PersonInput)).id;
   } catch (error) {
     // Duas leituras da mesma tela chegando juntas: a outra já criou.
     if (error instanceof DuplicatePersonError) return error.personId;
@@ -187,7 +211,7 @@ export async function garantirConjuge(
   ctx: OrgContext,
   recebidos: Record<string, string | null>,
 ): Promise<boolean> {
-  const cpf = recebidos["person.spouseCpf"]?.replace(/D+/g, "") ?? "";
+  const cpf = recebidos["person.spouseCpf"]?.replace(/\D+/g, "") ?? "";
   const nome = recebidos["person.spouseName"]?.trim() ?? "";
   if (cpf.length !== 11 || nome === "") return false;
   if (await findPersonByCpf(ctx, cpf)) return false;

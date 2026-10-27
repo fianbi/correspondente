@@ -77,6 +77,10 @@ export function App() {
         <div>
           <strong>{sessao.orgName}</strong>
           <p className="discreto">{sessao.email}</p>
+          {/* A versão vem do package.json da extensão; cada build que vai
+              para o operador sobe um número, e é por ela que se confere se o
+              Chrome carregou o build certo. */}
+          <p className="discreto">Versão {chrome.runtime.getManifest().version}</p>
         </div>
       </header>
       <p className="discreto">Para trocar de usuário ou escritório, use o sistema.</p>

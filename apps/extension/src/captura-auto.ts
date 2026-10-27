@@ -110,6 +110,8 @@ export interface UltimaCaptura {
   created?: boolean;
   /** O cônjuge da tela também ganhou cadastro. */
   spouseCreated?: boolean;
+  /** Campos que a tela mostrou num formato que o cadastro não aceita. */
+  ignored?: string[];
   erro: string | null;
 }
 
@@ -123,4 +125,17 @@ const FLUXO_DE_CADASTRO = "cadastro_cliente";
  */
 export function saiuDoCadastro(estado: EstadoCaptura, url: string): boolean {
   return estado.cpfNoTopo === true && !url.includes(FLUXO_DE_CADASTRO);
+}
+
+/** Últimas leituras e o que se fez delas, para o painel mostrar. */
+export const CHAVE_DIAGNOSTICO = "corr.capturaAuto.diagnostico";
+
+export interface Diagnostico {
+  em: number;
+  momento: "carregou" | "enviou" | "saiu";
+  url: string | null;
+  screenKey: string | null;
+  cpfFinal: string | null;
+  campos: number;
+  resultado: string;
 }

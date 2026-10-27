@@ -130,6 +130,8 @@ test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
         "person.spouseName": `CONJUGE NOVO ${sufixo}`,
         // Código do portal: não entra no cadastro, nem derruba a criação.
         "person.sex": "F",
+        // Formato que o cadastro não aceita: fica de fora, sem levar o resto.
+        "person.email": "nao-e-email",
       },
       incomes: [],
     },
@@ -140,6 +142,7 @@ test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
     created: true,
     spouseCreated: true,
     applied: expect.arrayContaining(["person.fullName", "person.motherName"]),
+    ignored: ["person.email"],
   });
 
   // O painel acha os dois pelo CPF.
