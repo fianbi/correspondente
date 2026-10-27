@@ -1,5 +1,14 @@
-import { captureScreen, discoverFields, fillScreen } from "@corr/portal";
-import type { PanelRequest, PanelResponse } from "@/src/messages";
+import {
+  autoCaptureKey,
+  CAIXA_PROFILE,
+  captureScreen,
+  discoverFields,
+  fillScreen,
+  readForAutoCapture,
+  type PortalProfile,
+} from "@corr/portal";
+import { CHAVE_PERFIL } from "@/src/captura-auto";
+import type { CapturaDaPagina, PanelRequest, PanelResponse } from "@/src/messages";
 
 /**
  * Content script: o único pedaço que toca a página do banco.
@@ -7,6 +16,9 @@ import type { PanelRequest, PanelResponse } from "@/src/messages";
  * Ele não decide nada — recebe a tela já escolhida pelo painel, aplica, e
  * responde o que aconteceu campo a campo. Nunca submete formulário: quem
  * confere e salva é o operador.
+ *
+ * Além disso, faz a captura automática: lê a tela quando o operador envia o
+ * formulário ou sai da página, e passa o que leu para o background.
  */
 export default defineContentScript({
   matches: ["https://*.caixa.gov.br/*"],
@@ -25,8 +37,60 @@ export default defineContentScript({
         return false;
       },
     );
+
+    observarCapturaAutomatica();
   },
 });
+
+/**
+ * Captura automática: só escuta eventos e lê campos. Nada é escrito na página
+ * nem impedido — o envio do portal segue exatamente como seria sem a extensão.
+ */
+function observarCapturaAutomatica() {
+  // O perfil do escritório (com os campos ensinados) é o que o painel
+  // carregou por último; antes de ele chegar do storage, vale o de fábrica.
+  // Os ouvintes entram já, sem esperar: um operador rápido pode digitar o CPF
+  // e sair da tela antes de a leitura do storage terminar.
+  let profile: PortalProfile = CAIXA_PROFILE;
+  void chrome.storage.local
+    .get(CHAVE_PERFIL)
+    .then((guardado) => {
+      const perfil = guardado[CHAVE_PERFIL] as PortalProfile | undefined;
+      if (perfil) profile = perfil;
+    })
+    .catch(() => undefined);
+
+  let ultimaChave: string | null = null;
+
+  const avisar = (momento: CapturaDaPagina["momento"]) => {
+    const captura = readForAutoCapture(document, profile);
+    if (!captura) return;
+
+    // O submit e a saída da página leem o mesmo conteúdo; um aviso basta. O
+    // background confere de novo, entre páginas e frames.
+    const chave = autoCaptureKey(
+      captura.cpf ?? "",
+      captura.screenKey,
+      captura.values,
+      captura.incomes,
+    );
+    if (momento !== "carregou" && chave === ultimaChave) return;
+    if (momento !== "carregou") ultimaChave = chave;
+
+    const mensagem: CapturaDaPagina = { kind: "captura-auto", momento, captura };
+    chrome.runtime.sendMessage(mensagem).catch(() => {
+      // Extensão recarregada ou desligada: a página segue sem ela.
+    });
+  };
+
+  avisar("carregou");
+  // Fase de captura: o portal às vezes cancela o evento no próprio handler, e
+  // a leitura precisa acontecer antes disso.
+  document.addEventListener("submit", () => avisar("enviou"), true);
+  // `pagehide` cobre o que o submit não vê: `form.submit()` chamado por
+  // script, links e troca de tela dentro de frame.
+  window.addEventListener("pagehide", () => avisar("saiu"));
+}
 
 function atender(mensagem: PanelRequest): PanelResponse {
   if (mensagem.kind === "destacar") {

@@ -89,6 +89,11 @@ export const personInputSchema = z
     residenceProofMonth: optionalInt,
     residenceProofYear: optionalInt,
 
+    dependentsCount: optionalInt,
+    rentCents: optionalMoney,
+    condoFeeCents: optionalMoney,
+    alimonyCents: optionalMoney,
+
     notes: optionalText,
   })
   .superRefine((value, ctx) => {
@@ -103,6 +108,10 @@ export const personInputSchema = z
     }
     if (value.residenceProofMonth !== null && (value.residenceProofMonth < 1 || value.residenceProofMonth > 12)) {
       ctx.addIssue({ code: "custom", path: ["residenceProofMonth"], message: "Mês inválido." });
+    }
+    // O portal aceita até dois dígitos.
+    if (value.dependentsCount !== null && (value.dependentsCount < 0 || value.dependentsCount > 99)) {
+      ctx.addIssue({ code: "custom", path: ["dependentsCount"], message: "Número inválido." });
     }
     // Espelha o que o portal exige em cada variação, para o operador descobrir
     // o que falta aqui e não no meio do preenchimento da tela do banco.

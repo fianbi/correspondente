@@ -56,6 +56,12 @@ export interface PortalProfile {
   key: string;
   label: string;
   hostPattern: string;
+  /**
+   * Campo onde o operador digita o CPF para abrir um cadastro. É a entrada da
+   * sessão de cadastro: a captura automática atribui as telas seguintes, que
+   * não mostram o CPF, a quem foi digitado aqui.
+   */
+  cpfEntrySelector?: string;
   screens: ScreenProfile[];
 }
 

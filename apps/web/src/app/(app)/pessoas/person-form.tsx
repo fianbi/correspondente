@@ -13,6 +13,7 @@ import {
   UFS,
   formatCpf,
   requiresSpouse,
+  toPlainBRL,
   type IdDocumentType,
   type MaritalStatus,
   type Nationality,
@@ -247,6 +248,42 @@ export function PersonForm({ person }: { person?: Person }) {
               defaultValue={person?.residenceProofYear ?? ""}
             />
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Grupo familiar" />
+        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field
+            label="Dependentes sem renda"
+            name="dependentsCount"
+            inputMode="numeric"
+            maxLength={2}
+            defaultValue={person?.dependentsCount ?? ""}
+            error={errorOf("dependentsCount")}
+          />
+          <Field
+            label="Aluguel"
+            name="rentCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.rentCents)}
+          />
+          <Field
+            label="Condomínio"
+            name="condoFeeCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.condoFeeCents)}
+          />
+          <Field
+            label="Pensão alimentícia"
+            name="alimonyCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.alimonyCents)}
+            hint="Despesas mensais médias do grupo familiar."
+          />
         </CardBody>
       </Card>
 

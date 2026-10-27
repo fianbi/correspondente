@@ -112,6 +112,13 @@ export const people = pgTable(
     residenceProofMonth: integer("residence_proof_month"),
     residenceProofYear: integer("residence_proof_year"),
 
+    // Grupo familiar, como a Caixa pede no cadastro do cliente: dependentes
+    // sem renda e a média das despesas mensais fixas.
+    dependentsCount: integer("dependents_count"),
+    rentCents: bigint("rent_cents", { mode: "number" }),
+    condoFeeCents: bigint("condo_fee_cents", { mode: "number" }),
+    alimonyCents: bigint("alimony_cents", { mode: "number" }),
+
     notes: text("notes"),
     createdBy: uuid("created_by"),
     ...timestamps,

@@ -1,4 +1,10 @@
-import type { CaptureOutcome, DiscoveredField, FillOutcome, PortalProfile } from "@corr/portal";
+import type {
+  AutoCapture,
+  CaptureOutcome,
+  DiscoveredField,
+  FillOutcome,
+  PortalProfile,
+} from "@corr/portal";
 
 /**
  * Contrato entre o painel lateral e o content script.
@@ -28,3 +34,15 @@ export type PanelResponse =
   | { kind: "descoberto"; fields: DiscoveredField[] }
   | { kind: "ok" }
   | { kind: "erro"; message: string };
+
+/**
+ * Do content script para o background, na captura automática.
+ *
+ * `carregou` só serve para guardar o CPF da tela; quem gera envio é `enviou`
+ * (submit do formulário) e `saiu` (a página está sendo descarregada).
+ */
+export interface CapturaDaPagina {
+  kind: "captura-auto";
+  momento: "carregou" | "enviou" | "saiu";
+  captura: AutoCapture;
+}

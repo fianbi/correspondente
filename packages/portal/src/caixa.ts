@@ -186,6 +186,28 @@ const RENDA_INFORMAL: ScreenProfile = {
   ],
 };
 
+const DEPENDENTES: ScreenProfile = {
+  key: "dependentes",
+  label: "Cadastro de clientes — número de dependentes",
+  urlHint: "cadastro_cliente",
+  marker: '[name="iNumSemDepRenda"]',
+  mappings: [
+    { dataKey: "person.dependentsCount", selector: '[name="iNumSemDepRenda"]', transform: "digits" },
+  ],
+};
+
+const DESPESAS: ScreenProfile = {
+  key: "despesas",
+  label: "Cadastro de clientes — despesas mensais",
+  urlHint: "cadastro_cliente",
+  marker: '[name="iAluguel"]',
+  mappings: [
+    { dataKey: "person.rentCents", selector: '[name="iAluguel"]', transform: "money_br" },
+    { dataKey: "person.condoFeeCents", selector: '[name="iCondominio"]', transform: "money_br" },
+    { dataKey: "person.alimonyCents", selector: '[name="iPenAli"]', transform: "money_br" },
+  ],
+};
+
 const AGENCIA: ScreenProfile = {
   key: "agencia_relacionamento",
   label: "Cadastro de clientes — agência de relacionamento",
@@ -202,7 +224,18 @@ export const CAIXA_PROFILE: PortalProfile = {
   key: "caixa_aqui",
   label: "Caixa Aqui (SICAQ)",
   hostPattern: "caixa.gov.br",
-  screens: [DADOS_CADASTRAIS, ENDERECO, RENDA_FORMAL, RENDA_INFORMAL, AGENCIA, PESQUISA],
+  // Tela "CPF do Cliente", que abre o cadastro de clientes.
+  cpfEntrySelector: "#cpf",
+  screens: [
+    DADOS_CADASTRAIS,
+    ENDERECO,
+    RENDA_FORMAL,
+    RENDA_INFORMAL,
+    DEPENDENTES,
+    DESPESAS,
+    AGENCIA,
+    PESQUISA,
+  ],
 };
 
 /** Valores de domínio traduzidos para os códigos que o portal espera. */
@@ -258,6 +291,10 @@ export function toCaixaValues(person: Record<string, unknown>): Record<string, s
     "person.housingSituation": codigo(portais.CAIXA_HOUSING_SITUATION, person.housingSituation),
     "person.residenceProofMonth": texto(person.residenceProofMonth),
     "person.residenceProofYear": texto(person.residenceProofYear),
+    "person.dependentsCount": texto(person.dependentsCount),
+    "person.rentCents": texto(person.rentCents),
+    "person.condoFeeCents": texto(person.condoFeeCents),
+    "person.alimonyCents": texto(person.alimonyCents),
     "person.phone": texto(person.phone),
     "person.email": texto(person.email),
   };

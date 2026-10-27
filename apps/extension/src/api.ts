@@ -1,4 +1,4 @@
-import type { PortalProfile } from "@corr/portal";
+import type { PortalProfile, SavedIncome } from "@corr/portal";
 
 /**
  * Cliente da API do sistema.
@@ -99,6 +99,21 @@ export const api = {
     chamar<{ applied: string[] }>(config, `/processos/${processId}/captura`, {
       method: "POST",
       body: JSON.stringify({ values }),
+    }),
+
+  /** Captura automática: a pessoa é achada pelo CPF, sem processo escolhido. */
+  capturarPorCpf: (
+    config: Config,
+    envio: {
+      cpf: string;
+      screenKey: string;
+      values: Record<string, string>;
+      incomes: SavedIncome[];
+    },
+  ) =>
+    chamar<{ found: boolean; applied: string[]; incomesAdded?: number }>(config, "/captura", {
+      method: "POST",
+      body: JSON.stringify(envio),
     }),
 
   perfil: (config: Config) => chamar<PortalProfile>(config, "/perfis"),

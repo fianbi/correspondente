@@ -12,6 +12,7 @@ import {
   type Sessao,
 } from "@/src/api";
 import { pedirAoQuadro, reconhecerPagina, type Reconhecimento } from "@/src/pagina";
+import { CapturaAutomatica } from "./CapturaAutomatica";
 
 export function App() {
   const [config, setConfig] = useState<Config>({ baseUrl: ENDERECO_PADRAO });
@@ -359,6 +360,8 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
           </p>
         </section>
       ) : null}
+
+      <CapturaAutomatica perfil={perfil} />
 
       {resultado ? <p className="ok">{resultado}</p> : null}
       {erro ? <p className="erro">{erro}</p> : null}
