@@ -3,13 +3,22 @@ import type { PortalProfile } from "@corr/portal";
 /**
  * Cliente da API do sistema.
  *
- * Autentica por token (gerado nas configurações do escritório), não por
- * cookie: a extensão roda em outra origem e não receberia o cookie de sessão.
+ * A extensão não tem login próprio: usa a sessão da web no mesmo navegador.
+ * Com permissão de host para o endereço do sistema, o Chrome manda o cookie de
+ * sessão junto (`credentials: "include"`). Usuário e escritório são sempre os
+ * da web; trocar ou sair é lá.
  */
 
 export interface Config {
   baseUrl: string;
-  token: string;
+}
+
+export const ENDERECO_PADRAO = "http://localhost:3000";
+
+export interface Sessao {
+  email: string;
+  orgId: string;
+  orgName: string;
 }
 
 export interface ProcessoResumo {
@@ -38,30 +47,37 @@ export interface DadosDoProcesso {
 
 const CONFIG_KEY = "corr.config";
 
-export async function lerConfig(): Promise<Config | null> {
-  const guardado = await chrome.storage.local.get(CONFIG_KEY);
-  return (guardado[CONFIG_KEY] as Config | undefined) ?? null;
+/** Sem sessão na web (ou ela foi encerrada): o painel pede para entrar no sistema. */
+export class SessaoExpirada extends Error {
+  constructor() {
+    super("Você não está conectado ao sistema.");
+  }
+}
+
+export async function lerConfig(): Promise<Config> {
+  const guardado = (await chrome.storage.local.get(CONFIG_KEY))[CONFIG_KEY] as
+    | Partial<Config>
+    | undefined;
+  return { baseUrl: guardado?.baseUrl ?? ENDERECO_PADRAO };
 }
 
 export async function gravarConfig(config: Config): Promise<void> {
-  await chrome.storage.local.set({ [CONFIG_KEY]: config });
+  await chrome.storage.local.set({ [CONFIG_KEY]: { baseUrl: semBarra(config.baseUrl) } });
 }
 
-export async function limparConfig(): Promise<void> {
-  await chrome.storage.local.remove(CONFIG_KEY);
+function semBarra(baseUrl: string): string {
+  return baseUrl.trim().replace(/\/$/, "");
 }
 
 async function chamar<T>(config: Config, caminho: string, init?: RequestInit): Promise<T> {
-  const resposta = await fetch(`${config.baseUrl.replace(/\/$/, "")}/api/ext${caminho}`, {
+  const resposta = await fetch(`${semBarra(config.baseUrl)}/api/ext${caminho}`, {
     ...init,
-    headers: {
-      ...init?.headers,
-      authorization: `Bearer ${config.token}`,
-      "content-type": "application/json",
-    },
-  });
+    credentials: "include",
+    headers: { ...init?.headers, "content-type": "application/json" },
+  }).catch(() => null);
+  if (!resposta) throw new Error("Não foi possível falar com o sistema nesse endereço.");
 
-  if (resposta.status === 401) throw new Error("Token inválido ou revogado.");
+  if (resposta.status === 401) throw new SessaoExpirada();
   if (!resposta.ok) {
     const corpo = (await resposta.json().catch(() => null)) as { error?: string } | null;
     throw new Error(corpo?.error ?? `Falha na chamada (${resposta.status}).`);
@@ -71,7 +87,7 @@ async function chamar<T>(config: Config, caminho: string, init?: RequestInit): P
 }
 
 export const api = {
-  sessao: (config: Config) => chamar<{ orgId: string; orgName: string }>(config, "/sessao"),
+  sessao: (config: Config) => chamar<Sessao>(config, "/sessao"),
 
   processos: (config: Config, busca: string) =>
     chamar<ProcessoResumo[]>(config, `/processos?q=${encodeURIComponent(busca)}`),

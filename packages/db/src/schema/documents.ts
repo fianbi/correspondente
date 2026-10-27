@@ -158,33 +158,6 @@ export type Pendency = typeof pendencies.$inferSelect;
 export type AccessLink = typeof accessLinks.$inferSelect;
 
 /**
- * Token de acesso da extensão de navegador.
- *
- * A extensão não recebe o cookie de sessão do app (`SameSite=Lax` barra
- * requisição de outra origem), e depender de cookie abriria a API para
- * qualquer extensão instalada. O token é gerado pelo usuário, guardado como
- * hash e revogável a qualquer momento — mesma lógica do link de acesso.
- */
-export const apiTokens = pgTable(
-  "api_tokens",
-  {
-    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-    orgId: uuid("org_id")
-      .notNull()
-      .references(() => orgs.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => profiles.id, { onDelete: "cascade" }),
-    tokenHash: text("token_hash").notNull().unique(),
-    label: text("label").notNull(),
-    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
-    revokedAt: timestamp("revoked_at", { withTimezone: true }),
-    ...timestamps,
-  },
-  (table) => [index("api_tokens_org_idx").on(table.orgId, table.userId)],
-);
-
-/**
  * Mapeamento de campo ensinado pelo operador.
  *
  * Os perfis dos portais nascem versionados no código, mas quando o banco muda
@@ -212,7 +185,6 @@ export const siteMappings = pgTable(
   ],
 );
 
-export type ApiToken = typeof apiTokens.$inferSelect;
 export type SiteMapping = typeof siteMappings.$inferSelect;
 
 /**

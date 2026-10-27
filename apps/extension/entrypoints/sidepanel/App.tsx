@@ -2,45 +2,68 @@ import { useCallback, useEffect, useState } from "react";
 import type { PortalProfile } from "@corr/portal";
 import {
   api,
+  ENDERECO_PADRAO,
   gravarConfig,
   lerConfig,
-  limparConfig,
+  SessaoExpirada,
   type Config,
   type DadosDoProcesso,
   type ProcessoResumo,
+  type Sessao,
 } from "@/src/api";
 import { pedirAoQuadro, reconhecerPagina, type Reconhecimento } from "@/src/pagina";
 
 export function App() {
-  const [config, setConfig] = useState<Config | null>(null);
-  const [org, setOrg] = useState<string | null>(null);
+  const [config, setConfig] = useState<Config>({ baseUrl: ENDERECO_PADRAO });
+  const [sessao, setSessao] = useState<Sessao | null>(null);
   const [perfil, setPerfil] = useState<PortalProfile | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  // A sessão é a da web: o painel só confere se ela existe e com quem está.
+  const conectar = useCallback(async (atual: Config) => {
+    setErro(null);
+    try {
+      const confirmada = await api.sessao(atual);
+      setSessao(confirmada);
+      setPerfil(await api.perfil(atual));
+    } catch (falha) {
+      setSessao(null);
+      setPerfil(null);
+      if (!(falha instanceof SessaoExpirada)) {
+        setErro(falha instanceof Error ? falha.message : "Falha ao conectar.");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     void (async () => {
       const guardado = await lerConfig();
-      if (!guardado) return;
       setConfig(guardado);
-      try {
-        const sessao = await api.sessao(guardado);
-        setOrg(sessao.orgName);
-        setPerfil(await api.perfil(guardado));
-      } catch (falha) {
-        setErro(falha instanceof Error ? falha.message : "Falha ao conectar.");
-      }
+      await conectar(guardado);
+      setCarregando(false);
     })();
-  }, []);
+  }, [conectar]);
 
-  if (!config || !org) {
+  // Quem acabou de entrar (ou trocar de usuário/escritório) na web volta ao
+  // painel e já encontra a sessão nova, sem precisar clicar em nada.
+  useEffect(() => {
+    const aoFocar = () => void conectar(config);
+    window.addEventListener("focus", aoFocar);
+    return () => window.removeEventListener("focus", aoFocar);
+  }, [conectar, config]);
+
+  if (carregando) return <p className="painel discreto">Carregando…</p>;
+
+  if (!sessao) {
     return (
-      <Conexao
+      <Desconectado
+        config={config}
         erro={erro}
-        aoConectar={(novo, nome) => {
+        aoTentar={async (novo) => {
+          await gravarConfig(novo);
           setConfig(novo);
-          setOrg(nome);
-          setErro(null);
-          void api.perfil(novo).then(setPerfil).catch(() => setPerfil(null));
+          await conectar(novo);
         }}
       />
     );
@@ -50,27 +73,18 @@ export function App() {
     <div className="painel">
       <header className="cabecalho">
         <div>
-          <strong>{org}</strong>
-          <p className="discreto">Correspondente</p>
+          <strong>{sessao.orgName}</strong>
+          <p className="discreto">{sessao.email}</p>
         </div>
-        <button
-          type="button"
-          className="link"
-          onClick={() =>
-            void limparConfig().then(() => {
-              setConfig(null);
-              setOrg(null);
-            })
-          }
-        >
-          Desconectar
-        </button>
       </header>
+      <p className="discreto">Para trocar de usuário ou escritório, use o sistema.</p>
 
       {erro ? <p className="erro">{erro}</p> : null}
 
       {perfil ? (
-        <Trabalho config={config} perfil={perfil} />
+        // A chave zera o trabalho ao trocar de usuário ou escritório na web:
+        // processo selecionado de um escritório não pode ser preenchido no outro.
+        <Trabalho key={`${sessao.email}:${sessao.orgId}`} config={config} perfil={perfil} />
       ) : (
         <p className="discreto">Carregando o perfil do portal…</p>
       )}
@@ -78,38 +92,32 @@ export function App() {
   );
 }
 
-function Conexao({
+function Desconectado({
+  config,
   erro,
-  aoConectar,
+  aoTentar,
 }: {
+  config: Config;
   erro: string | null;
-  aoConectar: (config: Config, orgName: string) => void;
+  aoTentar: (config: Config) => Promise<void>;
 }) {
-  const [baseUrl, setBaseUrl] = useState("http://localhost:3000");
-  const [token, setToken] = useState("");
-  const [falha, setFalha] = useState<string | null>(erro);
-  const [testando, setTestando] = useState(false);
+  const [baseUrl, setBaseUrl] = useState(config.baseUrl);
+  const [tentando, setTentando] = useState(false);
 
-  async function conectar() {
-    setTestando(true);
-    setFalha(null);
-    const config = { baseUrl, token: token.trim() };
+  async function tentar() {
+    setTentando(true);
     try {
-      const sessao = await api.sessao(config);
-      await gravarConfig(config);
-      aoConectar(config, sessao.orgName);
-    } catch (e) {
-      setFalha(e instanceof Error ? e.message : "Não foi possível conectar.");
+      await aoTentar({ baseUrl });
     } finally {
-      setTestando(false);
+      setTentando(false);
     }
   }
 
   return (
     <div className="painel">
-      <h1>Conectar ao sistema</h1>
+      <h1>Você não está conectado ao sistema</h1>
       <p className="discreto">
-        Gere um token em Configurações → Escritório, no sistema, e cole aqui.
+        A extensão usa o login do sistema neste navegador. Entre no sistema e volte aqui.
       </p>
 
       <label>
@@ -117,25 +125,17 @@ function Conexao({
         <input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} />
       </label>
 
-      <label>
-        Token
-        <input
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder="corr_…"
-          type="password"
-        />
-      </label>
-
-      {falha ? <p className="erro">{falha}</p> : null}
+      {erro ? <p className="erro">{erro}</p> : null}
 
       <button
         type="button"
         className="primario"
-        disabled={testando || !token}
-        onClick={() => void conectar()}
+        onClick={() => void chrome.tabs.create({ url: `${baseUrl.trim().replace(/\/$/, "")}/login` })}
       >
-        {testando ? "Conectando…" : "Conectar"}
+        Abrir o sistema
+      </button>
+      <button type="button" disabled={tentando} onClick={() => void tentar()}>
+        {tentando ? "Conferindo…" : "Já entrei, tentar de novo"}
       </button>
     </div>
   );

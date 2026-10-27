@@ -1,77 +1,51 @@
-import { randomUUID } from "node:crypto";
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
- * Exercita a API que a extensão consome, do jeito que ela consome: token no
- * cabeçalho, origem de extensão, sem cookie nenhum.
+ * Exercita a API que a extensão consome, do jeito que ela consome: com o
+ * cookie da sessão da web (o `request` já vem com o do storageState) e a origem
+ * da extensão. A extensão não tem login próprio.
  */
 
-async function gerarToken(page: Page): Promise<{ token: string; label: string }> {
-  // Rótulo único por execução: a base de desenvolvimento acumula tokens, e
-  // revogar "o primeiro que contém Teste" acabaria pegando outro.
-  const label = `Teste ${randomUUID().slice(0, 8)}`;
-
-  await page.goto("/configuracoes/escritorio");
-  await page.getByLabel("Identificação").fill(label);
-  await page.getByRole("button", { name: "Gerar token" }).click();
-
-  const codigo = page.locator("code").first();
-  await expect(codigo).toBeVisible();
-  const token = (await codigo.innerText()).trim();
-  expect(token.startsWith("corr_")).toBe(true);
-  return { token, label };
-}
+const EMAIL = process.env.SEED_USER_EMAIL ?? "dev@correspondente.local";
+const PASSWORD = process.env.SEED_USER_PASSWORD ?? "dev12345678";
 
 const ORIGEM_EXTENSAO = "chrome-extension://abcdefghijklmnopabcdefghijklmnop";
 
-function comToken(request: APIRequestContext, token: string) {
-  return {
-    headers: {
-      authorization: `Bearer ${token}`,
-      origin: ORIGEM_EXTENSAO,
-      "content-type": "application/json",
-    },
-    request,
-  };
-}
+const headers = { origin: ORIGEM_EXTENSAO, "content-type": "application/json" };
 
-test("token válido identifica o escritório", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-  const { headers } = comToken(request, token);
-
+test("sessão da web identifica usuário e escritório", async ({ request }) => {
   const resposta = await request.get("/api/ext/sessao", { headers });
   expect(resposta.status()).toBe(200);
-  expect(await resposta.json()).toMatchObject({ orgName: "Escritório Demo" });
+  expect(await resposta.json()).toMatchObject({ email: EMAIL, orgName: "Escritório Demo" });
 
-  // A resposta libera a origem da extensão — e só ela.
+  // A resposta libera a origem da extensão — e só ela —, com credenciais.
   expect(resposta.headers()["access-control-allow-origin"]).toBe(ORIGEM_EXTENSAO);
+  expect(resposta.headers()["access-control-allow-credentials"]).toBe("true");
 });
 
-test("sem token a API não responde nada", async ({ request }) => {
-  const semNada = await request.get("/api/ext/sessao");
-  expect(semNada.status()).toBe(401);
-
-  const inventado = await request.get("/api/ext/sessao", {
-    headers: { authorization: "Bearer corr_token_inventado_qualquer" },
+test("sem a sessão da web a API não responde nada", async ({ playwright, baseURL }) => {
+  const semCookie = await playwright.request.newContext({
+    baseURL,
+    storageState: { cookies: [], origins: [] },
   });
-  expect(inventado.status()).toBe(401);
+
+  const resposta = await semCookie.get("/api/ext/sessao", { headers });
+  // 401, e não o redirecionamento para /login que a web faria.
+  expect(resposta.status()).toBe(401);
+
+  await semCookie.dispose();
 });
 
-test("origem de site comum não é liberada pelo CORS", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-
+test("site comum não usa o cookie da web contra a API", async ({ request }) => {
   const resposta = await request.get("/api/ext/sessao", {
-    headers: { authorization: `Bearer ${token}`, origin: "https://site-qualquer.com" },
+    headers: { origin: "https://site-qualquer.com" },
   });
 
-  // O token ainda funciona (é cabeçalho, não cookie), mas o navegador de um
-  // site comum não conseguiria ler a resposta.
+  expect(resposta.status()).toBe(401);
   expect(resposta.headers()["access-control-allow-origin"]).toBe("null");
 });
 
-test("lista processos e entrega os dados já em código de portal", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-  const { headers } = comToken(request, token);
+test("lista processos e entrega os dados já em código de portal", async ({ request }) => {
 
   const lista = await request.get("/api/ext/processos", { headers });
   const processos = (await lista.json()) as { id: string; number: number }[];
@@ -87,9 +61,7 @@ test("lista processos e entrega os dados já em código de portal", async ({ pag
   }
 });
 
-test("busca por CPF encontra o processo", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-  const { headers } = comToken(request, token);
+test("busca por CPF encontra o processo", async ({ request }) => {
 
   const resposta = await request.get("/api/ext/processos?q=11144477735", { headers });
   const processos = (await resposta.json()) as { personCpf: string }[];
@@ -98,9 +70,7 @@ test("busca por CPF encontra o processo", async ({ page, request }) => {
   expect(processos.every((p) => p.personCpf === "11144477735")).toBe(true);
 });
 
-test("o perfil do portal vem com as telas mapeadas", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-  const { headers } = comToken(request, token);
+test("o perfil do portal vem com as telas mapeadas", async ({ request }) => {
 
   const resposta = await request.get("/api/ext/perfis", { headers });
   const perfil = (await resposta.json()) as {
@@ -113,9 +83,7 @@ test("o perfil do portal vem com as telas mapeadas", async ({ page, request }) =
   expect(dados?.mappings.length).toBeGreaterThan(15);
 });
 
-test("captura não sobrescreve o que o cadastro já tem", async ({ page, request }) => {
-  const { token } = await gerarToken(page);
-  const { headers } = comToken(request, token);
+test("captura não sobrescreve o que o cadastro já tem", async ({ request }) => {
 
   const lista = await request.get("/api/ext/processos", { headers });
   const [processo] = (await lista.json()) as { id: string }[];
@@ -135,16 +103,23 @@ test("captura não sobrescreve o que o cadastro já tem", async ({ page, request
   expect(valores.values["person.fullName"]).not.toBe("NOME VINDO DO PORTAL");
 });
 
-test("token revogado para de funcionar na hora", async ({ page, request }) => {
-  const { token, label } = await gerarToken(page);
-  const { headers } = comToken(request, token);
+test("sair na web desconecta a extensão", async ({ browser }) => {
+  // Contexto próprio, com login próprio: sair aqui não derruba a sessão
+  // compartilhada dos outros testes (o logout da web é `local`).
+  const contexto = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+  const page = await contexto.newPage();
 
-  expect((await request.get("/api/ext/sessao", { headers })).status()).toBe(200);
+  await page.goto("/login");
+  await page.getByLabel("E-mail").fill(EMAIL);
+  await page.getByLabel("Senha").fill(PASSWORD);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.waitForURL("**/painel");
 
-  await page.reload();
-  const linha = page.getByRole("listitem").filter({ hasText: label });
-  await linha.getByRole("button", { name: "Revogar" }).click();
-  await expect(linha.getByText("Revogado")).toBeVisible();
+  const sessao = () => contexto.request.get("/api/ext/sessao", { headers });
+  expect((await sessao()).status()).toBe(200);
 
-  expect((await request.get("/api/ext/sessao", { headers })).status()).toBe(401);
+  await contexto.request.post("/auth/sair");
+  expect((await sessao()).status()).toBe(401);
+
+  await contexto.close();
 });

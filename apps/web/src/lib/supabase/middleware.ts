@@ -2,8 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicEnv } from "@/lib/env";
 
-/** Rotas que não exigem sessão. */
-const PUBLIC_PREFIXES = ["/login", "/cadastro", "/auth", "/p/"];
+/**
+ * Rotas que não exigem sessão. A API da extensão (`/api/ext/`) autentica pela
+ * sessão da web em `_auth.ts` e responde 401 em vez de redirecionar para
+ * /login, que a extensão não teria como seguir. O refresh do cookie continua
+ * rodando para ela.
+ */
+const PUBLIC_PREFIXES = ["/login", "/cadastro", "/auth", "/p/", "/api/ext/"];
 
 const isPublic = (pathname: string) =>
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));

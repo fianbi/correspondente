@@ -92,6 +92,13 @@
       "when": 1789881491875,
       "tag": "0012_rls_formularios",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792984812855,
+      "tag": "0013_drop_api_tokens",
+      "breakpoints": true
     }
   ]
 }

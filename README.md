@@ -48,9 +48,15 @@ o preenchimento sem abrir o Caixa Aqui.
 A extensão nunca submete formulário: preenche, e quem confere e salva é o operador. Ela
 também não guarda credencial de banco nenhuma — o operador faz o login dele no portal.
 
-A autenticação com o sistema é por token gerado nas configurações, não por cookie: a
-extensão roda em outra origem e não receberia o cookie de sessão, e depender dele abriria
-a API para qualquer extensão instalada no navegador.
+A extensão não tem login próprio: usa a sessão da web no mesmo navegador. Ela tem
+permissão de host para o endereço do sistema, então o Chrome manda o cookie de sessão nas
+chamadas que ela faz (`credentials: "include"`). Usuário e escritório são sempre os da web:
+trocar de usuário, de escritório ou sair é lá, e vale para a extensão na próxima chamada.
+Sem sessão, o painel pede para abrir o sistema. A API confere a sessão no Auth e o vínculo
+com o escritório a cada chamada, e só aceita a origem da extensão (`EXTENSION_ORIGINS`;
+em desenvolvimento, qualquer extensão sem empacotar): um site comum não usa o cookie da
+web contra ela. Em produção, o domínio do sistema precisa estar no `host_permissions` do
+manifest.
 
 ## Documentos e acesso de terceiros
 
