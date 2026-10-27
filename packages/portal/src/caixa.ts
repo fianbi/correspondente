@@ -1,4 +1,6 @@
-import { portais } from "@corr/core";
+// Só os mapas do portal: o pacote inteiro traz o zod, que não tem lugar no
+// content script que roda dentro da página do banco.
+import * as portais from "@corr/core/portais";
 import type { FieldMapping, PortalProfile, ScreenProfile } from "./types";
 
 /**

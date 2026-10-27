@@ -78,9 +78,13 @@ function observarCapturaAutomatica() {
     if (momento !== "carregou") ultimaChave = chave;
 
     const mensagem: CapturaDaPagina = { kind: "captura-auto", momento, captura };
-    chrome.runtime.sendMessage(mensagem).catch(() => {
-      // Extensão recarregada ou desligada: a página segue sem ela.
-    });
+    try {
+      chrome.runtime.sendMessage(mensagem).catch(() => undefined);
+    } catch {
+      // Extensão recarregada com a aba aberta: este script ficou órfão e o
+      // Chrome recusa a chamada na hora ("Extension context invalidated"). A
+      // página segue sem ele; a aba recarregada já vem com o script novo.
+    }
   };
 
   avisar("carregou");
