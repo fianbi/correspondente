@@ -1,12 +1,13 @@
 import { api, lerConfig } from "./api";
 import {
   CHAVE_DESLIGADA,
-  CHAVE_ESTADO,
+  chaveDaAba,
   CHAVE_ULTIMA,
   decidirEnvio,
   esquecerEnvio,
   ESTADO_INICIAL,
   saiuDoCadastro,
+  TELAS_QUE_ABREM_CADASTRO,
   type EstadoCaptura,
   type UltimaCaptura,
 } from "./captura-auto";
@@ -24,7 +25,6 @@ import type { CapturaDaPagina } from "./messages";
  * diferentes não podem trocar dados entre si.
  */
 
-const chaveDaAba = (tabId: number) => `${CHAVE_ESTADO}.${tabId}`;
 
 async function lerEstado(tabId: number): Promise<EstadoCaptura> {
   const chave = chaveDaAba(tabId);
@@ -59,8 +59,10 @@ async function processar(
   // operador saiu do cadastro (ver `ouvirCapturaAutomatica`).
   const origem = mensagem.captura.cpf ? { cpfNoTopo: frameId === 0 } : {};
 
-  if (mensagem.momento === "carregou") {
-    // Abrir a tela não envia nada: só registra de quem é o cadastro em curso.
+  const abreCadastro = TELAS_QUE_ABREM_CADASTRO.has(mensagem.captura.screenKey ?? "");
+  if (mensagem.momento === "carregou" && !abreCadastro) {
+    // Abrir a tela não envia nada (fora as que abrem o cadastro): só registra
+    // de quem é o cadastro em curso.
     if (mensagem.captura.cpf) {
       await gravarEstado(tabId, { ...estado, ...origem, cpf: mensagem.captura.cpf, cpfEm: agora });
     }
@@ -75,13 +77,18 @@ async function processar(
   const base = { em: agora, screenKey: envio.screenKey, cpfFinal: envio.cpf.slice(-4) };
   try {
     const { chave: _chave, ...corpo } = envio;
-    const { found, applied, incomesAdded } = await api.capturarPorCpf(config, corpo);
+    const resposta = await api.capturarPorCpf(config, corpo);
+    const { found, applied, incomesAdded } = resposta;
     await registrar({
       ...base,
       applied,
       incomesAdded: incomesAdded ?? 0,
-      // A extensão não cria pessoa: cadastro novo nasce no sistema, conferido.
-      erro: found ? null : "CPF sem cadastro neste escritório; nada foi gravado.",
+      created: resposta.created === true,
+      spouseCreated: resposta.spouseCreated === true,
+      // Sem nome na tela não há como criar: a tela de dados cadastrais cria.
+      erro: found
+        ? null
+        : "CPF ainda sem cadastro; ele é criado quando a tela de dados cadastrais tiver o nome.",
     });
   } catch (falha) {
     // Rede ou servidor: o mesmo conteúdo pode ir na próxima leitura.

@@ -63,6 +63,8 @@ export function CapturaAutomatica({ perfil }: { perfil: PortalProfile }) {
 
 function descrever(ultima: UltimaCaptura): string {
   const partes: string[] = [];
+  if (ultima.created) partes.push("cadastro criado");
+  if (ultima.spouseCreated) partes.push("cônjuge cadastrado");
   if (ultima.applied.length > 0) partes.push(`${ultima.applied.length} campo(s)`);
   if (ultima.incomesAdded) partes.push(`${ultima.incomesAdded} renda(s)`);
   return partes.length === 0 ? "nada novo para o cadastro." : `${partes.join(" e ")} trazido(s).`;

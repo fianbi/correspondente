@@ -13,6 +13,7 @@ import {
 } from "@/src/api";
 import { pedirAoQuadro, reconhecerPagina, type Reconhecimento } from "@/src/pagina";
 import { CapturaAutomatica } from "./CapturaAutomatica";
+import { ClienteDaTela } from "./ClienteDaTela";
 
 export function App() {
   const [config, setConfig] = useState<Config>({ baseUrl: ENDERECO_PADRAO });
@@ -236,6 +237,8 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
 
   return (
     <>
+      <ClienteDaTela config={config} />
+
       <section className="bloco">
         <div className="linha">
           <p className="rotulo">Tela aberta</p>

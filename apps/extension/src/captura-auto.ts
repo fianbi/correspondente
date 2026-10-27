@@ -83,6 +83,14 @@ export function esquecerEnvio(estado: EstadoCaptura, chave: string): EstadoCaptu
 
 /** Estado da sessão de cadastro (`chrome.storage.session`: some ao fechar o navegador). */
 export const CHAVE_ESTADO = "corr.capturaAuto.estado";
+/** Chave do estado de uma aba: cada aba tem o seu cadastro em curso. */
+export const chaveDaAba = (tabId: number) => `${CHAVE_ESTADO}.${tabId}`;
+
+/**
+ * Telas que abrem o cadastro: com elas, a leitura já vale ao abrir a tela, e
+ * não só ao sair. É o que cria a pessoa que o escritório ainda não tem.
+ */
+export const TELAS_QUE_ABREM_CADASTRO = new Set(["cadastro_dados"]);
 /** Resultado do último envio, que o painel mostra. */
 export const CHAVE_ULTIMA = "corr.capturaAuto.ultima";
 /** Presente quando o operador desligou a captura automática no painel. */
@@ -98,6 +106,10 @@ export interface UltimaCaptura {
   applied: string[];
   /** Rendas da lista do portal que entraram no cadastro. */
   incomesAdded?: number;
+  /** A pessoa não existia e foi criada com esta tela. */
+  created?: boolean;
+  /** O cônjuge da tela também ganhou cadastro. */
+  spouseCreated?: boolean;
   erro: string | null;
 }
 

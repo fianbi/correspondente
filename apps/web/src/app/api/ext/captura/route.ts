@@ -1,5 +1,11 @@
 import { findPersonByCpf } from "@corr/db";
-import { adicionarRendas, aplicarCaptura } from "../_captura";
+import {
+  adicionarRendas,
+  aplicarCaptura,
+  chavesAceitas,
+  criarPessoaDaTela,
+  garantirConjuge,
+} from "../_captura";
 import { contextFromRequest, json, preflight, unauthorized } from "../_auth";
 
 export async function OPTIONS(request: Request) {
@@ -11,8 +17,9 @@ export async function OPTIONS(request: Request) {
  * (ou na saída da página) e manda o que leu, com o CPF da sessão de cadastro.
  *
  * Ninguém escolheu processo, então a pessoa é achada pelo CPF dentro do
- * escritório. CPF sem cadastro não cria ninguém: pessoa nova nasce no sistema,
- * conferida, e a resposta só diz que não achou.
+ * escritório. CPF sem cadastro vira cadastro novo quando a tela traz o nome
+ * completo (a de dados cadastrais); nas outras, a resposta só diz que não
+ * achou. Cônjuge informado na tela também vira cadastro, se não existir.
  */
 export async function POST(request: Request) {
   const ctx = await contextFromRequest(request);
@@ -32,9 +39,12 @@ export async function POST(request: Request) {
       ? (body.values as Record<string, string | null>)
       : {};
 
-  const pessoa = await findPersonByCpf(ctx, cpf);
+  const existente = await findPersonByCpf(ctx, cpf);
+  const criadaId = existente ? null : await criarPessoaDaTela(ctx, cpf, values);
+  const pessoa = existente ?? (criadaId ? { id: criadaId } : null);
   if (!pessoa) return json(request, { found: false, applied: [] });
 
+  const spouseCreated = await garantirConjuge(ctx, values);
   const resultado = await aplicarCaptura(ctx, pessoa.id, values);
   if (!resultado.ok) return json(request, { error: resultado.error }, 400);
 
@@ -43,7 +53,10 @@ export async function POST(request: Request) {
 
   return json(request, {
     found: true,
-    applied: resultado.applied,
+    created: criadaId !== null,
+    spouseCreated,
+    // Pessoa recém-criada: o que a tela trouxe entrou na criação.
+    applied: criadaId !== null ? chavesAceitas(values) : resultado.applied,
     incomesAdded: rendasNovas,
     personId: pessoa.id,
   });

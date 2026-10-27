@@ -1,7 +1,15 @@
 import "server-only";
 
 import { personIncomeInputSchema, personInputSchema, type OrgContext } from "@corr/core";
-import { addPersonIncome, getPerson, listPersonIncomes, updatePerson } from "@corr/db";
+import {
+  addPersonIncome,
+  createPerson,
+  DuplicatePersonError,
+  findPersonByCpf,
+  getPerson,
+  listPersonIncomes,
+  updatePerson,
+} from "@corr/db";
 
 /** Chaves que a extensão pode escrever de volta, vindas da tela do portal. */
 const CAMPOS_ACEITOS: Record<string, string> = {
@@ -129,4 +137,69 @@ export async function adicionarRendas(
   }
 
   return adicionadas;
+}
+
+/** Chaves da tela que entram no cadastro (as aceitas e preenchidas). */
+export function chavesAceitas(recebidos: Record<string, string | null>): string[] {
+  return Object.keys(CAMPOS_ACEITOS).filter((chave) => Boolean(recebidos[chave]));
+}
+
+/** Só as colunas aceitas, já no formato que o schema da pessoa lê. */
+function camposDaTela(recebidos: Record<string, string | null>): Record<string, unknown> {
+  const campos: Record<string, unknown> = {};
+  for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
+    const valor = recebidos[chave];
+    if (valor === undefined || valor === null || valor === "") continue;
+    campos[coluna] = EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor;
+  }
+  return campos;
+}
+
+/**
+ * Cria quem ainda não existe no escritório.
+ *
+ * O cadastro nasce da tela de dados cadastrais do portal, que mostra o CPF e
+ * o nome completo; sem nome não há cadastro, e quem cria é a tela seguinte
+ * que o trouxer. Devolve o id, ou `null` quando a tela não basta.
+ */
+export async function criarPessoaDaTela(
+  ctx: OrgContext,
+  cpf: string,
+  recebidos: Record<string, string | null>,
+): Promise<string | null> {
+  const parsed = personInputSchema.safeParse({ ...camposDaTela(recebidos), cpf });
+  if (!parsed.success) return null;
+
+  try {
+    return (await createPerson(ctx, parsed.data)).id;
+  } catch (error) {
+    // Duas leituras da mesma tela chegando juntas: a outra já criou.
+    if (error instanceof DuplicatePersonError) return error.personId;
+    throw error;
+  }
+}
+
+/**
+ * Cônjuge informado na tela vira cadastro também, se ainda não existir. Só
+ * CPF e nome: o resto do cadastro dele vem quando a tela for a dele.
+ */
+export async function garantirConjuge(
+  ctx: OrgContext,
+  recebidos: Record<string, string | null>,
+): Promise<boolean> {
+  const cpf = recebidos["person.spouseCpf"]?.replace(/D+/g, "") ?? "";
+  const nome = recebidos["person.spouseName"]?.trim() ?? "";
+  if (cpf.length !== 11 || nome === "") return false;
+  if (await findPersonByCpf(ctx, cpf)) return false;
+
+  const parsed = personInputSchema.safeParse({ cpf, fullName: nome });
+  if (!parsed.success) return false;
+
+  try {
+    await createPerson(ctx, parsed.data);
+    return true;
+  } catch (error) {
+    if (error instanceof DuplicatePersonError) return false;
+    throw error;
+  }
 }

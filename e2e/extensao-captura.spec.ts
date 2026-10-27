@@ -82,6 +82,19 @@ test.beforeAll(async () => {
     if (url.pathname.endsWith("/cadastro_cliente12b_renda_dependentes_finalizar")) {
       return rota.fulfill({ contentType: "text/html", body: fixture("cadastro-de-clientes-8.html") });
     }
+    // Dados cadastrais de um cliente que a Caixa já conhece: a tela abre
+    // preenchida, com CPF, nome e cônjuge vindos do próprio portal.
+    if (url.pathname.endsWith("/cliente_conhecido")) {
+      const cpf = url.searchParams.get("cpf") ?? "";
+      const nome = url.searchParams.get("nome") ?? "";
+      const conjuge = url.searchParams.get("conjuge") ?? "";
+      const corpo = fixture("cadastro-de-clientes-3.html")
+        .replace('name="dataCpf" readonly="readonly" size="13" maxlength="11" value=""', `name="dataCpf" readonly="readonly" size="13" maxlength="11" value="${cpf}"`)
+        .replace(/(name="nomeCompleto"[^>]*value=")"/, `$1${nome}"`)
+        .replace(/(name="cpfConjuge"[^>]*value=")"/, `$1${conjuge}"`)
+        .replace(/(name="nomeCompletoConjuge"[^>]*value=")"/, `$1CONJUGE DE ${nome}"`);
+      return rota.fulfill({ contentType: "text/html", body: corpo });
+    }
     if (url.pathname.endsWith("/cadastro_cliente4")) {
       return rota.fulfill({ contentType: "text/html", body: fixture("cadastro-de-clientes-6.html") });
     }
@@ -159,4 +172,41 @@ test("sair do cadastro esquece o CPF: a tela seguinte não vai para ninguém", a
   // Dá tempo ao background; nada pode ter sido enviado.
   await pagina.waitForTimeout(1500);
   expect((await ultima())?.em).toBe(antes?.em);
+});
+
+test("cliente que o escritório não tem é criado ao abrir a tela, com o cônjuge, e aparece no painel", async () => {
+  const pagina = await contexto.newPage();
+  const cpf = cpfFicticio();
+  const conjuge = cpfFicticio();
+  const nome = `CLIENTE DA CAIXA ${Date.now().toString().slice(-5)}`;
+
+  // Só abrir a tela: nada de envio de formulário nem saída da página.
+  await pagina.goto(
+    `${PORTAL}/cadastro_cliente/cliente_conhecido?cpf=${cpf}&nome=${encodeURIComponent(nome)}&conjuge=${conjuge}`,
+  );
+  await expect.poll(ultima, { timeout: 10_000 }).toMatchObject({
+    screenKey: "cadastro_dados",
+    cpfFinal: cpf.slice(-4),
+    created: true,
+    spouseCreated: true,
+    erro: null,
+  });
+
+  // O painel mostra o cadastro do CPF da sessão da aba ativa. Aberto numa aba
+  // própria, a aba ativa é o próprio painel: a sessão vai para ela.
+  const id = new URL(fundo.url()).host;
+  const painel = await contexto.newPage();
+  await painel.goto(`chrome-extension://${id}/sidepanel.html`);
+  const abaDoPainel = await painel.evaluate(async () => (await chrome.tabs.getCurrent())!.id!);
+  await fundo.evaluate(
+    ({ aba, cpf }) =>
+      chrome.storage.session.set({
+        [`corr.capturaAuto.estado.${aba}`]: { cpf, cpfEm: Date.now(), enviados: [] },
+      }),
+    { aba: abaDoPainel, cpf },
+  );
+
+  await expect(painel.getByText("Cliente na tela")).toBeVisible();
+  await expect(painel.getByText(nome, { exact: true })).toBeVisible();
+  await expect(painel.getByText(`CONJUGE DE ${nome}`)).toBeVisible();
 });

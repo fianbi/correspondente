@@ -113,13 +113,62 @@ test("dependentes e despesas entram no grupo familiar, sem sobrescrever", async 
   await expect(page.getByLabel("Aluguel")).toHaveValue("1500,00");
 });
 
-test("CPF sem cadastro não cria ninguém", async ({ request }) => {
+test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
+  const cpf = cpfFicticio();
+  const conjuge = cpfFicticio();
+  const sufixo = Date.now().toString().slice(-5);
+
   const resposta = await request.post("/api/ext/captura", {
     headers,
-    data: { cpf: cpfFicticio(), screenKey: "cadastro_dados", values: { "person.fullName": "X" } },
+    data: {
+      cpf,
+      screenKey: "cadastro_dados",
+      values: {
+        "person.fullName": `CLIENTE NOVO ${sufixo}`,
+        "person.motherName": "MAE DO CLIENTE NOVO",
+        "person.spouseCpf": conjuge,
+        "person.spouseName": `CONJUGE NOVO ${sufixo}`,
+        // Código do portal: não entra no cadastro, nem derruba a criação.
+        "person.sex": "F",
+      },
+      incomes: [],
+    },
   });
   expect(resposta.status()).toBe(200);
+  expect(await resposta.json()).toMatchObject({
+    found: true,
+    created: true,
+    spouseCreated: true,
+    applied: expect.arrayContaining(["person.fullName", "person.motherName"]),
+  });
+
+  // O painel acha os dois pelo CPF.
+  const pessoa = await request.get(`/api/ext/pessoas/${cpf}`, { headers });
+  expect(await pessoa.json()).toMatchObject({
+    fullName: `CLIENTE NOVO ${sufixo}`,
+    motherName: "MAE DO CLIENTE NOVO",
+    spouseName: `CONJUGE NOVO ${sufixo}`,
+    processes: [],
+  });
+  const doConjuge = await request.get(`/api/ext/pessoas/${conjuge}`, { headers });
+  expect(await doConjuge.json()).toMatchObject({ fullName: `CONJUGE NOVO ${sufixo}` });
+
+  // A mesma tela de novo não cria nada outra vez.
+  const deNovo = await request.post("/api/ext/captura", {
+    headers,
+    data: { cpf, screenKey: "cadastro_dados", values: { "person.fullName": "OUTRO NOME" }, incomes: [] },
+  });
+  expect(await deNovo.json()).toMatchObject({ found: true, created: false, applied: [] });
+});
+
+test("CPF novo sem nome na tela não cria ninguém", async ({ request }) => {
+  const cpf = cpfFicticio();
+  const resposta = await request.post("/api/ext/captura", {
+    headers,
+    data: { cpf, screenKey: "cadastro_endereco", values: { "person.zipCode": "01310100" } },
+  });
   expect(await resposta.json()).toEqual({ found: false, applied: [] });
+  expect(await (await request.get(`/api/ext/pessoas/${cpf}`, { headers })).json()).toBeNull();
 });
 
 test("sem CPF válido a captura é recusada", async ({ request }) => {

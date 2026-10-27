@@ -37,6 +37,31 @@ export interface RendaDoProcesso {
   values: Record<string, string | null>;
 }
 
+export interface PessoaDaTela {
+  id: string;
+  cpf: string;
+  fullName: string;
+  birthDate: string | null;
+  motherName: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  uf: string | null;
+  maritalStatus: string | null;
+  spouseName: string | null;
+  dependentsCount: number | null;
+  rentCents: number | null;
+  condoFeeCents: number | null;
+  alimonyCents: number | null;
+  incomes: {
+    kind: string;
+    sourceName: string | null;
+    grossCents: number | null;
+    netCents: number | null;
+  }[];
+  processes: { id: string; number: number; stage: string; status: string }[];
+}
+
 export interface DadosDoProcesso {
   processId: string;
   number: number;
@@ -111,10 +136,20 @@ export const api = {
       incomes: SavedIncome[];
     },
   ) =>
-    chamar<{ found: boolean; applied: string[]; incomesAdded?: number }>(config, "/captura", {
+    chamar<{
+      found: boolean;
+      applied: string[];
+      incomesAdded?: number;
+      created?: boolean;
+      spouseCreated?: boolean;
+    }>(config, "/captura", {
       method: "POST",
       body: JSON.stringify(envio),
     }),
+
+  /** Cadastro do CPF que está na tela do portal; `null` se ainda não existe. */
+  pessoaPorCpf: (config: Config, cpf: string) =>
+    chamar<PessoaDaTela | null>(config, `/pessoas/${cpf}`),
 
   perfil: (config: Config) => chamar<PortalProfile>(config, "/perfis"),
 
