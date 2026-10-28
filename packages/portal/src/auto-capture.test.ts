@@ -63,6 +63,47 @@ describe("readForAutoCapture", () => {
     expect(captura.values["person.cpf"]).toBeUndefined();
   });
 
+  it("listas voltam nos valores do sistema, não nos códigos do portal", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const escolher = (nome: string, valor: string) => {
+      doc.querySelector<HTMLSelectElement>(`[name="${nome}"]`)!.value = valor;
+    };
+    escolher("cmbSexo", "F");
+    escolher("cmbNacionalidade", "BRASILEIRO");
+    escolher("cmbUFNaturalidade", "35");
+    escolher("cmbMunicipioNaturalidade", "0010");
+    escolher("cmbGrauInstrucao", "07");
+    escolher("cmbEstadoCivil", "9");
+    escolher("cmbTipoDocumento", "0372008");
+    escolher("cmbOrgaoEmissorRg", "10");
+    escolher("cmbUFIdentidadeRg", "SP");
+
+    const captura = readForAutoCapture(doc, CAIXA_PROFILE)!;
+    expect(captura.values).toMatchObject({
+      "person.sex": "feminino",
+      "person.nationality": "brasileiro",
+      "person.birthUf": "SP",
+      // Município e órgão emissor: o sistema guarda o nome que a tela mostra.
+      "person.birthCity": "ADAMANTINA",
+      "person.educationLevel": "medio_completo",
+      "person.maritalStatus": "casado_comunhao_parcial",
+      "person.docType": "rg",
+      "person.docIssuer": "SECRETARIA DE SEGURANÇA PÚBLICA",
+      "person.docIssuerUf": "SP",
+    });
+  });
+
+  it("código que o sistema não conhece fica de fora", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const sexo = doc.querySelector<HTMLSelectElement>("[name=\"cmbSexo\"]")!;
+    const opcao = doc.createElement("option");
+    opcao.value = "X";
+    opcao.textContent = "OUTRO";
+    sexo.appendChild(opcao);
+    sexo.value = "X";
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values["person.sex"]).toBeUndefined();
+  });
+
   it("tela sem CPF volta sem CPF, para o background usar o da sessão", () => {
     const doc = carregarFixture("cadastro-de-clientes-4.html");
     escrever(doc, "cep", "01310100");

@@ -1,4 +1,5 @@
 import { bestScreenForFieldNames, captureScreen } from "./engine";
+import { fromCaixaOutcomes } from "./from-caixa";
 import { readSavedIncomes, type SavedIncome } from "./saved-incomes";
 import type { PortalProfile } from "./types";
 
@@ -57,7 +58,7 @@ export function readForAutoCapture(root: Document, profile: PortalProfile): Auto
   const values: Record<string, string> = {};
   let cpf: string | null = entrada;
 
-  for (const { dataKey, value } of captureScreen(root, reconhecida.screen)) {
+  for (const { dataKey, value } of fromCaixaOutcomes(captureScreen(root, reconhecida.screen))) {
     if (value === null) continue;
 
     if (dataKey === "person.cpf") {

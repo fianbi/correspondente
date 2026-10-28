@@ -128,8 +128,6 @@ test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
         "person.motherName": "MAE DO CLIENTE NOVO",
         "person.spouseCpf": conjuge,
         "person.spouseName": `CONJUGE NOVO ${sufixo}`,
-        // Código do portal: não entra no cadastro, nem derruba a criação.
-        "person.sex": "F",
         // Formato que o cadastro não aceita: fica de fora, sem levar o resto.
         "person.email": "nao-e-email",
       },
@@ -162,6 +160,45 @@ test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
     data: { cpf, screenKey: "cadastro_dados", values: { "person.fullName": "OUTRO NOME" }, incomes: [] },
   });
   expect(await deNovo.json()).toMatchObject({ found: true, created: false, applied: [] });
+});
+
+test("listas da tela aparecem preenchidas no cadastro da web", async ({ page, request }) => {
+  const cpf = cpfFicticio();
+  const resposta = await request.post("/api/ext/captura", {
+    headers,
+    data: {
+      cpf,
+      screenKey: "cadastro_dados",
+      // Como a extensão manda depois de traduzir os códigos do portal.
+      values: {
+        "person.fullName": `CLIENTE LISTAS ${Date.now().toString().slice(-5)}`,
+        "person.sex": "feminino",
+        "person.nationality": "brasileiro",
+        "person.birthUf": "SP",
+        "person.birthCity": "ADAMANTINA",
+        "person.educationLevel": "medio_completo",
+        // Casado sem o cônjuge ainda: o nome dele vem depois, e o estado
+        // civil não pode ficar de fora por isso.
+        "person.maritalStatus": "casado_comunhao_parcial",
+        "person.docType": "rg",
+        "person.docIssuer": "SECRETARIA DE SEGURANÇA PÚBLICA",
+        "person.docIssuerUf": "SP",
+      },
+      incomes: [],
+    },
+  });
+  const corpo = (await resposta.json()) as { personId: string; ignored: string[] };
+  expect(corpo.ignored).toEqual([]);
+
+  await page.goto(`/pessoas/${corpo.personId}`);
+  await expect(page.getByLabel("Sexo")).toHaveValue("feminino");
+  await expect(page.getByLabel("Nacionalidade")).toHaveValue("brasileiro");
+  await expect(page.getByLabel("UF de naturalidade")).toHaveValue("SP");
+  await expect(page.getByLabel("Cidade de naturalidade")).toHaveValue("ADAMANTINA");
+  await expect(page.getByLabel("Grau de instrução")).toHaveValue("medio_completo");
+  await expect(page.getByLabel("Estado civil")).toHaveValue("casado_comunhao_parcial");
+  await expect(page.getByLabel("Órgão emissor")).toHaveValue("SECRETARIA DE SEGURANÇA PÚBLICA");
+  await expect(page.getByLabel("UF do órgão")).toHaveValue("SP");
 });
 
 test("CPF novo sem nome na tela não cria ninguém", async ({ request }) => {

@@ -37,6 +37,25 @@ const CAMPOS_ACEITOS: Record<string, string> = {
   "person.district": "district",
   "person.city": "city",
   "person.email": "email",
+  // Listas do portal, já traduzidas para os valores do sistema pela extensão.
+  "person.sex": "sex",
+  "person.nationality": "nationality",
+  "person.nationalityCountry": "nationalityCountry",
+  "person.birthUf": "birthUf",
+  "person.birthCity": "birthCity",
+  "person.educationLevel": "educationLevel",
+  "person.docType": "docType",
+  "person.docIssuerUf": "docIssuerUf",
+  "person.docFirstLicenseDate": "docFirstLicenseDate",
+  "person.docIssuerCountry": "docIssuerCountry",
+  "person.maritalStatus": "maritalStatus",
+  "person.streetType": "streetType",
+  "person.uf": "uf",
+  "person.propertyType": "propertyType",
+  "person.housingSituation": "housingSituation",
+  "person.residenceProofMonth": "residenceProofMonth",
+  "person.residenceProofYear": "residenceProofYear",
+  "person.phone": "phone",
   "person.dependentsCount": "dependentsCount",
   "person.rentCents": "rentCents",
   "person.condoFeeCents": "condoFeeCents",
@@ -57,14 +76,17 @@ export type ResultadoCaptura =
 const COLUNAS_DA_PESSOA = Object.keys(personInputSchema.shape);
 
 /**
- * Valida um campo sozinho, sobre um cadastro mínimo e válido. Um valor que o
- * portal mostra num formato que o sistema não aceita (data, PIS, e-mail)
- * fica de fora sem levar junto os outros campos da mesma tela.
+ * Valida um campo sozinho, pela regra do próprio campo. Um valor que o portal
+ * mostra num formato que o sistema não aceita (data, PIS, e-mail) fica de
+ * fora sem levar junto os outros campos da mesma tela. As regras entre campos
+ * (casado exige o nome do cônjuge) ficam para o formulário da web: a tela do
+ * banco chega aos pedaços, e o estado civil vem antes do cônjuge.
  */
-function validarCampo(cpf: string, coluna: string, valor: unknown): { ok: boolean; valor?: unknown } {
-  const parsed = personInputSchema.safeParse({ cpf, fullName: "VALIDACAO", [coluna]: valor });
-  if (!parsed.success) return { ok: false };
-  return { ok: true, valor: (parsed.data as Record<string, unknown>)[coluna] };
+function validarCampo(coluna: string, valor: unknown): { ok: boolean; valor?: unknown } {
+  const regra = (personInputSchema.shape as Record<string, { safeParse: (v: unknown) => { success: boolean; data?: unknown } }>)[coluna];
+  if (!regra) return { ok: false };
+  const parsed = regra.safeParse(valor);
+  return parsed.success ? { ok: true, valor: parsed.data } : { ok: false };
 }
 
 /**
@@ -98,7 +120,6 @@ export async function aplicarCaptura(
     if (pessoa[coluna] !== null && pessoa[coluna] !== undefined && pessoa[coluna] !== "") continue;
 
     const validado = validarCampo(
-      pessoa.cpf as string,
       coluna,
       EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor,
     );
@@ -190,7 +211,7 @@ export async function criarPessoaDaTela(
   for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
     const valor = recebidos[chave];
     if (valor === undefined || valor === null || valor === "" || coluna === "fullName") continue;
-    const validado = validarCampo(cpf, coluna, EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor);
+    const validado = validarCampo(coluna, EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor);
     if (validado.ok) campos[coluna] = validado.valor;
   }
 

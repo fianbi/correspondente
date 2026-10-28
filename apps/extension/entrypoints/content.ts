@@ -3,6 +3,7 @@ import {
   CAIXA_PROFILE,
   captureScreen,
   discoverFields,
+  fromCaixaOutcomes,
   fillScreen,
   readForAutoCapture,
   type PortalProfile,
@@ -131,7 +132,7 @@ function atender(mensagem: PanelRequest): PanelResponse {
     };
   }
 
-  return { kind: "capturado", values: captureScreen(document, tela) };
+  return { kind: "capturado", values: fromCaixaOutcomes(captureScreen(document, tela)) };
 }
 
 function enviar(mensagem: CapturaDaPagina) {

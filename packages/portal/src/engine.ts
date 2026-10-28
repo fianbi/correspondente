@@ -188,7 +188,18 @@ export function captureScreen(root: Document, screen: ScreenProfile): CaptureOut
     const bruto = element.value?.trim() ?? "";
     if (bruto === "") continue;
 
-    resultados.push({ dataKey: mapping.dataKey, value: reverseTransform(bruto, mapping.transform) });
+    const resultado: CaptureOutcome = {
+      dataKey: mapping.dataKey,
+      value: reverseTransform(bruto, mapping.transform),
+    };
+    // Lista do portal: o valor é um código, e alguns dados (município, órgão
+    // emissor) só fazem sentido para o sistema pelo nome que a tela mostra.
+    if (isSelect(element)) {
+      const escolhida = element.options[element.selectedIndex];
+      const texto = escolhida?.textContent?.replace(/\s+/g, " ").trim();
+      if (texto) resultado.label = texto;
+    }
+    resultados.push(resultado);
   }
 
   return resultados;

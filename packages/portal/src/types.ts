@@ -81,4 +81,6 @@ export interface FillOutcome {
 export interface CaptureOutcome {
   dataKey: string;
   value: string | null;
+  /** Texto da opção escolhida, quando o campo é um `<select>`. */
+  label?: string;
 }
