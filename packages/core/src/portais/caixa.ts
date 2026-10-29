@@ -150,12 +150,11 @@ export const CAIXA_ORGAO_EMISSOR: Record<IdDocumentType, { codigo: string; nome:
     { codigo: "90", nome: "POLÍCIA CIVIL" },
     { codigo: "91", nome: "SECRETARIA DE ESTADO DA CASA CIVIL" },
   ],
+  // O portal troca a lista do mesmo campo quando o tipo é RIC (conferido na
+  // tela real, fixture `cadastro-de-clientes-10-ric.html`).
   ric: [
-    { codigo: "10", nome: "SECRETARIA DE SEGURANÇA PÚBLICA" },
-    { codigo: "81", nome: "OUTRO TIPO DE ÓRGÃO EMISSOR" },
-    { codigo: "88", nome: "SECRETARIA DEFESA SOCIAL" },
-    { codigo: "90", nome: "POLÍCIA CIVIL" },
-    { codigo: "91", nome: "SECRETARIA DE ESTADO DA CASA CIVIL" },
+    { codigo: "40", nome: "MINISTÉRIO DA JUSTIÇA" },
+    { codigo: "95", nome: "OUTRO TIPO DE ÓRGÃO EMISSOR DE RIC" },
   ],
   passaporte: [
     { codigo: "44", nome: "POLÍCIA FEDERAL" },

@@ -93,6 +93,43 @@ describe("readForAutoCapture", () => {
     });
   });
 
+  it("CNH: tipo, número, órgão pelo nome, UF e as três datas", () => {
+    const doc = carregarFixture("cadastro-de-clientes-12-cnh.html");
+    const valor = (nome: string, v: string) => {
+      doc.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${nome}"]`)!.value = v;
+    };
+    valor("cmbTipoDocumento", "0782");
+    valor("identidadeNumeroCnh", "01234567890");
+    valor("cmbOrgaoEmissorCnh", "83");
+    valor("cmbUFIdentidadeCnh", "SP");
+    valor("dataPrimeiraHabilitacaoCnh", "10/04/2014");
+    valor("dataEmissaoIdentidadeCnh", "10/04/2024");
+    valor("dataFimValidadeCnh", "09/04/2034");
+
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values).toMatchObject({
+      "person.docType": "cnh",
+      "person.docNumber": "01234567890",
+      "person.docIssuer": "ÓRGÃO DE TRÂNSITO",
+      "person.docIssuerUf": "SP",
+      "person.docFirstLicenseDate": "2014-04-10",
+      "person.docIssuedAt": "2024-04-10",
+      "person.docValidUntil": "2034-04-09",
+    });
+  });
+
+  it("RIC: o órgão vem da lista própria do RIC", () => {
+    const doc = carregarFixture("cadastro-de-clientes-10-ric.html");
+    doc.querySelector<HTMLSelectElement>("[name=\"cmbTipoDocumento\"]")!.value = "0372102";
+    doc.querySelector<HTMLInputElement>("[name=\"identidadeNumeroRg\"]")!.value = "12345678901";
+    doc.querySelector<HTMLSelectElement>("[name=\"cmbOrgaoEmissorRg\"]")!.value = "40";
+
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values).toMatchObject({
+      "person.docType": "ric",
+      "person.docNumber": "12345678901",
+      "person.docIssuer": "MINISTÉRIO DA JUSTIÇA",
+    });
+  });
+
   it("código que o sistema não conhece fica de fora", () => {
     const doc = carregarFixture("cadastro-de-clientes-3.html");
     const sexo = doc.querySelector<HTMLSelectElement>("[name=\"cmbSexo\"]")!;
