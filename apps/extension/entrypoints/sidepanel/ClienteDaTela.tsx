@@ -1,22 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { MARITAL_STATUS_LABELS, type MaritalStatus } from "@corr/core/domain";
 import { formatBRL, formatCpf } from "@corr/core/format";
-import { api, type Config, type PessoaDaTela } from "@/src/api";
-import { CHAVE_ULTIMA, chaveDaAba, type EstadoCaptura } from "@/src/captura-auto";
+import type { PessoaDaTela } from "@/src/api";
+import { chaveDaAba, type EstadoCaptura } from "@/src/captura-auto";
 
 /**
- * O cliente do cadastro aberto no portal, com o que o sistema já tem dele.
- *
- * A pessoa é a do CPF da sessão de cadastro da aba (o mesmo que a captura
- * automática usa), e o quadro se atualiza a cada captura: o operador vê o
- * cadastro do sistema se completando enquanto avança nas telas do banco.
+ * CPF da sessão de cadastro da aba ativa: o mesmo que a coleta automática
+ * usa para saber de quem é a tela aberta no portal.
  */
-export function ClienteDaTela({ config }: { config: Config }) {
+export function useCpfDaTela(): string | null {
   const [cpf, setCpf] = useState<string | null>(null);
-  const [pessoa, setPessoa] = useState<PessoaDaTela | null | undefined>(undefined);
-  const [erro, setErro] = useState<string | null>(null);
 
-  const lerCpf = useCallback(async () => {
+  const ler = useCallback(async () => {
     const [aba] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (aba?.id === undefined) return setCpf(null);
     const chave = chaveDaAba(aba.id);
@@ -24,23 +19,11 @@ export function ClienteDaTela({ config }: { config: Config }) {
     setCpf(estado?.cpf ?? null);
   }, []);
 
-  const carregar = useCallback(async () => {
-    if (!cpf) return setPessoa(undefined);
-    try {
-      setPessoa(await api.pessoaPorCpf(config, cpf));
-      setErro(null);
-    } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : "Falha ao buscar o cadastro.");
-    }
-  }, [config, cpf]);
-
   useEffect(() => {
-    void lerCpf();
-    const aoMudarAba = () => void lerCpf();
-    const aoMudarStorage = (mudancas: Record<string, chrome.storage.StorageChange>, area: string) => {
-      if (area === "session") void lerCpf();
-      // Captura concluída: o cadastro do sistema pode ter mudado.
-      if (area === "local" && mudancas[CHAVE_ULTIMA]) void carregar();
+    void ler();
+    const aoMudarAba = () => void ler();
+    const aoMudarStorage = (_: unknown, area: string) => {
+      if (area === "session") void ler();
     };
     chrome.tabs.onActivated.addListener(aoMudarAba);
     chrome.storage.onChanged.addListener(aoMudarStorage);
@@ -48,38 +31,22 @@ export function ClienteDaTela({ config }: { config: Config }) {
       chrome.tabs.onActivated.removeListener(aoMudarAba);
       chrome.storage.onChanged.removeListener(aoMudarStorage);
     };
-  }, [lerCpf, carregar]);
+  }, [ler]);
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  if (!cpf) return null;
-
-  return (
-    <section className="bloco">
-      <p className="rotulo">Cliente na tela</p>
-
-      {pessoa === undefined ? <p className="discreto">Buscando o cadastro…</p> : null}
-
-      {pessoa === null ? (
-        <>
-          <p className="destaque">CPF {formatCpf(cpf)}</p>
-          <p className="discreto">
-            Ainda sem cadastro no sistema. Ele é criado assim que a tela de dados cadastrais tiver o
-            nome, junto com o cônjuge, se houver.
-          </p>
-        </>
-      ) : null}
-
-      {pessoa ? <Cadastro pessoa={pessoa} config={config} /> : null}
-
-      {erro ? <p className="erro">{erro}</p> : null}
-    </section>
-  );
+  return cpf;
 }
 
-function Cadastro({ pessoa, config }: { pessoa: PessoaDaTela; config: Config }) {
+/** Iniciais para o avatar do cliente: "MARIA DA SILVA" vira "MS". */
+export function iniciais(nome: string): string {
+  const todas = nome.trim().split(/\s+/);
+  // "DA", "DE", "DOS" não contam: as iniciais são as do nome e do sobrenome.
+  const partes = todas.filter((parte) => parte.length > 2);
+  const [primeira, ...resto] = partes.length > 0 ? partes : todas;
+  return `${primeira?.[0] ?? ""}${resto.at(-1)?.[0] ?? ""}`.toUpperCase();
+}
+
+/** O que o sistema já tem do cliente, para conferir ao lado da tela do banco. */
+export function Ficha({ pessoa }: { pessoa: PessoaDaTela }) {
   const estadoCivil = pessoa.maritalStatus
     ? MARITAL_STATUS_LABELS[pessoa.maritalStatus as MaritalStatus]
     : null;
@@ -109,9 +76,16 @@ function Cadastro({ pessoa, config }: { pessoa: PessoaDaTela; config: Config }) 
     ],
   ];
 
+  const preenchidos = linhas.filter(([, valor]) => valor !== null).length;
+
   return (
     <>
-      <p className="destaque">{pessoa.fullName}</p>
+      <div className="progresso" title="Campos do resumo já preenchidos no sistema">
+        <div style={{ width: `${Math.round((preenchidos / linhas.length) * 100)}%` }} />
+      </div>
+      <p className="discreto">
+        {preenchidos} de {linhas.length} dados principais no sistema
+      </p>
 
       <dl className="ficha">
         {linhas.map(([rotulo, valor]) => (
@@ -122,11 +96,12 @@ function Cadastro({ pessoa, config }: { pessoa: PessoaDaTela; config: Config }) 
         ))}
       </dl>
 
+      <p className="rotulo">Rendas</p>
       {pessoa.incomes.length > 0 ? (
         <ul className="ficha-lista">
           {pessoa.incomes.map((renda, indice) => (
             <li key={indice}>
-              Renda {renda.kind}: {renda.sourceName ?? "sem fonte"} ·{" "}
+              <span className="etiqueta">{renda.kind}</span> {renda.sourceName ?? "sem fonte"} ·{" "}
               {formatBRL(renda.grossCents ?? renda.netCents)}
             </li>
           ))}
@@ -140,14 +115,6 @@ function Cadastro({ pessoa, config }: { pessoa: PessoaDaTela; config: Config }) 
           ? "Sem processo aberto."
           : `Processo(s): ${pessoa.processes.map((processo) => `#${processo.number}`).join(", ")}`}
       </p>
-
-      <button
-        type="button"
-        className="link"
-        onClick={() => void chrome.tabs.create({ url: `${config.baseUrl}/pessoas/${pessoa.id}` })}
-      >
-        Abrir o cadastro no sistema
-      </button>
     </>
   );
 }

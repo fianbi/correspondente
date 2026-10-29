@@ -7,13 +7,14 @@ import {
   lerConfig,
   SessaoExpirada,
   type Config,
-  type DadosDoProcesso,
-  type ProcessoResumo,
   type Sessao,
 } from "@/src/api";
-import { pedirAoQuadro, reconhecerPagina, type Reconhecimento } from "@/src/pagina";
-import { CapturaAutomatica } from "./CapturaAutomatica";
-import { ClienteDaTela } from "./ClienteDaTela";
+import { CHAVE_PERFIL } from "@/src/captura-auto";
+import { reconhecerPagina, type Reconhecimento } from "@/src/pagina";
+import { Atendimento } from "./Atendimento";
+import { Atividade, ChaveDaColeta, useColeta, type Coleta } from "./CapturaAutomatica";
+import { useCpfDaTela } from "./ClienteDaTela";
+import { Clientes } from "./Clientes";
 
 export function App() {
   const [config, setConfig] = useState<Config>({ baseUrl: ENDERECO_PADRAO });
@@ -21,6 +22,7 @@ export function App() {
   const [perfil, setPerfil] = useState<PortalProfile | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const coleta = useColeta();
 
   // A sessão é a da web: o painel só confere se ela existe e com quem está.
   const conectar = useCallback(async (atual: Config) => {
@@ -74,26 +76,50 @@ export function App() {
   return (
     <div className="painel">
       <header className="cabecalho">
-        <div>
-          <strong>{sessao.orgName}</strong>
-          <p className="discreto">{sessao.email}</p>
-          {/* A versão vem do package.json da extensão; cada build que vai
-              para o operador sobe um número, e é por ela que se confere se o
-              Chrome carregou o build certo. */}
-          <p className="discreto">Versão {chrome.runtime.getManifest().version}</p>
+        <div className="marca">
+          <span className="logo" aria-hidden="true">C</span>
+          <div>
+            <strong>{sessao.orgName}</strong>
+            <p className="discreto" title="Para trocar de usuário ou escritório, use o sistema.">
+              {sessao.email}
+            </p>
+          </div>
         </div>
+        {/* A versão vem do package.json da extensão; cada build que vai para
+            o operador sobe um número, e é por ela que se confere se o Chrome
+            carregou o build certo. */}
+        <span className="selo" title="Versão da extensão">
+          v{chrome.runtime.getManifest().version}
+        </span>
       </header>
-      <p className="discreto">Para trocar de usuário ou escritório, use o sistema.</p>
+
+      <ChaveDaColeta coleta={coleta} />
 
       {erro ? <p className="erro">{erro}</p> : null}
 
       {perfil ? (
         // A chave zera o trabalho ao trocar de usuário ou escritório na web:
-        // processo selecionado de um escritório não pode ser preenchido no outro.
-        <Trabalho key={`${sessao.email}:${sessao.orgId}`} config={config} perfil={perfil} />
+        // cliente escolhido num escritório não pode ser preenchido no outro.
+        <Trabalho
+          key={`${sessao.email}:${sessao.orgId}`}
+          config={config}
+          perfil={perfil}
+          coleta={coleta}
+        />
       ) : (
         <p className="discreto">Carregando o perfil do portal…</p>
       )}
+
+      <footer className="rodape">
+        <button
+          type="button"
+          className="link"
+          onClick={() => void chrome.tabs.create({ url: config.baseUrl })}
+        >
+          Abrir o sistema ↗
+        </button>
+        <span className="discreto">Trocar usuário ou escritório: no sistema</span>
+      </footer>
     </div>
   );
 }
@@ -147,16 +173,34 @@ function Desconectado({
   );
 }
 
-function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile }) {
-  const [busca, setBusca] = useState("");
-  const [processos, setProcessos] = useState<ProcessoResumo[]>([]);
-  const [selecionado, setSelecionado] = useState<DadosDoProcesso | null>(null);
+type Aba = "atendimento" | "clientes" | "atividade";
+
+function Trabalho({
+  config,
+  perfil,
+  coleta,
+}: {
+  config: Config;
+  perfil: PortalProfile;
+  coleta: Coleta;
+}) {
+  const [aba, setAba] = useState<Aba>("atendimento");
   const [pagina, setPagina] = useState<Reconhecimento | null>(null);
-  const [resultado, setResultado] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [semSobrescrever, setSemSobrescrever] = useState(true);
-  const [verDiagnostico, setVerDiagnostico] = useState(false);
-  const [rendaEscolhida, setRendaEscolhida] = useState<string | null>(null);
+  const cpfDaTela = useCpfDaTela();
+  // Cliente escolhido na lista; sem escolha, o atendimento segue a tela.
+  const [escolhido, setEscolhido] = useState<string | null>(null);
+
+  // O content script reconhece as telas com este perfil, que inclui o que o
+  // escritório ensinou; antes de o painel abrir, ele usa o perfil de fábrica.
+  useEffect(() => {
+    void chrome.storage.local.set({ [CHAVE_PERFIL]: perfil });
+  }, [perfil]);
+
+  // Um CPF novo digitado no portal é um atendimento novo: a escolha antiga
+  // da lista deixa de valer e o painel passa a seguir a tela.
+  useEffect(() => {
+    if (cpfDaTela) setEscolhido(null);
+  }, [cpfDaTela]);
 
   const reconhecer = useCallback(async () => {
     setPagina(await reconhecerPagina(perfil));
@@ -173,249 +217,59 @@ function Trabalho({ config, perfil }: { config: Config; perfil: PortalProfile })
     };
   }, [reconhecer]);
 
-  useEffect(() => {
-    void api.processos(config, busca).then(setProcessos).catch(() => setProcessos([]));
-  }, [config, busca]);
+  const cpf = escolhido ?? cpfDaTela;
 
-  const telaPronta = pagina?.screen != null && pagina.frameId != null;
-
-  // A tela de renda do portal cadastra uma fonte por vez: sem escolher qual,
-  // preencher seria escrever a primeira da lista sem avisar o operador.
-  const precisaDeRenda = pagina?.screen?.needsIncome === true;
-  const rendas = selecionado?.incomes ?? [];
-  const renda = rendas.find((item) => item.id === rendaEscolhida) ?? null;
-  const faltaEscolherRenda = precisaDeRenda && renda === null;
-
-  async function preencher() {
-    if (!selecionado || !telaPronta || faltaEscolherRenda) return;
-    setErro(null);
-
-    const resposta = await pedirAoQuadro(pagina!.frameId!, {
-      kind: "preencher",
-      profile: perfil,
-      screenKey: pagina!.screen!.key,
-      values: { ...selecionado.values, ...(renda?.values ?? {}) },
-      skipFilled: semSobrescrever,
-    });
-
-    if (resposta.kind === "preenchido") {
-      const feitos = resposta.outcomes.filter((o) => o.status === "preenchido").length;
-      const semOpcao = resposta.outcomes.filter((o) => o.status === "opcao_ausente").length;
-      setResultado(
-        `${feitos} campo(s) preenchido(s).` +
-          (semOpcao > 0 ? ` ${semOpcao} sem opção equivalente — confira à mão.` : "") +
-          " Confira e salve na tela do banco.",
-      );
-    } else if (resposta.kind === "erro") {
-      setErro(resposta.message);
-    }
-  }
-
-  async function capturar() {
-    if (!selecionado || !telaPronta) return;
-    setErro(null);
-
-    const resposta = await pedirAoQuadro(pagina!.frameId!, {
-      kind: "capturar",
-      profile: perfil,
-      screenKey: pagina!.screen!.key,
-    });
-
-    if (resposta.kind !== "capturado") {
-      if (resposta.kind === "erro") setErro(resposta.message);
-      return;
-    }
-
-    const valores = Object.fromEntries(resposta.values.map((v) => [v.dataKey, v.value]));
-    try {
-      const { applied } = await api.capturar(config, selecionado.processId, valores);
-      setResultado(
-        applied.length === 0
-          ? "Nada novo: o cadastro já tinha esses dados."
-          : `${applied.length} campo(s) trazido(s) para o cadastro.`,
-      );
-    } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : "Falha ao gravar.");
-    }
-  }
+  const abas: [Aba, string][] = [
+    ["atendimento", "Atendimento"],
+    ["clientes", "Clientes"],
+    ["atividade", "Atividade"],
+  ];
 
   return (
     <>
-      <ClienteDaTela config={config} />
-
-      <section className="bloco">
-        <div className="linha">
-          <p className="rotulo">Tela aberta</p>
-          <button type="button" className="link" onClick={() => void reconhecer()}>
-            Verificar de novo
+      <nav className="abas" role="tablist">
+        {abas.map(([chave, rotulo]) => (
+          <button
+            key={chave}
+            type="button"
+            role="tab"
+            aria-selected={aba === chave}
+            className={aba === chave ? "aba ativa" : "aba"}
+            onClick={() => setAba(chave)}
+          >
+            {rotulo}
+            {chave === "atividade" && coleta.ultima?.erro ? <span className="ponto erro" /> : null}
           </button>
-        </div>
+        ))}
+      </nav>
 
-        {telaPronta ? (
-          <>
-            <p className="destaque">{pagina!.screen!.label}</p>
-            <p className="discreto">
-              {pagina!.found} de {pagina!.total} campos do perfil encontrados nesta tela.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="discreto">Nenhuma tela do perfil reconhecida.</p>
-            <button
-              type="button"
-              className="link"
-              onClick={() => setVerDiagnostico((v) => !v)}
-            >
-              {verDiagnostico ? "Ocultar detalhes" : "Ver o que foi encontrado"}
-            </button>
-
-            {/* O diagnóstico é o que transforma "não mapeada" em informação
-                acionável: sem ele, não há como saber se o problema é a tela
-                errada, um frame sem campos ou um perfil desatualizado. */}
-            {verDiagnostico ? <Diagnostico pagina={pagina} perfil={perfil} /> : null}
-          </>
-        )}
-      </section>
-
-      <section className="bloco">
-        <label>
-          Processo
-          <input
-            value={busca}
-            placeholder="Buscar por nome, CPF ou número"
-            onChange={(e) => setBusca(e.target.value)}
-          />
-        </label>
-
-        <ul className="lista">
-          {processos.map((processo) => (
-            <li key={processo.id}>
-              <button
-                type="button"
-                className={selecionado?.processId === processo.id ? "item selecionado" : "item"}
-                onClick={() =>
-                  void api
-                    .dados(config, processo.id)
-                    .then(setSelecionado)
-                    .catch((e: Error) => setErro(e.message))
-                }
-              >
-                <strong>#{processo.number}</strong> {processo.personName}
-              </button>
-            </li>
-          ))}
-          {processos.length === 0 ? (
-            <li className="discreto">Nenhum processo encontrado.</li>
-          ) : null}
-        </ul>
-      </section>
-
-      {selecionado ? (
-        <section className="bloco">
-          <p className="rotulo">Selecionado</p>
-          <p className="destaque">
-            #{selecionado.number} {selecionado.personName}
-          </p>
-
-          {precisaDeRenda ? (
-            <label>
-              Renda a preencher
-              <select
-                value={rendaEscolhida ?? ""}
-                onChange={(e) => setRendaEscolhida(e.target.value || null)}
-              >
-                <option value="">Selecione a fonte…</option>
-                {rendas.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label} ({item.kind})
-                  </option>
-                ))}
-              </select>
-              {rendas.length === 0 ? (
-                <span className="discreto">
-                  Esta pessoa não tem renda cadastrada no sistema.
-                </span>
-              ) : null}
-            </label>
-          ) : null}
-
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={semSobrescrever}
-              onChange={(e) => setSemSobrescrever(e.target.checked)}
-            />
-            Não sobrescrever campos já preenchidos
-          </label>
-
-          <div className="acoes">
-            <button
-              type="button"
-              className="primario"
-              disabled={!telaPronta || faltaEscolherRenda}
-              onClick={() => void preencher()}
-            >
-              Preencher a tela
-            </button>
-            <button type="button" disabled={!telaPronta} onClick={() => void capturar()}>
-              Trazer da tela
-            </button>
-          </div>
-
-          <p className="discreto">
-            A extensão nunca salva no portal: ela preenche, você confere e clica em salvar.
-          </p>
-        </section>
+      {aba === "atendimento" ? (
+        <Atendimento
+          config={config}
+          perfil={perfil}
+          pagina={pagina}
+          reconhecer={reconhecer}
+          cpf={cpf}
+          cpfDaTela={cpfDaTela}
+          coleta={coleta}
+          aoVoltarParaTela={() => setEscolhido(null)}
+          aoAbrirClientes={() => setAba("clientes")}
+        />
       ) : null}
 
-      <CapturaAutomatica perfil={perfil} />
+      {aba === "clientes" ? (
+        <Clientes
+          config={config}
+          cpfAtivo={cpf}
+          cpfDaTela={cpfDaTela}
+          aoEscolher={(escolha) => {
+            setEscolhido(escolha === cpfDaTela ? null : escolha);
+            setAba("atendimento");
+          }}
+        />
+      ) : null}
 
-      {resultado ? <p className="ok">{resultado}</p> : null}
-      {erro ? <p className="erro">{erro}</p> : null}
+      {aba === "atividade" ? <Atividade coleta={coleta} perfil={perfil} /> : null}
     </>
-  );
-}
-
-/** O que a extensão viu em cada frame da aba, para destravar o mapeamento. */
-function Diagnostico({
-  pagina,
-  perfil,
-}: {
-  pagina: Reconhecimento | null;
-  perfil: PortalProfile;
-}) {
-  const quadros = pagina?.quadros ?? [];
-
-  if (quadros.length === 0) {
-    return (
-      <p className="discreto">
-        Nenhum documento pôde ser lido nesta aba. A extensão só enxerga páginas em{" "}
-        <code>{perfil.hostPattern}</code> — confira se a tela do portal está nesta aba e se o
-        endereço bate.
-      </p>
-    );
-  }
-
-  return (
-    <div className="diagnostico">
-      {quadros.map((quadro) => (
-        <div key={quadro.frameId} className="quadro">
-          <p className="mono">{quadro.url}</p>
-          <p className="discreto">
-            {quadro.fieldNames.length} campo(s) visível(is)
-            {quadro.hiddenCount > 0 ? ` e ${quadro.hiddenCount} de controle` : ""}
-            {quadro.frameId !== 0 ? " · dentro de um frame" : ""}
-          </p>
-          {quadro.fieldNames.length > 0 ? (
-            <p className="mono discreto">{quadro.fieldNames.join(", ")}</p>
-          ) : null}
-        </div>
-      ))}
-
-      <p className="discreto">
-        Se os campos acima são os da tela que você quer preencher, o perfil precisa ser
-        atualizado — mande esta lista para quem cuida do sistema.
-      </p>
-    </div>
   );
 }

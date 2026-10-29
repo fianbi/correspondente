@@ -5,6 +5,11 @@
   --ink-muted: #5b6b7f;
   --line: #e3e8ee;
   --surface-muted: #f6f8fa;
+  --brand-soft: #eef4fb;
+  --ok: #15803d;
+  --ok-soft: #f0fdf4;
+  --warn: #92400e;
+  --warn-soft: #fffbeb;
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 14px;
   color: var(--ink);
@@ -12,7 +17,7 @@
 
 body {
   margin: 0;
-  background: #fff;
+  background: var(--surface-muted);
 }
 
 .painel {
@@ -41,8 +46,14 @@ h1 {
   flex-direction: column;
   gap: 8px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+}
+
+.bloco.vazio {
+  align-items: flex-start;
+  border-style: dashed;
 }
 
 label {
@@ -243,4 +254,306 @@ select {
 .ficha-lista {
   margin: 4px 0;
   padding-left: 16px;
+}
+
+/* --- Cabeçalho, chave da coleta e abas --- */
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.marca strong {
+  display: block;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.selo {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  white-space: nowrap;
+}
+
+.selo.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+label.chave {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chave input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.chave-trilho {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #c4cdd8;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.chave-trilho::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s;
+}
+
+.chave input:checked + .chave-trilho {
+  background: var(--ok);
+}
+
+.chave input:checked + .chave-trilho::after {
+  transform: translateX(14px);
+}
+
+.chave input:focus-visible + .chave-trilho {
+  outline: 2px solid rgba(31, 76, 135, 0.4);
+  outline-offset: 2px;
+}
+
+.abas {
+  display: flex;
+  gap: 2px;
+  background: #e6ebf1;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.aba {
+  flex: 1;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  padding: 6px 4px;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.aba.ativa,
+.aba.ativa:hover:not(:disabled) {
+  background: #fff;
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(15, 27, 42, 0.12);
+}
+
+.rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* --- Tela e cliente em atendimento --- */
+
+.tela-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ponto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c4cdd8;
+  flex-shrink: 0;
+}
+
+.ponto.ok {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.ponto.erro {
+  background: #dc2626;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.cliente-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatar.grande {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.aviso {
+  margin: 0;
+  background: var(--warn-soft);
+  color: var(--warn);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.nota {
+  margin: 0;
+  background: var(--surface-muted);
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.progresso {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progresso div {
+  height: 100%;
+  background: var(--brand);
+}
+
+.etiqueta {
+  display: inline-block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--surface-muted);
+  border-radius: 4px;
+  padding: 0 4px;
+  color: var(--ink-muted);
+}
+
+/* --- Lista de clientes --- */
+
+input[type="search"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.clientes {
+  list-style: none;
+  margin: 0 -4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cliente {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.cliente.ativo {
+  background: var(--brand-soft);
+}
+
+.cliente-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.cliente-nome {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cliente-lado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* --- Atividade --- */
+
+.linha-do-tempo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.linha-do-tempo li {
+  display: flex;
+  gap: 8px;
+  border-left: 2px solid var(--line);
+  padding-left: 8px;
+}
+
+.linha-do-tempo .hora {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }

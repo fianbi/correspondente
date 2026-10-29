@@ -22,6 +22,8 @@ export interface ListPeopleOptions {
   search?: string;
   limit?: number;
   offset?: number;
+  /** `recent`: os atualizados por último primeiro (o painel da extensão). */
+  order?: "name" | "recent";
 }
 
 export async function listPeople(ctx: OrgContext, options: ListPeopleOptions = {}) {
@@ -54,10 +56,11 @@ export async function listPeople(ctx: OrgContext, options: ListPeopleOptions = {
           city: people.city,
           uf: people.uf,
           createdAt: people.createdAt,
+          updatedAt: people.updatedAt,
         })
         .from(people)
         .where(where)
-        .orderBy(asc(people.fullName))
+        .orderBy(options.order === "recent" ? desc(people.updatedAt) : asc(people.fullName))
         .limit(limit)
         .offset(offset),
       tx.select({ value: count() }).from(people).where(where),

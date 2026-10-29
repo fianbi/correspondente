@@ -219,3 +219,27 @@ test("cliente que o escritório não tem é criado ao abrir a tela, com o cônju
   await expect(painel.getByText(nome, { exact: true })).toBeVisible();
   await expect(painel.getByText(`CONJUGE DE ${nome}`)).toBeVisible();
 });
+
+test("a aba Clientes lista o cliente recém-criado, e os dados dele saem prontos para o portal", async () => {
+  const pagina = await contexto.newPage();
+  const cpf = cpfFicticio();
+  const nome = `CLIENTE RECENTE ${Date.now().toString().slice(-5)}`;
+  await pagina.goto("http://localhost:3000/pessoas/nova");
+  await pagina.getByLabel("CPF").fill(cpf);
+  await pagina.getByLabel("Nome completo").fill(nome);
+  await pagina.getByRole("button", { name: "Cadastrar pessoa" }).click();
+  await expect(pagina).toHaveURL(/\/pessoas\/[0-9a-f-]{36}/);
+
+  const id = new URL(fundo.url()).host;
+  const dados = await pagina.request.get(`http://localhost:3000/api/ext/pessoas/${cpf}/dados`, {
+    headers: { origin: `chrome-extension://${id}` },
+  });
+  expect(dados.status()).toBe(200);
+  expect(((await dados.json()) as { values: Record<string, string | null> }).values["person.cpf"]).toBe(cpf);
+
+  const painel = await contexto.newPage();
+  await painel.goto(`chrome-extension://${id}/sidepanel.html`);
+  await painel.getByRole("tab", { name: "Clientes" }).click();
+  await expect(painel.getByText("Últimos clientes")).toBeVisible();
+  await expect(painel.getByText(nome, { exact: true })).toBeVisible();
+});

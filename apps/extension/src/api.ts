@@ -21,16 +21,17 @@ export interface Sessao {
   orgName: string;
 }
 
-export interface ProcessoResumo {
+/** Cliente da lista do painel: os atualizados por último vêm primeiro. */
+export interface ClienteResumo {
   id: string;
-  number: number;
-  personName: string;
-  personCpf: string;
-  stage: string;
-  status: string;
+  cpf: string;
+  fullName: string;
+  city: string | null;
+  uf: string | null;
+  updatedAt: string;
 }
 
-export interface RendaDoProcesso {
+export interface RendaDoCliente {
   id: string;
   label: string;
   kind: "formal" | "informal";
@@ -65,12 +66,12 @@ export interface PessoaDaTela {
   processes: { id: string; number: number; stage: string; status: string }[];
 }
 
-export interface DadosDoProcesso {
-  processId: string;
-  number: number;
+/** O que o botão de preencher escreve no portal, já nos códigos do banco. */
+export interface DadosDoCliente {
+  personId: string;
   personName: string;
   values: Record<string, string | null>;
-  incomes: RendaDoProcesso[];
+  incomes: RendaDoCliente[];
 }
 
 const CONFIG_KEY = "corr.config";
@@ -117,19 +118,16 @@ async function chamar<T>(config: Config, caminho: string, init?: RequestInit): P
 export const api = {
   sessao: (config: Config) => chamar<Sessao>(config, "/sessao"),
 
-  processos: (config: Config, busca: string) =>
-    chamar<ProcessoResumo[]>(config, `/processos?q=${encodeURIComponent(busca)}`),
+  clientes: (config: Config, busca: string) =>
+    chamar<ClienteResumo[]>(config, `/pessoas?q=${encodeURIComponent(busca)}`),
 
-  dados: (config: Config, processId: string) =>
-    chamar<DadosDoProcesso>(config, `/processos/${processId}/dados`),
+  dadosDoCliente: (config: Config, cpf: string) =>
+    chamar<DadosDoCliente>(config, `/pessoas/${cpf}/dados`),
 
-  capturar: (config: Config, processId: string, values: Record<string, string | null>) =>
-    chamar<{ applied: string[] }>(config, `/processos/${processId}/captura`, {
-      method: "POST",
-      body: JSON.stringify({ values }),
-    }),
-
-  /** Captura automática: a pessoa é achada pelo CPF, sem processo escolhido. */
+  /**
+   * Leva o que está na tela para o cadastro do CPF: a captura automática e o
+   * botão "Trazer da tela" usam o mesmo caminho.
+   */
   capturarPorCpf: (
     config: Config,
     envio: {
