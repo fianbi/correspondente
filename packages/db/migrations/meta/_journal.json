@@ -113,6 +113,13 @@
       "when": 1793284730520,
       "tag": "0015_orgao_emissor_por_nome",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793285442942,
+      "tag": "0016_declaracao_e_agencia",
+      "breakpoints": true
     }
   ]
 }

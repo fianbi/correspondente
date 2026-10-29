@@ -37,8 +37,26 @@ const PELO_ROTULO = new Set([
   "person.streetType",
 ]);
 
+/**
+ * A tela de agência preenche a partir da agência do processo (`agency.*`),
+ * mas o que ela mostra é a agência de relacionamento do cliente, que é dado
+ * da pessoa. Na leitura, cada campo vai para o cadastro dela. O município é
+ * guardado pelo nome; UF e agência, pelo valor (sigla e número).
+ */
+const AGENCIA_DA_PESSOA: Record<string, { dataKey: string; peloRotulo: boolean }> = {
+  "agency.uf": { dataKey: "person.relationshipAgencyUf", peloRotulo: false },
+  "agency.city": { dataKey: "person.relationshipAgencyCity", peloRotulo: true },
+  "agency.number": { dataKey: "person.relationshipAgencyNumber", peloRotulo: false },
+};
+
 export function fromCaixaOutcome(outcome: CaptureOutcome): CaptureOutcome | null {
   if (outcome.value === null) return outcome;
+
+  const agencia = AGENCIA_DA_PESSOA[outcome.dataKey];
+  if (agencia) {
+    const valor = agencia.peloRotulo ? outcome.label : outcome.value.trim();
+    return valor ? { dataKey: agencia.dataKey, value: valor } : null;
+  }
 
   const mapa = POR_CODIGO[outcome.dataKey];
   if (mapa) {

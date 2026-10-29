@@ -99,6 +99,14 @@ function Cadastro({ pessoa, config }: { pessoa: PessoaDaTela; config: Config }) 
     ["Telefone", pessoa.phone],
     ["Dependentes", pessoa.dependentsCount === null ? null : String(pessoa.dependentsCount)],
     ["Despesas mensais", despesas > 0 ? formatBRL(despesas) : null],
+    [
+      "Agência",
+      pessoa.relationshipAgencyNumber
+        ? [pessoa.relationshipAgencyNumber, pessoa.relationshipAgencyCity, pessoa.relationshipAgencyUf]
+            .filter(Boolean)
+            .join(" · ")
+        : null,
+    ],
   ];
 
   return (

@@ -96,6 +96,19 @@ const DADOS_CADASTRAIS: ScreenProfile = {
       selector: `[name="${portais.CAIXA_PAIS_NACIONALIDADE_FIELD}"]`,
       when: { selector: '[name="cmbNacionalidade"]', equals: "ESTRANGEIRO" },
     },
+    // Declaração de propósitos: marcações, lidas e escritas como true/false.
+    // O financiamento habitacional vem depois de empréstimos, porque o portal
+    // só o habilita quando a caixa de empréstimos é marcada.
+    { dataKey: "person.purposeAccounts", selector: '[name="movimentaContaDepositoPoupanca"]' },
+    { dataKey: "person.purposeLoans", selector: '[name="emprestimosFinanciamentos"]' },
+    { dataKey: "person.purposeHousingLoan", selector: '[name="habitacional"]' },
+    { dataKey: "person.purposeInvestments", selector: '[name="investimentos"]' },
+    { dataKey: "person.purposeCreditCard", selector: '[name="cartaoCredito"]' },
+    {
+      dataKey: "person.purposeInsurance",
+      selector: '[name="seguroPrevidenciaCapitalizacaoConsorcios"]',
+    },
+    { dataKey: "person.purposeForeignExchange", selector: '[name="operacoesInternacionaisCambio"]' },
   ],
 };
 
@@ -244,6 +257,9 @@ export const CAIXA_PROFILE: PortalProfile = {
 export function toCaixaValues(person: Record<string, unknown>): Record<string, string | null> {
   const texto = (valor: unknown): string | null =>
     valor === null || valor === undefined || valor === "" ? null : String(valor);
+  // Sim/não do cadastro; "não respondido" (null) não mexe na marcação da tela.
+  const marcacao = (valor: unknown): string | null =>
+    typeof valor === "boolean" ? String(valor) : null;
 
   const codigo = <T extends string>(
     mapa: Record<T, portais.CaixaCode>,
@@ -297,6 +313,13 @@ export function toCaixaValues(person: Record<string, unknown>): Record<string, s
     "person.rentCents": texto(person.rentCents),
     "person.condoFeeCents": texto(person.condoFeeCents),
     "person.alimonyCents": texto(person.alimonyCents),
+    "person.purposeAccounts": marcacao(person.purposeAccounts),
+    "person.purposeLoans": marcacao(person.purposeLoans),
+    "person.purposeHousingLoan": marcacao(person.purposeHousingLoan),
+    "person.purposeInvestments": marcacao(person.purposeInvestments),
+    "person.purposeCreditCard": marcacao(person.purposeCreditCard),
+    "person.purposeInsurance": marcacao(person.purposeInsurance),
+    "person.purposeForeignExchange": marcacao(person.purposeForeignExchange),
     "person.phone": texto(person.phone),
     "person.email": texto(person.email),
   };

@@ -20,6 +20,7 @@ import {
   optionalEmail,
   optionalEnum,
   optionalInt,
+  optionalBoolean,
   optionalMoney,
   optionalText,
 } from "./helpers";
@@ -93,6 +94,18 @@ export const personInputSchema = z
     rentCents: optionalMoney,
     condoFeeCents: optionalMoney,
     alimonyCents: optionalMoney,
+
+    purposeAccounts: optionalBoolean,
+    purposeLoans: optionalBoolean,
+    purposeHousingLoan: optionalBoolean,
+    purposeInvestments: optionalBoolean,
+    purposeCreditCard: optionalBoolean,
+    purposeInsurance: optionalBoolean,
+    purposeForeignExchange: optionalBoolean,
+
+    relationshipAgencyNumber: optionalText,
+    relationshipAgencyCity: optionalText,
+    relationshipAgencyUf: optionalEnum(UFS),
 
     notes: optionalText,
   })

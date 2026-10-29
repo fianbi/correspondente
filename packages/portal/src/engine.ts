@@ -74,6 +74,49 @@ export function setFieldValue(element: FieldElement, value: string): void {
   element.dispatchEvent(new EventCtor("change", { bubbles: true }));
 }
 
+function tipoDeMarcacao(element: FieldElement): "checkbox" | "radio" | null {
+  if (tagOf(element) !== "input") return null;
+  const tipo = (element.getAttribute("type") ?? "").toLowerCase();
+  return tipo === "checkbox" || tipo === "radio" ? tipo : null;
+}
+
+/**
+ * Lê uma marcação como `true`/`false`. Caixa: marcada ou não. Grupo de
+ * opções: o `value` da escolhida, ou `""` quando nenhuma está escolhida
+ * (ainda não respondido não é o mesmo que "não"). `null` se não é marcação.
+ */
+function lerMarcacao(root: Document, selector: string, element: FieldElement): string | null {
+  const tipo = tipoDeMarcacao(element);
+  if (tipo === "checkbox") return (element as HTMLInputElement).checked ? "true" : "false";
+  if (tipo === "radio") {
+    return root.querySelector<HTMLInputElement>(`${selector}:checked`)?.value.trim() ?? "";
+  }
+  return null;
+}
+
+/** Marca conforme o valor; `null` se o campo não é marcação, `false` sem opção. */
+function marcar(
+  root: Document,
+  selector: string,
+  element: FieldElement,
+  valor: string,
+): boolean | null {
+  const tipo = tipoDeMarcacao(element);
+  if (tipo === null) return null;
+
+  const alvo =
+    tipo === "checkbox"
+      ? (element as HTMLInputElement)
+      : root.querySelector<HTMLInputElement>(`${selector}[value="${valor}"]`);
+  if (!alvo) return false;
+
+  alvo.checked = tipo === "checkbox" ? valor === "true" : true;
+  const view = alvo.ownerDocument?.defaultView as (Window & typeof globalThis) | null;
+  const EventCtor = view?.Event ?? Event;
+  alvo.dispatchEvent(new EventCtor("change", { bubbles: true }));
+  return true;
+}
+
 /** Nome da tag em minúsculas — substitui `instanceof`, que não cruza realms. */
 function tagOf(element: Element): string {
   return element.tagName.toLowerCase();
@@ -148,6 +191,16 @@ export function fillScreen(
       continue;
     }
 
+    // Marcação (caixa de seleção ou grupo de opções): o valor é `true` ou
+    // `false`, e o campo é marcado, não escrito. Sempre dispara o evento: o
+    // portal habilita campos dependentes (financiamento habitacional) no
+    // `change`, e uma caixa que já chega marcada nunca o dispararia.
+    const marcado = marcar(root, mapping.selector, element, bruto);
+    if (marcado !== null) {
+      resultados.push({ ...base, status: marcado ? "preenchido" : "opcao_ausente", written: bruto });
+      continue;
+    }
+
     if (options.skipFilled && element.value.trim() !== "") {
       resultados.push({ ...base, status: "sem_valor", written: element.value });
       continue;
@@ -185,7 +238,7 @@ export function captureScreen(root: Document, screen: ScreenProfile): CaptureOut
     const element = findField(root, mapping.selector);
     if (!element) continue;
 
-    const bruto = element.value?.trim() ?? "";
+    const bruto = lerMarcacao(root, mapping.selector, element) ?? element.value?.trim() ?? "";
     if (bruto === "") continue;
 
     const resultado: CaptureOutcome = {

@@ -27,7 +27,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       listAgencies(ctx),
     ]);
 
-    const agencia = agencias.find((item) => item.id === processo.agencyId) ?? null;
+    // A agência do processo manda; sem ela, vale a de relacionamento que o
+    // cliente já tem na Caixa (capturada do próprio portal).
+    const agencia =
+      agencias.find((item) => item.id === processo.agencyId) ??
+      (pessoa.relationshipAgencyNumber
+        ? {
+            number: pessoa.relationshipAgencyNumber,
+            city: pessoa.relationshipAgencyCity,
+            uf: pessoa.relationshipAgencyUf,
+          }
+        : null);
 
     return json(request, {
       processId: processo.id,

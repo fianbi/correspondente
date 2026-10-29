@@ -245,7 +245,10 @@ describe("captura da tela", () => {
   it("ignora campo vazio em vez de gravar string vazia", () => {
     const doc = carregarFixture("cadastro-de-clientes-3.html");
     const capturado = captureScreen(doc, TELA_DADOS);
-    expect(capturado).toEqual([]);
+    // Só as marcações da declaração de propósitos: caixa desmarcada é "não",
+    // uma resposta, e não campo vazio.
+    expect(capturado.every((item) => item.dataKey.startsWith("person.purpose"))).toBe(true);
+    expect(capturado.every((item) => item.value === "true" || item.value === "false")).toBe(true);
   });
 });
 

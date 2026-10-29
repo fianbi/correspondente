@@ -201,6 +201,39 @@ test("listas da tela aparecem preenchidas no cadastro da web", async ({ page, re
   await expect(page.getByLabel("UF do órgão")).toHaveValue("SP");
 });
 
+test("declaração de propósitos e agência de relacionamento aparecem no cadastro", async ({
+  page,
+  request,
+}) => {
+  const cpf = cpfFicticio();
+  const enviar = (screenKey: string, values: Record<string, string>) =>
+    request.post("/api/ext/captura", { headers, data: { cpf, screenKey, values, incomes: [] } });
+
+  const criada = await enviar("cadastro_dados", {
+    "person.fullName": `CLIENTE PROPOSITOS ${Date.now().toString().slice(-5)}`,
+    "person.purposeAccounts": "true",
+    "person.purposeLoans": "true",
+    "person.purposeHousingLoan": "true",
+    "person.purposeInvestments": "false",
+  });
+  const { personId } = (await criada.json()) as { personId: string };
+  await enviar("agencia_relacionamento", {
+    "person.relationshipAgencyUf": "SP",
+    "person.relationshipAgencyCity": "ADAMANTINA",
+    "person.relationshipAgencyNumber": "2352",
+  });
+
+  await page.goto(`/pessoas/${personId}`);
+  await expect(page.getByLabel("Movimentação de conta, depósito e poupança")).toHaveValue("true");
+  await expect(page.getByLabel("Financiamento habitacional")).toHaveValue("true");
+  await expect(page.getByLabel("Investimentos")).toHaveValue("false");
+  // Não respondido continua em branco, e não vira "não".
+  await expect(page.getByLabel("Cartão de crédito")).toHaveValue("");
+  await expect(page.getByLabel("Agência", { exact: true })).toHaveValue("2352");
+  await expect(page.getByLabel("Município da agência")).toHaveValue("ADAMANTINA");
+  await expect(page.getByLabel("UF da agência")).toHaveValue("SP");
+});
+
 test("CPF novo sem nome na tela não cria ninguém", async ({ request }) => {
   const cpf = cpfFicticio();
   const resposta = await request.post("/api/ext/captura", {

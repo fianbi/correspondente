@@ -186,6 +186,63 @@ describe("grupo familiar", () => {
   });
 });
 
+describe("declaração de propósitos e agência", () => {
+  it("marcações viram sim/não; o habitacional, a opção escolhida", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const marcar = (nome: string, valor: boolean) => {
+      doc.querySelector<HTMLInputElement>(`[name="${nome}"]`)!.checked = valor;
+    };
+    marcar("movimentaContaDepositoPoupanca", true);
+    marcar("emprestimosFinanciamentos", true);
+    doc.querySelector<HTMLInputElement>("#habitacionalSIM")!.checked = true;
+    marcar("cartaoCredito", false);
+
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values).toMatchObject({
+      "person.purposeAccounts": "true",
+      "person.purposeLoans": "true",
+      "person.purposeHousingLoan": "true",
+      "person.purposeInvestments": "false",
+      "person.purposeCreditCard": "false",
+    });
+  });
+
+  it("habitacional sem resposta fica de fora (não é o mesmo que não)", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values["person.purposeHousingLoan"]).toBeUndefined();
+  });
+
+  it("preencher marca as caixas e escolhe o habitacional", () => {
+    const doc = carregarFixture("cadastro-de-clientes-3.html");
+    const tela = CAIXA_PROFILE.screens.find((screen) => screen.key === "cadastro_dados")!;
+    fillScreen(
+      doc,
+      tela,
+      toCaixaValues({ purposeLoans: true, purposeHousingLoan: false, purposeInvestments: true }),
+    );
+    expect(doc.querySelector<HTMLInputElement>("#emprestimosFinanciamentos")!.checked).toBe(true);
+    expect(doc.querySelector<HTMLInputElement>("#habitacionalNAO")!.checked).toBe(true);
+    expect(doc.querySelector<HTMLInputElement>("#investimentos")!.checked).toBe(true);
+    // "Não respondido" não mexe na marcação.
+    expect(doc.querySelector<HTMLInputElement>("#cartaoCredito")!.checked).toBe(false);
+  });
+
+  it("agência de relacionamento vai para o cadastro da pessoa", () => {
+    const doc = carregarFixture("cadastro-de-clientes-9.html");
+    const escolher = (nome: string, valor: string) => {
+      doc.querySelector<HTMLSelectElement>(`[name="${nome}"]`)!.value = valor;
+    };
+    escolher("cmbUFAgenciaRelacionamento", "SP");
+    escolher("cmbMunicipioAgenciaRelacionamento", "000009030");
+    escolher("cmbAgenciaRelacionamento", "2352");
+
+    expect(readForAutoCapture(doc, CAIXA_PROFILE)!.values).toEqual({
+      "person.relationshipAgencyUf": "SP",
+      "person.relationshipAgencyCity": "ADAMANTINA",
+      "person.relationshipAgencyNumber": "2352",
+    });
+  });
+});
+
 describe("rendas da lista do portal", () => {
   it("renda formal vem da lista, não do formulário vazio", () => {
     const captura = readForAutoCapture(carregarFixture("cadastro-de-clientes-5.html"), CAIXA_PROFILE)!;

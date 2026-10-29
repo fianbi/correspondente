@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   date,
   index,
   integer,
@@ -118,6 +119,22 @@ export const people = pgTable(
     rentCents: bigint("rent_cents", { mode: "number" }),
     condoFeeCents: bigint("condo_fee_cents", { mode: "number" }),
     alimonyCents: bigint("alimony_cents", { mode: "number" }),
+
+    // Declaração de propósitos da relação com a Caixa. `null` é "não
+    // respondido", diferente de "não".
+    purposeAccounts: boolean("purpose_accounts"),
+    purposeLoans: boolean("purpose_loans"),
+    /** Só existe quando há empréstimos e financiamentos. */
+    purposeHousingLoan: boolean("purpose_housing_loan"),
+    purposeInvestments: boolean("purpose_investments"),
+    purposeCreditCard: boolean("purpose_credit_card"),
+    purposeInsurance: boolean("purpose_insurance"),
+    purposeForeignExchange: boolean("purpose_foreign_exchange"),
+
+    // Agência de relacionamento do cliente na Caixa, como o portal mostra.
+    relationshipAgencyNumber: text("relationship_agency_number"),
+    relationshipAgencyCity: text("relationship_agency_city"),
+    relationshipAgencyUf: text("relationship_agency_uf"),
 
     notes: text("notes"),
     createdBy: uuid("created_by"),

@@ -75,7 +75,11 @@ async function processar(
     return "tela aberta; envia ao salvar ou sair";
   }
 
-  const decisao = decidirEnvio(estado, mensagem.captura, agora);
+  const decisao = decidirEnvio(
+    estado,
+    mensagem.momento === "carregou" ? semMarcacoes(mensagem.captura) : mensagem.captura,
+    agora,
+  );
   await gravarEstado(tabId, { ...decisao.estado, ...origem });
   const envio = decisao.envio;
   if (!envio) {
@@ -114,6 +118,19 @@ async function processar(
     });
     return `falha: ${falha instanceof Error ? falha.message : "erro desconhecido"}`;
   }
+}
+
+/**
+ * Ao abrir a tela, as marcações da declaração de propósitos ainda são as que
+ * o portal traz por padrão, não a resposta do cliente. Como a captura não
+ * sobrescreve, gravar o padrão agora travaria a resposta de verdade: elas
+ * só vão quando o operador envia a tela ou sai dela.
+ */
+function semMarcacoes(captura: AutoCapture): AutoCapture {
+  const values = Object.fromEntries(
+    Object.entries(captura.values).filter(([chave]) => !chave.startsWith("person.purpose")),
+  );
+  return { ...captura, values };
 }
 
 /**

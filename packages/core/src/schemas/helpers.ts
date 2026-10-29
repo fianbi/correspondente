@@ -78,3 +78,22 @@ export function optionalEnum<T extends readonly [string, ...string[]]>(values: T
     )
     .transform((value) => value as T[number] | null);
 }
+
+/**
+ * Sim/não opcional. Chega como `"true"`/`"false"` (select Sim/Não da web,
+ * marcação lida do portal) ou booleano; vazio é "não respondido" (`null`),
+ * que não é o mesmo que "não".
+ */
+export const optionalBoolean = z
+  .union([z.boolean(), z.string()])
+  .transform((value, ctx) => {
+    if (typeof value === "boolean") return value;
+    const texto = value.trim().toLowerCase();
+    if (texto === "") return null;
+    if (texto === "true" || texto === "sim") return true;
+    if (texto === "false" || texto === "nao" || texto === "não") return false;
+    ctx.addIssue({ code: "custom", message: "Opção inválida." });
+    return z.NEVER;
+  })
+  .nullish()
+  .transform((value) => value ?? null);

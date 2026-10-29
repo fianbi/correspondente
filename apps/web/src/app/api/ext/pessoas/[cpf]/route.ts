@@ -41,6 +41,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ cpf:
     rentCents: pessoa.rentCents,
     condoFeeCents: pessoa.condoFeeCents,
     alimonyCents: pessoa.alimonyCents,
+    relationshipAgencyNumber: pessoa.relationshipAgencyNumber,
+    relationshipAgencyCity: pessoa.relationshipAgencyCity,
+    relationshipAgencyUf: pessoa.relationshipAgencyUf,
     incomes: rendas.map((renda) => ({
       kind: renda.kind,
       sourceName: renda.sourceName ?? renda.occupation,

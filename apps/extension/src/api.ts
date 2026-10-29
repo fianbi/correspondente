@@ -53,6 +53,9 @@ export interface PessoaDaTela {
   rentCents: number | null;
   condoFeeCents: number | null;
   alimonyCents: number | null;
+  relationshipAgencyNumber: string | null;
+  relationshipAgencyCity: string | null;
+  relationshipAgencyUf: string | null;
   incomes: {
     kind: string;
     sourceName: string | null;
