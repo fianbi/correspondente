@@ -25,28 +25,9 @@ import { Field } from "@/components/ui/field";
 import { SelectField, optionsFromLabels } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { savePerson, type PersonFormState } from "./actions";
+import { DeclaracaoPropositos } from "./declaracao-propositos";
 
 const UF_OPTIONS = UFS.map((uf) => ({ value: uf, label: uf }));
-
-/** Sim/não com "não respondido" (vazio), como a declaração de propósitos do portal. */
-const SIM_NAO = [
-  { value: "true", label: "Sim" },
-  { value: "false", label: "Não" },
-];
-
-function simNao(valor: boolean | null | undefined): string {
-  return valor === true ? "true" : valor === false ? "false" : "";
-}
-
-const PROPOSITOS = [
-  ["purposeAccounts", "Movimentação de conta, depósito e poupança"],
-  ["purposeLoans", "Empréstimos e financiamentos"],
-  ["purposeHousingLoan", "Financiamento habitacional"],
-  ["purposeInvestments", "Investimentos"],
-  ["purposeCreditCard", "Cartão de crédito"],
-  ["purposeInsurance", "Seguro, previdência, capitalização e consórcios"],
-  ["purposeForeignExchange", "Operações internacionais e câmbio"],
-] as const;
 
 /**
  * Órgãos emissores aceitos por tipo de documento. A lista vem do próprio
@@ -309,16 +290,18 @@ export function PersonForm({ person }: { person?: Person }) {
 
       <Card>
         <CardHeader title="Declaração de propósitos" />
-        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PROPOSITOS.map(([name, label]) => (
-            <SelectField
-              key={name}
-              label={label}
-              name={name}
-              options={SIM_NAO}
-              defaultValue={simNao(person?.[name])}
-            />
-          ))}
+        <CardBody>
+          <DeclaracaoPropositos
+            inicial={{
+              purposeAccounts: person?.purposeAccounts ?? null,
+              purposeLoans: person?.purposeLoans ?? null,
+              purposeHousingLoan: person?.purposeHousingLoan ?? null,
+              purposeInvestments: person?.purposeInvestments ?? null,
+              purposeCreditCard: person?.purposeCreditCard ?? null,
+              purposeInsurance: person?.purposeInsurance ?? null,
+              purposeForeignExchange: person?.purposeForeignExchange ?? null,
+            }}
+          />
         </CardBody>
       </Card>
 

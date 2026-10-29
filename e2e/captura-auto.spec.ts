@@ -224,14 +224,27 @@ test("declaração de propósitos e agência de relacionamento aparecem no cadas
   });
 
   await page.goto(`/pessoas/${personId}`);
-  await expect(page.getByLabel("Movimentação de conta, depósito e poupança")).toHaveValue("true");
-  await expect(page.getByLabel("Financiamento habitacional")).toHaveValue("true");
-  await expect(page.getByLabel("Investimentos")).toHaveValue("false");
-  // Não respondido continua em branco, e não vira "não".
-  await expect(page.getByLabel("Cartão de crédito")).toHaveValue("");
+  const caixa = (nome: string) => page.getByRole("checkbox", { name: nome });
+  await expect(caixa("Movimentação de conta, depósito e poupança")).toBeChecked();
+  await expect(caixa("Empréstimos e financiamentos")).toBeChecked();
+  await expect(page.getByRole("radio", { name: "Sim" })).toBeChecked();
+  await expect(caixa("Investimentos")).not.toBeChecked();
   await expect(page.getByLabel("Agência", { exact: true })).toHaveValue("2352");
   await expect(page.getByLabel("Município da agência")).toHaveValue("ADAMANTINA");
   await expect(page.getByLabel("UF da agência")).toHaveValue("SP");
+
+  // Pela web, como no SICAQ: marcar e salvar. Desmarcar empréstimos tira o
+  // habitacional, que deixa de existir.
+  await caixa("Cartão de crédito").check();
+  await caixa("Empréstimos e financiamentos").uncheck();
+  await expect(page.getByRole("radio", { name: "Sim" })).toBeDisabled();
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page.getByRole("button", { name: "Salvar alterações" })).toBeEnabled();
+  await page.reload();
+  await expect(caixa("Cartão de crédito")).toBeChecked();
+  await expect(caixa("Empréstimos e financiamentos")).not.toBeChecked();
+  await expect(caixa("Movimentação de conta, depósito e poupança")).toBeChecked();
+  await expect(page.getByRole("radio", { name: "Sim" })).not.toBeChecked();
 });
 
 test("CPF novo sem nome na tela não cria ninguém", async ({ request }) => {
