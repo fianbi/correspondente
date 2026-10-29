@@ -31,7 +31,7 @@ export default async function PendenciasPage() {
             <CardBody className="p-0">
               <ul className="divide-y divide-line">
                 {pendencies.map((pendency) => (
-                  <li key={pendency.id} className="flex items-start justify-between gap-4 px-5 py-3">
+                  <li key={pendency.id} className="relative flex items-start justify-between gap-4 px-5 py-3 hover:bg-surface-muted/60">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink">{pendency.title}</p>
                       {pendency.description ? (
@@ -40,7 +40,7 @@ export default async function PendenciasPage() {
                       <p className="mt-0.5 text-xs text-ink-muted">
                         <Link
                           href={`/processos/${pendency.processId}?aba=pendencias` as Route}
-                          className="hover:text-ink hover:underline"
+                          className="hover:text-ink hover:underline after:absolute after:inset-0"
                         >
                           #{pendency.processNumber} {pendency.clientName}
                         </Link>

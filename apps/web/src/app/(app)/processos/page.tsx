@@ -106,12 +106,12 @@ export default async function ProcessosPage({
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((process) => (
-                  <tr key={process.id} className="hover:bg-surface-muted/60">
+                  <tr key={process.id} className="relative hover:bg-surface-muted/60">
                     <td className="px-5 py-3 text-ink-muted">{process.number}</td>
                     <td className="px-5 py-3">
                       <Link
                         href={`/processos/${process.id}`}
-                        className="font-medium text-ink hover:text-brand-600 hover:underline"
+                        className="font-medium after:absolute after:inset-0 text-ink hover:text-brand-600 hover:underline"
                       >
                         {process.personName}
                       </Link>

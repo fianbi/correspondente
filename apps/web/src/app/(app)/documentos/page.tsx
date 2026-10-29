@@ -42,14 +42,14 @@ export default async function DocumentosPage() {
               </thead>
               <tbody className="divide-y divide-line">
                 {documents.map((document) => (
-                  <tr key={document.id} className="hover:bg-surface-muted/60">
+                  <tr key={document.id} className="relative hover:bg-surface-muted/60">
                     <td className="px-5 py-3">
                       <span className="flex items-center gap-2">
                         <FileText className="size-4 shrink-0 text-ink-muted" aria-hidden />
                         {document.processId ? (
                           <Link
                             href={`/processos/${document.processId}?aba=documentos` as Route}
-                            className="font-medium text-ink hover:text-brand-600 hover:underline"
+                            className="font-medium after:absolute after:inset-0 text-ink hover:text-brand-600 hover:underline"
                           >
                             {document.title}
                           </Link>

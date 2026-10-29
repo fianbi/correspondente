@@ -75,11 +75,11 @@ export default async function PessoasPage({
               </thead>
               <tbody className="divide-y divide-line">
                 {rows.map((person) => (
-                  <tr key={person.id} className="hover:bg-surface-muted/60">
+                  <tr key={person.id} className="relative hover:bg-surface-muted/60">
                     <td className="px-5 py-3">
                       <Link
                         href={`/pessoas/${person.id}`}
-                        className="font-medium text-ink hover:text-brand-600 hover:underline"
+                        className="font-medium after:absolute after:inset-0 text-ink hover:text-brand-600 hover:underline"
                       >
                         {person.fullName}
                       </Link>
