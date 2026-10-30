@@ -1,5 +1,6 @@
 import type {
   AutoCapture,
+  LeituraFormulariosEnviados,
   CaptureOutcome,
   DiscoveredField,
   FillOutcome,
@@ -47,5 +48,16 @@ export interface CapturaDaPagina {
   /** `null`: a página tem formulário, mas nenhuma tela do perfil bate. */
   captura: AutoCapture | null;
   /** Endereço do documento lido, para o diagnóstico. */
+  url?: string;
+}
+
+/**
+ * Do content script para o background: a tela "Consulta de Formulários
+ * Enviados" foi aberta, com a lista do CPF consultado. É só leitura de
+ * resultado, então vai assim que a página carrega.
+ */
+export interface FormulariosDaPagina {
+  kind: "formularios-enviados";
+  leitura: LeituraFormulariosEnviados;
   url?: string;
 }

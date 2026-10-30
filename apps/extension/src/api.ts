@@ -1,4 +1,4 @@
-import type { PortalProfile, SavedIncome } from "@corr/portal";
+import type { FormularioEnviado, PortalProfile, SavedIncome } from "@corr/portal";
 
 /**
  * Cliente da API do sistema.
@@ -64,6 +64,12 @@ export interface PessoaDaTela {
     netCents: number | null;
   }[];
   processes: { id: string; number: number; stage: string; status: string }[];
+  /** Avaliações de risco do SICAQ, mais recentes primeiro. */
+  riskAssessments?: {
+    proposalNumber: string;
+    result: string | null;
+    validUntil: string | null;
+  }[];
 }
 
 /** O que o botão de preencher escreve no portal, já nos códigos do banco. */
@@ -145,6 +151,18 @@ export const api = {
       spouseCreated?: boolean;
       ignored?: string[];
     }>(config, "/captura", {
+      method: "POST",
+      body: JSON.stringify(envio),
+    }),
+
+  /** Linhas com avaliação de risco da tela "Formulários Enviados". */
+  avaliacoesDeRisco: (config: Config, envio: { cpf: string; rows: FormularioEnviado[] }) =>
+    chamar<{
+      found: boolean;
+      added: number;
+      updated: number;
+      linkedProcesses: number[];
+    }>(config, "/avaliacoes-risco", {
       method: "POST",
       body: JSON.stringify(envio),
     }),

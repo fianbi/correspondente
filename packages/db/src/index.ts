@@ -37,4 +37,5 @@ export type {
   Pendency,
   FormTemplate,
   SiteMapping,
+  RiskAssessment,
 } from "./schema/index";

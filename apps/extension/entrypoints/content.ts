@@ -6,10 +6,16 @@ import {
   fromCaixaOutcomes,
   fillScreen,
   readForAutoCapture,
+  readSentForms,
   type PortalProfile,
 } from "@corr/portal";
 import { CHAVE_PERFIL } from "@/src/captura-auto";
-import type { CapturaDaPagina, PanelRequest, PanelResponse } from "@/src/messages";
+import type {
+  CapturaDaPagina,
+  FormulariosDaPagina,
+  PanelRequest,
+  PanelResponse,
+} from "@/src/messages";
 
 /**
  * Content script: o único pedaço que toca a página do banco.
@@ -40,6 +46,7 @@ export default defineContentScript({
     );
 
     observarCapturaAutomatica();
+    lerFormulariosEnviados();
   },
 });
 
@@ -98,6 +105,17 @@ function observarCapturaAutomatica() {
   window.addEventListener("pagehide", () => avisar("saiu"));
 }
 
+/**
+ * Formulários enviados: a lista com a avaliação de risco já chega pronta na
+ * página de resultado da busca. Não há o que salvar nem de onde sair, então a
+ * leitura vai ao carregar.
+ */
+function lerFormulariosEnviados() {
+  const leitura = readSentForms(document);
+  if (!leitura) return;
+  enviar({ kind: "formularios-enviados", leitura, url: location.href });
+}
+
 function atender(mensagem: PanelRequest): PanelResponse {
   if (mensagem.kind === "destacar") {
     const alvo = document.querySelector<HTMLElement>(mensagem.selector);
@@ -135,7 +153,7 @@ function atender(mensagem: PanelRequest): PanelResponse {
   return { kind: "capturado", values: fromCaixaOutcomes(captureScreen(document, tela)) };
 }
 
-function enviar(mensagem: CapturaDaPagina) {
+function enviar(mensagem: CapturaDaPagina | FormulariosDaPagina) {
   try {
     chrome.runtime.sendMessage(mensagem).catch(() => undefined);
   } catch {

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<!--
+  Montada à mão a partir da tela real "Consulta de Formulários Enviados" do
+  Caixa Aqui (amostra salva no projeto cb-radar), com a mesma marcação da
+  tabela de resultado e nenhum dado real. A amostra não tinha formulário
+  habitacional com avaliação de risco preenchida; a terceira linha imita uma,
+  e o formato exato desse conteúdo ainda precisa ser conferido no portal.
+-->
+<html>
+<head><meta charset="utf-8"><title>Caixa Aqui - Consulta de Formulários Enviados</title></head>
+<body>
+<form id="main" name="main" method="post">
+<input type="hidden" id="dataCpf" name="dataCpf" value="">
+<input type="hidden" id="cpf" name="cpf" value="">
+<input type="hidden" id="numProposta" name="numProposta" value="">
+<label>Buscar por CPF</label>
+<input type="text" id="cpfCliente" name="cpfCliente" value="111.444.777-35">
+<input type="button" value="Consultar">
+<table cellspacing="3px" style="border-collapse: collapse;border-color: #111111" id="row" class="tbReport" cellpadding="3px">
+<thead>
+<tr>
+<th class="tdfon10tb_c sortable">
+<a href="#">No Prop.</a></th>
+<th class="tdfon10tb_c sortable">
+<a href="#">Data Remessa</a></th>
+<th class="tdfon10tb_c sortable" style="padding: 0px 30px;">
+<a href="#">CPF Cliente</a></th>
+<th class="tdfon10tb_c">Resultado da Análise de Conformidade</th>
+<th class="tdfon10tb_c sortable">
+<a href="#">Produto</a></th>
+<th class="tdfon10tb_c">Resultado Da Avaliação De Risco</th>
+<th class="tdfon10tb_c">Alterar</th>
+<th class="tdfon10tb_c detalhes_avaliacao_risco">Detalhes Avaliação de Risco</th>
+<th class="tdfon10tb_c">Validade da Avaliação de Risco</th>
+<th class="tdfon10tb_c">Visualizar</th>
+<th class="tdfon10tb_c sortable">
+<a href="#">Tipo de Pedido</a></th></tr></thead>
+<tbody>
+<tr class="odd">
+<td class="tdfon10C" style="width: 40;align: center;">-</td>
+<td class="tdfon10C" style="width: 60;">23/06/2026</td>
+<td class="tdfon10C" style="width: 70;padding: -1px 30px;">
+								111.444.777-35
+							</td>
+<td class="tdfon10C" style="width: 60;">
+											Pré-Cadastro
+									<!-- HABITACAO -->
+									<!-- FINANCIAMENTO_VEICULO, MATERIAL_CONSTRUCAO -->
+							</td>
+<td class="tdfon10C" style="width: 100;">
+									-
+							</td>
+<td class="tdfon10C" style="width: 50;">
+									-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+													-
+							</td>
+<td class="tdfon10C">
+								-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+                       					-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+									<a alt="Imprimir" href="javascript:detalhaCliente(&#39;11144477735&#39;);"><img border="0" src="botao_imprimir_menor.gif" width="14" height="16"></a>
+							</td>
+<td class="tdfon10C" style="width: 100;">
+										Cadastro de Cliente
+							</td></tr>
+<tr class="even">
+<td class="tdfon10C" style="width: 40;align: center;">40000001</td>
+<td class="tdfon10C" style="width: 60;">24/07/2020</td>
+<td class="tdfon10C" style="width: 70;padding: -1px 30px;">
+								111.444.777-35
+							</td>
+<td class="tdfon10C" style="width: 60;">
+															<a href="javascript:consultaAtivacao(&#39;11144477735&#39;);">
+																Contratação realizada
+															</a>
+							</td>
+<td class="tdfon10C" style="width: 100;">
+											Proposta de Cartão de Crédito 
+							</td>
+<td class="tdfon10C" style="width: 50;">
+									-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+										-
+							</td>
+<td class="tdfon10C">
+								-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+                       					-
+							</td>
+<td class="tdfon10C" style="width: 30;">
+									<a alt="Imprimir" href="javascript:imprimir(&#39;40000001&#39;, false);"><img border="0" src="botao_imprimir_menor.gif" width="14" height="16"></a>
+							</td>
+<td class="tdfon10C" style="width: 100;">
+										Solicitação<br>
+										Contratação
+							</td></tr>
+<tr class="odd">
+<td class="tdfon10C" style="width: 40;align: center;">81234567</td>
+<td class="tdfon10C" style="width: 60;">02/10/2026</td>
+<td class="tdfon10C" style="width: 70;padding: -1px 30px;">
+								111.444.777-35
+							</td>
+<td class="tdfon10C" style="width: 60;">
+									Em análise
+							</td>
+<td class="tdfon10C" style="width: 100;">
+											Habitação
+							</td>
+<td class="tdfon10C" style="width: 50;">
+									APROVADA
+							</td>
+<td class="tdfon10C" style="width: 30;">
+											<a href="javascript:alterar(&#39;81234567&#39;, &#39;1&#39;, &#39;11144477735&#39;, &#39;A&#39;, &#39;N&#39;);">Alterar</a>
+							</td>
+<td class="tdfon10C">
+								Valor máximo de financiamento R$ 280.000,00 - Prestação máxima R$ 2.150,00
+							</td>
+<td class="tdfon10C" style="width: 30;">
+                       					02/01/2027
+							</td>
+<td class="tdfon10C" style="width: 30;">
+									<a alt="Imprimir" href="javascript:imprimir(&#39;81234567&#39;, false);"><img border="0" src="botao_imprimir_menor.gif" width="14" height="16"></a>
+							</td>
+<td class="tdfon10C" style="width: 100;">
+										Avaliação de Risco
+							</td></tr>
+</tbody></table>
+</form>
+</body>
+</html>

@@ -8,13 +8,14 @@ import {
   esquecerEnvio,
   ESTADO_INICIAL,
   saiuDoCadastro,
+  TELA_FORMULARIOS_ENVIADOS,
   TELAS_QUE_ABREM_CADASTRO,
   type Diagnostico,
   type EstadoCaptura,
   type UltimaCaptura,
 } from "./captura-auto";
-import type { AutoCapture } from "@corr/portal";
-import type { CapturaDaPagina } from "./messages";
+import { hasRiskAssessment, type AutoCapture } from "@corr/portal";
+import type { CapturaDaPagina, FormulariosDaPagina } from "./messages";
 
 /**
  * Lado do background da captura automática: recebe o que o content script
@@ -134,19 +135,77 @@ function semMarcacoes(captura: AutoCapture): AutoCapture {
 }
 
 /**
+ * Formulários enviados: grava no cadastro do CPF consultado as linhas que têm
+ * avaliação de risco. O sistema vincula a vigente ao processo aberto que
+ * ainda não tem nenhuma.
+ *
+ * Recarregar a página manda a mesma lista de novo, e tudo bem: o sistema
+ * atualiza pela proposta, sem duplicar.
+ */
+async function processarFormularios(mensagem: FormulariosDaPagina): Promise<string> {
+  const config = await lerConfig();
+  if (!config) return "sem endereço do sistema";
+  if ((await chrome.storage.local.get(CHAVE_DESLIGADA))[CHAVE_DESLIGADA]) {
+    return "captura automática desligada";
+  }
+
+  const { cpf } = mensagem.leitura;
+  if (!cpf) return "lista sem CPF";
+  const rows = mensagem.leitura.rows.filter(hasRiskAssessment);
+  if (rows.length === 0) return "nenhuma avaliação de risco na lista";
+
+  const base = { em: Date.now(), screenKey: TELA_FORMULARIOS_ENVIADOS, cpfFinal: cpf.slice(-4), applied: [] };
+  try {
+    const resposta = await api.avaliacoesDeRisco(config, { cpf, rows });
+    await registrar({
+      ...base,
+      riskAssessments: {
+        added: resposta.added,
+        updated: resposta.updated,
+        linkedProcesses: resposta.linkedProcesses,
+      },
+      erro: resposta.found
+        ? null
+        : "CPF ainda sem cadastro; passe pelo cadastro de clientes e consulte de novo.",
+    });
+    return resposta.found
+      ? `${rows.length} avaliação(ões) de risco enviada(s)`
+      : "enviado; CPF sem cadastro";
+  } catch (falha) {
+    const motivo = falha instanceof Error ? falha.message : "Falha ao enviar.";
+    await registrar({ ...base, erro: motivo });
+    return `falha: ${motivo}`;
+  }
+}
+
+/**
  * Cada leitura que chega, com o que se fez dela. É o que permite entender, no
  * uso real, por que uma tela não foi para o sistema sem abrir o DevTools.
  */
-async function anotar(mensagem: CapturaDaPagina, resultado: string): Promise<void> {
-  const item: Diagnostico = {
-    em: Date.now(),
-    momento: mensagem.momento,
-    url: mensagem.url ?? null,
-    screenKey: mensagem.captura?.screenKey ?? null,
-    cpfFinal: mensagem.captura?.cpf?.slice(-4) ?? null,
-    campos: mensagem.captura ? Object.keys(mensagem.captura.values).length : 0,
-    resultado,
-  };
+async function anotar(
+  mensagem: CapturaDaPagina | FormulariosDaPagina,
+  resultado: string,
+): Promise<void> {
+  const item: Diagnostico =
+    mensagem.kind === "formularios-enviados"
+      ? {
+          em: Date.now(),
+          momento: "carregou",
+          url: mensagem.url ?? null,
+          screenKey: TELA_FORMULARIOS_ENVIADOS,
+          cpfFinal: mensagem.leitura.cpf?.slice(-4) ?? null,
+          campos: mensagem.leitura.rows.length,
+          resultado,
+        }
+      : {
+          em: Date.now(),
+          momento: mensagem.momento,
+          url: mensagem.url ?? null,
+          screenKey: mensagem.captura?.screenKey ?? null,
+          cpfFinal: mensagem.captura?.cpf?.slice(-4) ?? null,
+          campos: mensagem.captura ? Object.keys(mensagem.captura.values).length : 0,
+          resultado,
+        };
   const anteriores =
     ((await chrome.storage.local.get(CHAVE_DIAGNOSTICO))[CHAVE_DIAGNOSTICO] as
       | Diagnostico[]
@@ -160,9 +219,21 @@ let fila: Promise<void> = Promise.resolve();
 
 export function ouvirCapturaAutomatica(): void {
   chrome.runtime.onMessage.addListener((mensagem: unknown, remetente, responder) => {
-    const recebida = mensagem as Partial<CapturaDaPagina> | null;
     const tabId = remetente.tab?.id;
-    if (recebida?.kind !== "captura-auto" || tabId === undefined) return false;
+    if (tabId === undefined) return false;
+
+    const formularios = mensagem as Partial<FormulariosDaPagina> | null;
+    if (formularios?.kind === "formularios-enviados" && formularios.leitura) {
+      const lida = formularios as FormulariosDaPagina;
+      fila = fila
+        .then(async () => anotar(lida, await processarFormularios(lida)))
+        .catch(() => undefined)
+        .finally(() => responder({ ok: true }));
+      return true;
+    }
+
+    const recebida = mensagem as Partial<CapturaDaPagina> | null;
+    if (recebida?.kind !== "captura-auto") return false;
 
     fila = fila
       .then(async () => {

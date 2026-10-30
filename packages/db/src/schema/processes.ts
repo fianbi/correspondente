@@ -22,6 +22,7 @@ import {
 import { agencies, banks, brokers, realEstateAgencies } from "./catalogs";
 import { orgs, profiles } from "./orgs";
 import { people } from "./people";
+import { riskAssessments } from "./risk-assessments";
 
 export const processStage = pgEnum("process_stage", PROCESS_STAGES);
 export const processStatus = pgEnum("process_status", PROCESS_STATUSES);
@@ -89,6 +90,14 @@ export const processes = pgTable(
 
     /** Validade do crédito aprovado: alimenta o alerta de "a vencer". */
     creditValidUntil: date("credit_valid_until"),
+
+    /**
+     * Avaliação de risco do SICAQ que vale para este processo. A captura da
+     * extensão preenche sozinha quando está vazio; o operador pode trocar.
+     */
+    riskAssessmentId: uuid("risk_assessment_id").references(() => riskAssessments.id, {
+      onDelete: "set null",
+    }),
 
     brokerId: uuid("broker_id").references(() => brokers.id, { onDelete: "set null" }),
     realEstateAgencyId: uuid("real_estate_agency_id").references(() => realEstateAgencies.id, {

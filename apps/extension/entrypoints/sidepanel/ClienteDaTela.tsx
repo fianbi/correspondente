@@ -110,6 +110,25 @@ export function Ficha({ pessoa }: { pessoa: PessoaDaTela }) {
         <p className="discreto">Nenhuma renda cadastrada.</p>
       )}
 
+      <p className="rotulo">Avaliação de risco</p>
+      {pessoa.riskAssessments && pessoa.riskAssessments.length > 0 ? (
+        <ul className="ficha-lista">
+          {pessoa.riskAssessments.slice(0, 3).map((avaliacao) => (
+            <li key={avaliacao.proposalNumber}>
+              <span className="etiqueta">{avaliacao.result ?? "sem resultado"}</span> proposta{" "}
+              {avaliacao.proposalNumber}
+              {avaliacao.validUntil
+                ? ` · validade ${avaliacao.validUntil.split("-").reverse().join("/")}`
+                : ""}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="discreto">
+          Nenhuma capturada. Abra "Formulários Enviados" no portal com este CPF.
+        </p>
+      )}
+
       <p className="discreto">
         {pessoa.processes.length === 0
           ? "Sem processo aberto."

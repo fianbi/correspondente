@@ -4,6 +4,7 @@ import {
   CHAVE_DESLIGADA,
   CHAVE_DIAGNOSTICO,
   CHAVE_ULTIMA,
+  TELA_FORMULARIOS_ENVIADOS,
   type Diagnostico,
   type UltimaCaptura,
 } from "@/src/captura-auto";
@@ -81,11 +82,10 @@ export function UltimaColeta({
   ultima: UltimaCaptura;
   perfil: PortalProfile;
 }) {
-  const tela = perfil.screens.find((screen) => screen.key === ultima.screenKey);
   return (
     <p className={ultima.erro ? "erro" : "nota"}>
       <strong>{new Date(ultima.em).toLocaleTimeString("pt-BR")}</strong> ·{" "}
-      {tela?.label ?? ultima.screenKey} · CPF final {ultima.cpfFinal}:{" "}
+      {nomeDaTela(perfil, ultima.screenKey)} · CPF final {ultima.cpfFinal}:{" "}
       {ultima.erro ?? descrever(ultima)}
     </p>
   );
@@ -128,11 +128,7 @@ export function Atividade({ coleta, perfil }: { coleta: Coleta; perfil: PortalPr
               <li key={`${leitura.em}-${leitura.momento}`}>
                 <span className="hora">{new Date(leitura.em).toLocaleTimeString("pt-BR")}</span>
                 <span>
-                  <strong>
-                    {perfil.screens.find((s) => s.key === leitura.screenKey)?.label ??
-                      leitura.screenKey ??
-                      "Sem tela reconhecida"}
-                  </strong>{" "}
+                  <strong>{nomeDaTela(perfil, leitura.screenKey)}</strong>{" "}
                   <span className="discreto">
                     ({leitura.momento}
                     {leitura.cpfFinal ? ` · CPF final ${leitura.cpfFinal}` : ""})
@@ -152,7 +148,22 @@ export function Atividade({ coleta, perfil }: { coleta: Coleta; perfil: PortalPr
   );
 }
 
+/** Nome da tela para o operador; a de formulários enviados não está no perfil. */
+function nomeDaTela(perfil: PortalProfile, screenKey: string | null): string {
+  if (screenKey === TELA_FORMULARIOS_ENVIADOS) return "Formulários enviados";
+  return perfil.screens.find((s) => s.key === screenKey)?.label ?? screenKey ?? "Sem tela reconhecida";
+}
+
 function descrever(ultima: UltimaCaptura): string {
+  if (ultima.riskAssessments) {
+    const { added, updated, linkedProcesses } = ultima.riskAssessments;
+    const total = added + updated;
+    const vinculo =
+      linkedProcesses.length > 0
+        ? ` Vinculada ao(s) processo(s) ${linkedProcesses.map((n) => `#${n}`).join(", ")}.`
+        : "";
+    return `${total} avaliação(ões) de risco gravada(s), ${added} nova(s).${vinculo}`;
+  }
   const partes: string[] = [];
   if (ultima.created) partes.push("cadastro criado");
   if (ultima.spouseCreated) partes.push("cônjuge cadastrado");

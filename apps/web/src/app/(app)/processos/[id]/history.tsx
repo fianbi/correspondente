@@ -35,6 +35,12 @@ function describe(event: ProcessEvent, resolveRelation: (value: string | null) =
       return { label: "Etapa iniciada", from: null, to: stageLabel(event.newValue) };
     case "etapa_finalizada":
       return { label: "Etapa finalizada", from: null, to: stageLabel(event.newValue) };
+    case "avaliacao_risco_vinculada":
+      return {
+        label: "Avaliação de risco",
+        from: event.oldValue ? `Proposta ${event.oldValue}` : null,
+        to: event.newValue ? `Proposta ${event.newValue}` : "Nenhuma",
+      };
     case "responsavel_alterado":
       return {
         label: `Responsável — ${stageLabel(event.fieldKey)}`,

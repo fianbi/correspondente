@@ -14,6 +14,7 @@ import { orgCounters, profiles } from "../schema/orgs";
 import { agencies, banks, brokers } from "../schema/catalogs";
 import { people } from "../schema/people";
 import { processParticipants, processes } from "../schema/processes";
+import { linkCurrentRiskAssessment } from "./risk-assessments";
 import { recordProcessEvent } from "./process-fields";
 
 /**
@@ -162,6 +163,10 @@ export async function createProcess(ctx: OrgContext, input: ProcessInput) {
     await recordProcessEvent(tx, ctx, created.id, "processo_criado", {
       newValue: String(created.number),
     });
+
+    // A pessoa já passou pela avaliação de risco do SICAQ antes de o processo
+    // existir: a vigente entra nele desde o começo.
+    await linkCurrentRiskAssessment(tx, ctx, input.personId);
 
     return created;
   });

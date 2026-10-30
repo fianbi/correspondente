@@ -4,3 +4,4 @@ export * from "./caixa";
 export * from "./auto-capture";
 export * from "./saved-incomes";
 export * from "./from-caixa";
+export * from "./formularios-enviados";

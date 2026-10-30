@@ -25,6 +25,7 @@ import {
   listFormTemplates,
   listProcessPendencies,
   listRealEstateAgencies,
+  listRiskAssessmentsForPeople,
   listStageStates,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
@@ -38,6 +39,7 @@ import { ProcessHeaderControls } from "./header-controls";
 import { ProcessDocuments } from "./process-documents";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
+import { RiskCard } from "./risk-card";
 
 export const metadata: Metadata = { title: "Processo" };
 
@@ -106,11 +108,13 @@ export default async function ProcessoPage({
     flow.stages.find((s) => s.key === etapa)?.key ?? process.stage ?? flow.stages[0]?.key;
   const currentStage = flow.stages.find((s) => s.key === currentStageKey) ?? flow.stages[0];
 
-  const [documents, pendencies, links, templates] = await Promise.all([
+  const participantIds = [...new Set(process.participants.map((p) => p.personId))];
+  const [documents, pendencies, links, templates, riskAssessments] = await Promise.all([
     listProcessDocuments(ctx, id),
     listProcessPendencies(ctx, id),
     listAccessLinks(ctx, id),
     listFormTemplates(ctx),
+    listRiskAssessmentsForPeople(ctx, participantIds),
   ]);
 
   const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
@@ -234,6 +238,15 @@ export default async function ProcessoPage({
               </Link>
             ))}
           </nav>
+
+          {tab === "etapas" ? (
+            <RiskCard
+              processId={id}
+              linkedId={process.riskAssessmentId}
+              assessments={riskAssessments}
+              showPerson={participantIds.length > 1}
+            />
+          ) : null}
 
           {tab === "historico" ? (
             <HistoryTab processId={id} actors={members} relations={relations} />

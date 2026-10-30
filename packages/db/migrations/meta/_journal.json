@@ -120,6 +120,20 @@
       "when": 1793285442942,
       "tag": "0016_declaracao_e_agencia",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793366133590,
+      "tag": "0017_avaliacao_de_risco",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793366139322,
+      "tag": "0018_rls_avaliacao_de_risco",
+      "breakpoints": true
     }
   ]
 }

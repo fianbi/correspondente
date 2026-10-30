@@ -112,8 +112,13 @@ export interface UltimaCaptura {
   spouseCreated?: boolean;
   /** Campos que a tela mostrou num formato que o cadastro não aceita. */
   ignored?: string[];
+  /** Tela de formulários enviados: avaliações de risco gravadas e processos que as receberam. */
+  riskAssessments?: { added: number; updated: number; linkedProcesses: number[] };
   erro: string | null;
 }
+
+/** `screenKey` da tela de formulários enviados, que não é tela de cadastro do perfil. */
+export const TELA_FORMULARIOS_ENVIADOS = "formularios_enviados";
 
 /** Pedaço da URL comum a todas as telas do cadastro de clientes do portal. */
 const FLUXO_DE_CADASTRO = "cadastro_cliente";

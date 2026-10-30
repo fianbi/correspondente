@@ -1,4 +1,10 @@
-import { findPersonByCpf, getPerson, listPersonIncomes, listProcessesForPerson } from "@corr/db";
+import {
+  findPersonByCpf,
+  getPerson,
+  listPersonIncomes,
+  listProcessesForPerson,
+  listRiskAssessmentsForPeople,
+} from "@corr/db";
 import { contextFromRequest, json, preflight, unauthorized } from "../../_auth";
 
 export async function OPTIONS(request: Request) {
@@ -19,10 +25,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ cpf:
   const encontrada = await findPersonByCpf(ctx, cpf);
   if (!encontrada) return json(request, null);
 
-  const [pessoa, rendas, processos] = await Promise.all([
+  const [pessoa, rendas, processos, avaliacoes] = await Promise.all([
     getPerson(ctx, encontrada.id),
     listPersonIncomes(ctx, encontrada.id),
     listProcessesForPerson(ctx, encontrada.id),
+    listRiskAssessmentsForPeople(ctx, [encontrada.id]),
   ]);
 
   return json(request, {
@@ -55,6 +62,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ cpf:
       number: processo.number,
       stage: processo.stage,
       status: processo.status,
+    })),
+    riskAssessments: avaliacoes.map((avaliacao) => ({
+      proposalNumber: avaliacao.proposalNumber,
+      result: avaliacao.result,
+      validUntil: avaliacao.validUntil,
     })),
   });
 }
