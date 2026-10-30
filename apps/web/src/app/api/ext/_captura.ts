@@ -14,6 +14,7 @@ import {
   getPerson,
   listPersonIncomes,
   updatePerson,
+  updatePersonIncome,
 } from "@corr/db";
 
 /** Chaves que a extensão pode escrever de volta, vindas da tela do portal. */
@@ -99,8 +100,18 @@ function validarCampo(coluna: string, valor: unknown): { ok: boolean; valor?: un
   return parsed.success ? { ok: true, valor: parsed.data } : { ok: false };
 }
 
+/** Compara o valor do banco com o da tela (datas chegam como texto ou Date). */
+function mesmoValor(atual: unknown, novo: unknown): boolean {
+  const normalizar = (valor: unknown) =>
+    valor instanceof Date ? valor.toISOString().slice(0, 10) : valor === undefined ? null : valor;
+  return normalizar(atual) === normalizar(novo);
+}
+
 /**
  * Traz para o cadastro da pessoa o que estava na tela do portal.
+ *
+ * O portal é a fonte: um campo que a tela mostra diferente do cadastro é
+ * atualizado; igual, não é regravado; vazio na tela, não apaga nada.
  *
  * Vale para a captura manual (processo escolhido no painel) e para a
  * automática (pessoa achada pelo CPF). Só as chaves da lista acima são
@@ -125,10 +136,6 @@ export async function aplicarCaptura(
   for (const [chave, coluna] of Object.entries(CAMPOS_ACEITOS)) {
     const valor = recebidos[chave];
     if (valor === undefined || valor === null || valor === "") continue;
-    // Só preenche o que está vazio: o cadastro do escritório é a fonte, o
-    // portal complementa. Sobrescrever calado desfaria conferência humana.
-    if (pessoa[coluna] !== null && pessoa[coluna] !== undefined && pessoa[coluna] !== "") continue;
-
     const validado = validarCampo(
       coluna,
       EM_CENTAVOS.has(coluna) ? Number(valor) / 100 : valor,
@@ -137,6 +144,9 @@ export async function aplicarCaptura(
       ignorados.push(chave);
       continue;
     }
+    // O portal é a fonte: o que a tela mostra atualiza o cadastro. Só não
+    // grava o que já está igual, e campo vazio na tela nunca apaga nada.
+    if (mesmoValor(pessoa[coluna], validado.valor)) continue;
     novos[coluna] = validado.valor;
     aplicados.push(chave);
   }
@@ -150,8 +160,9 @@ export async function aplicarCaptura(
 }
 
 /**
- * Identidade de uma renda: tipo, início e de onde ela vem. Com isso, ler a
- * mesma lista do portal de novo não duplica nada.
+ * Identidade de uma renda: o tipo e de onde ela vem (documento da fonte
+ * pagadora, nome da atividade ou ocupação). Sem nada disso, a data de
+ * início. É o que reconhece a mesma renda quando o valor muda no portal.
  */
 function identidadeDaRenda(renda: {
   kind: string;
@@ -160,25 +171,33 @@ function identidadeDaRenda(renda: {
   sourceName: string | null;
   occupation: string | null;
 }): string {
-  const origem = renda.sourceDocument ?? renda.sourceName ?? renda.occupation ?? "";
-  return [renda.kind, renda.startDate ?? "", origem.trim().toLowerCase()].join("|");
+  const origem = (renda.sourceDocument ?? renda.sourceName ?? renda.occupation ?? "").trim();
+  return [renda.kind, origem ? origem.toLowerCase() : `inicio:${renda.startDate ?? ""}`].join("|");
+}
+
+export interface ResultadoRendas {
+  adicionadas: number;
+  atualizadas: number;
 }
 
 /**
- * Traz as rendas que o portal já tem cadastradas.
+ * Traz as rendas que o portal tem cadastradas.
  *
- * Só acrescenta: uma renda que o sistema já tem (mesma identidade) fica como
- * está, mesmo que o portal mostre outro valor, pela mesma regra dos campos da
- * pessoa. E nada é apagado — renda que sumiu do portal pode ter sido só um
- * ajuste na tela, e quem decide tirar do cadastro é o escritório.
+ * O portal é a fonte: renda nova entra, e a que o sistema já tem (mesma
+ * identidade) é atualizada com o que a tela mostra, campo a campo, sem apagar
+ * o que a tela não traz. Nada é removido: a lista do portal não tem tudo o
+ * que o sistema guarda (renda lançada só na web, por exemplo), e quem decide
+ * tirar uma renda do cadastro é o escritório.
  */
 export async function adicionarRendas(
   ctx: OrgContext,
   personId: string,
   recebidas: unknown[],
-): Promise<number> {
-  const existentes = new Set((await listPersonIncomes(ctx, personId)).map(identidadeDaRenda));
-  let adicionadas = 0;
+): Promise<ResultadoRendas> {
+  const existentes = new Map(
+    (await listPersonIncomes(ctx, personId)).map((renda) => [identidadeDaRenda(renda), renda]),
+  );
+  const resultado: ResultadoRendas = { adicionadas: 0, atualizadas: 0 };
 
   for (const recebida of recebidas) {
     const parsed = personIncomeInputSchema.safeParse(recebida);
@@ -186,14 +205,27 @@ export async function adicionarRendas(
     if (!parsed.success) continue;
 
     const identidade = identidadeDaRenda(parsed.data);
-    if (existentes.has(identidade)) continue;
+    const existente = existentes.get(identidade);
 
-    await addPersonIncome(ctx, personId, parsed.data);
-    existentes.add(identidade);
-    adicionadas += 1;
+    if (!existente) {
+      existentes.set(identidade, await addPersonIncome(ctx, personId, parsed.data));
+      resultado.adicionadas += 1;
+      continue;
+    }
+
+    const mudancas = Object.fromEntries(
+      Object.entries(parsed.data).filter(
+        ([coluna, valor]) =>
+          valor !== null && !mesmoValor((existente as Record<string, unknown>)[coluna], valor),
+      ),
+    );
+    if (Object.keys(mudancas).length === 0) continue;
+
+    existentes.set(identidade, await updatePersonIncome(ctx, existente.id, mudancas));
+    resultado.atualizadas += 1;
   }
 
-  return adicionadas;
+  return resultado;
 }
 
 /** Chaves da tela que entram no cadastro (as aceitas e preenchidas). */

@@ -49,7 +49,8 @@ export async function POST(request: Request) {
   if (!resultado.ok) return json(request, { error: resultado.error }, 400);
 
   const rendas = Array.isArray(body?.incomes) ? body.incomes : [];
-  const rendasNovas = rendas.length > 0 ? await adicionarRendas(ctx, pessoa.id, rendas) : 0;
+  const rendasDaTela =
+    rendas.length > 0 ? await adicionarRendas(ctx, pessoa.id, rendas) : { adicionadas: 0, atualizadas: 0 };
 
   return json(request, {
     found: true,
@@ -63,7 +64,8 @@ export async function POST(request: Request) {
         : resultado.applied,
     // Campos que a tela mostrou num formato que o cadastro não aceita.
     ignored: resultado.ignored,
-    incomesAdded: rendasNovas,
+    incomesAdded: rendasDaTela.adicionadas,
+    incomesUpdated: rendasDaTela.atualizadas,
     personId: pessoa.id,
   });
 }

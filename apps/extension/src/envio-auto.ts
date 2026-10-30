@@ -33,7 +33,9 @@ import type { CapturaDaPagina, FormulariosDaPagina } from "./messages";
 async function lerEstado(tabId: number): Promise<EstadoCaptura> {
   const chave = chaveDaAba(tabId);
   const guardado = await chrome.storage.session.get(chave);
-  return (guardado[chave] as EstadoCaptura | undefined) ?? ESTADO_INICIAL;
+  const estado = guardado[chave] as Partial<EstadoCaptura> | undefined;
+  // Estado gravado por uma versão anterior da extensão não tem `conhecidos`.
+  return { ...ESTADO_INICIAL, ...estado, conhecidos: estado?.conhecidos ?? {} };
 }
 
 async function gravarEstado(tabId: number, estado: EstadoCaptura): Promise<void> {
@@ -88,18 +90,22 @@ async function processar(
     if (mensagem.captura.screenKey === null) return "CPF guardado para as próximas telas";
     const vazia =
       Object.keys(mensagem.captura.values).length === 0 && mensagem.captura.incomes.length === 0;
-    return vazia ? "tela sem dados preenchidos" : "mesmo conteúdo já enviado";
+    return vazia ? "tela sem dados preenchidos" : "nada mudou desde o último envio";
   }
 
   const base = { em: agora, screenKey: envio.screenKey, cpfFinal: envio.cpf.slice(-4) };
   try {
-    const { chave: _chave, ...corpo } = envio;
+    const { anterior: _anterior, ...corpo } = envio;
     const resposta = await api.capturarPorCpf(config, corpo);
     const { found, applied, incomesAdded } = resposta;
+    // Sem pessoa, nada foi gravado: o que esta tela trouxe vai de novo
+    // quando o cadastro existir (a tela de dados cadastrais cria).
+    if (!found) await gravarEstado(tabId, esquecerEnvio(await lerEstado(tabId), envio));
     await registrar({
       ...base,
       applied,
       incomesAdded: incomesAdded ?? 0,
+      incomesUpdated: resposta.incomesUpdated ?? 0,
       created: resposta.created === true,
       spouseCreated: resposta.spouseCreated === true,
       ignored: resposta.ignored ?? [],
@@ -111,7 +117,7 @@ async function processar(
     return found ? "enviado" : "enviado; CPF sem cadastro";
   } catch (falha) {
     // Rede ou servidor: o mesmo conteúdo pode ir na próxima leitura.
-    await gravarEstado(tabId, esquecerEnvio(await lerEstado(tabId), envio.chave));
+    await gravarEstado(tabId, esquecerEnvio(await lerEstado(tabId), envio));
     await registrar({
       ...base,
       applied: [],

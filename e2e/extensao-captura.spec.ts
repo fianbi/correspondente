@@ -131,9 +131,10 @@ test("tela salva no portal completa o cadastro do CPF digitado na entrada", asyn
   await expect.poll(ultima, { timeout: 10_000 }).toMatchObject({
     screenKey: "cadastro_dados",
     cpfFinal: cpf.slice(-4),
-    // O nome já existia no sistema: entram a mãe, que estava vazia, e as
-    // respostas da declaração de propósitos, lidas ao sair da tela.
+    // O portal é a fonte: o nome digitado na tela troca o do sistema, e
+    // entram a mãe e as respostas da declaração de propósitos, lidas ao sair.
     applied: [
+      "person.fullName",
       "person.motherName",
       "person.purposeAccounts",
       "person.purposeLoans",

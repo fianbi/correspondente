@@ -29,22 +29,49 @@ describe("decidirEnvio", () => {
     expect(endereco.envio).toMatchObject({ cpf: CPF, screenKey: "cadastro_endereco" });
   });
 
-  it("o mesmo conteúdo não vai duas vezes", () => {
+  it("só o que mudou vai para a API; sem mudança, nenhuma chamada", () => {
     const comCpf = { ...ESTADO_INICIAL, cpf: CPF, cpfEm: 1000 };
-    const primeiro = decidirEnvio(comCpf, ENDERECO, 2000);
-    expect(primeiro.envio).not.toBeNull();
-    expect(decidirEnvio(primeiro.estado, ENDERECO, 2100).envio).toBeNull();
+    const tela = { ...ENDERECO, values: { "person.zipCode": "01310100", "person.street": "AV PAULISTA" } };
+    const primeiro = decidirEnvio(comCpf, tela, 2000);
+    expect(primeiro.envio?.values).toEqual(tela.values);
 
-    // Conteúdo mudou: é um envio novo.
-    const mudou = { ...ENDERECO, values: { "person.zipCode": "04538133" } };
-    expect(decidirEnvio(primeiro.estado, mudou, 2200).envio).not.toBeNull();
+    // Mesma tela, nada mudou (envio do formulário e saída da página juntos).
+    expect(decidirEnvio(primeiro.estado, tela, 2100).envio).toBeNull();
+
+    // Operador trocou só o CEP: vai só o CEP.
+    const mudou = { ...tela, values: { ...tela.values, "person.zipCode": "04538133" } };
+    expect(decidirEnvio(primeiro.estado, mudou, 2200).envio?.values).toEqual({
+      "person.zipCode": "04538133",
+    });
   });
 
-  it("envio que falhou pode ir de novo", () => {
+  it("lista de rendas vai inteira quando muda, e não vai quando é a mesma", () => {
+    const comCpf = { ...ESTADO_INICIAL, cpf: CPF, cpfEm: 1000 };
+    const renda = { kind: "informal" as const, sourceName: "CORRETOR", netCents: "1500,00" };
+    const tela = { screenKey: "renda_informal", cpf: null, values: {}, incomes: [renda] };
+    const primeiro = decidirEnvio(comCpf, tela, 2000);
+    expect(primeiro.envio?.incomes).toEqual([renda]);
+    expect(decidirEnvio(primeiro.estado, tela, 2100).envio).toBeNull();
+
+    const aumento = { ...tela, incomes: [{ ...renda, netCents: "1800,00" }] };
+    expect(decidirEnvio(primeiro.estado, aumento, 2200).envio?.incomes).toHaveLength(1);
+
+    // Lista vazia não apaga nada no sistema: nem chama.
+    expect(decidirEnvio(comCpf, { ...tela, incomes: [] }, 2300).envio).toBeNull();
+  });
+
+  it("envio que não chegou ao cadastro vai de novo", () => {
     const comCpf = { ...ESTADO_INICIAL, cpf: CPF, cpfEm: 1000 };
     const primeiro = decidirEnvio(comCpf, ENDERECO, 2000);
-    const esquecido = esquecerEnvio(primeiro.estado, primeiro.envio!.chave);
-    expect(decidirEnvio(esquecido, ENDERECO, 2100).envio).not.toBeNull();
+    const esquecido = esquecerEnvio(primeiro.estado, primeiro.envio!);
+    expect(decidirEnvio(esquecido, ENDERECO, 2100).envio?.values).toEqual(ENDERECO.values);
+  });
+
+  it("o que se sabe de um CPF não vale para outro", () => {
+    const comCpf = { ...ESTADO_INICIAL, cpf: CPF, cpfEm: 1000 };
+    const primeiro = decidirEnvio(comCpf, ENDERECO, 2000);
+    const outro = decidirEnvio(primeiro.estado, { ...ENDERECO, cpf: "52998224725" }, 2100);
+    expect(outro.envio?.values).toEqual(ENDERECO.values);
   });
 
   it("CPF novo na tela substitui o da sessão", () => {

@@ -101,7 +101,7 @@ export function Atividade({ coleta, perfil }: { coleta: Coleta; perfil: PortalPr
         <p className="rotulo">Como funciona</p>
         <p className="discreto">
           {ligada
-            ? "Ao salvar ou sair de uma tela do cadastro no portal, a extensão lê os campos e grava no cadastro do CPF digitado na abertura do cadastro. Só campos vazios no sistema são preenchidos."
+            ? "Ao salvar ou sair de uma tela do cadastro no portal, a extensão lê os campos e atualiza o cadastro do CPF digitado na abertura do cadastro. Só vai para o sistema o que mudou; campo vazio no portal não apaga nada."
             : "A coleta está desligada: nada do que for salvo no portal vai para o sistema. Ligue a chave no topo do painel para voltar a gravar."}
         </p>
       </section>
@@ -169,6 +169,7 @@ function descrever(ultima: UltimaCaptura): string {
   if (ultima.spouseCreated) partes.push("cônjuge cadastrado");
   if (ultima.applied.length > 0) partes.push(`${ultima.applied.length} campo(s)`);
   if (ultima.incomesAdded) partes.push(`${ultima.incomesAdded} renda(s)`);
+  if (ultima.incomesUpdated) partes.push(`${ultima.incomesUpdated} renda(s) atualizada(s)`);
   const resumo =
     partes.length === 0 ? "nada novo para o cadastro." : `${partes.join(" e ")} trazido(s).`;
   const ignorados = ultima.ignored ?? [];

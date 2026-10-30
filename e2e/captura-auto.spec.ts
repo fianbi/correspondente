@@ -19,7 +19,7 @@ function cpfFicticio(): string {
   return `${base}${d1}${digito(`${base}${d1}`, 11)}`;
 }
 
-test("completa o cadastro achado pelo CPF, sem sobrescrever e sem repetir", async ({
+test("o portal atualiza o cadastro achado pelo CPF, e o que está igual não é regravado", async ({
   page,
   request,
 }) => {
@@ -46,16 +46,26 @@ test("completa o cadastro achado pelo CPF, sem sobrescrever e sem repetir", asyn
   expect(primeira.status()).toBe(200);
   const corpo = (await primeira.json()) as { found: boolean; applied: string[] };
   expect(corpo.found).toBe(true);
-  expect(corpo.applied).toEqual(["person.motherName"]);
+  // O portal é a fonte: o nome que estava no sistema dá lugar ao da tela.
+  expect(corpo.applied).toEqual(["person.fullName", "person.motherName"]);
 
-  // O nome já existia e a mãe acabou de ser gravada: nada mais a aplicar.
+  // A mesma tela de novo: tudo já está igual, nada a gravar.
   const segunda = await request.post("/api/ext/captura", { headers, data: envio });
   expect(((await segunda.json()) as { applied: string[] }).applied).toEqual([]);
 
-  await page.reload();
-  await expect(page.getByRole("heading", { name: nome })).toBeVisible();
+  // Campo vazio na tela não apaga o que o cadastro tem.
+  const vazia = await request.post("/api/ext/captura", {
+    headers,
+    data: { ...envio, values: { "person.motherName": "" } },
+  });
+  expect(((await vazia.json()) as { applied: string[] }).applied).toEqual([]);
 
-  // Rendas da lista do portal: entram uma vez, e ler a lista de novo não duplica.
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "NOME QUE ESTAVA NO PORTAL" })).toBeVisible();
+  await expect(page.getByLabel("Nome da mãe")).toHaveValue("MAE VINDA DO PORTAL");
+
+  // Rendas da lista do portal: entram uma vez, e ler a lista de novo não
+  // duplica; o valor que mudou no portal atualiza a mesma renda.
   const rendas = {
     cpf,
     screenKey: "renda_informal",
@@ -65,13 +75,21 @@ test("completa o cadastro achado pelo CPF, sem sobrescrever e sem repetir", asyn
   const comRenda = await request.post("/api/ext/captura", { headers, data: rendas });
   expect(((await comRenda.json()) as { incomesAdded: number }).incomesAdded).toBe(1);
   const deNovo = await request.post("/api/ext/captura", { headers, data: rendas });
-  expect(((await deNovo.json()) as { incomesAdded: number }).incomesAdded).toBe(0);
+  expect(await deNovo.json()).toMatchObject({ incomesAdded: 0, incomesUpdated: 0 });
 
-  await page.reload();
-  await expect(page.getByRole("listitem").filter({ hasText: "CORRETOR" })).toHaveCount(1);
+  const aumento = await request.post("/api/ext/captura", {
+    headers,
+    data: { ...rendas, incomes: [{ ...rendas.incomes[0], netCents: "1800,00" }] },
+  });
+  expect(await aumento.json()).toMatchObject({ incomesAdded: 0, incomesUpdated: 1 });
+
+  const pessoa = await request.get(`/api/ext/pessoas/${cpf}`, { headers });
+  expect(((await pessoa.json()) as { incomes: unknown[] }).incomes).toEqual([
+    expect.objectContaining({ kind: "informal", sourceName: "CORRETOR", netCents: 180000 }),
+  ]);
 });
 
-test("dependentes e despesas entram no grupo familiar, sem sobrescrever", async ({
+test("dependentes e despesas entram no grupo familiar e acompanham o portal", async ({
   page,
   request,
 }) => {
@@ -96,21 +114,26 @@ test("dependentes e despesas entram no grupo familiar, sem sobrescrever", async 
     "person.condoFeeCents",
   ]);
 
-  // Valor diferente no portal não troca o que o cadastro já tem.
-  await enviar("despesas", { "person.rentCents": "999900" });
+  // O aluguel mudou no portal: o cadastro acompanha.
+  await enviar("despesas", { "person.rentCents": "180000" });
 
   await page.reload();
   await expect(page.getByLabel("Dependentes sem renda")).toHaveValue("2");
-  await expect(page.getByLabel("Aluguel")).toHaveValue("1500,00");
+  await expect(page.getByLabel("Aluguel")).toHaveValue("1800,00");
   await expect(page.getByLabel("Condomínio")).toHaveValue("350,50");
   await expect(page.getByLabel("Pensão alimentícia")).toHaveValue("");
 
   // O formulário da web grava em reais e mostra de volta o mesmo valor.
   await page.getByLabel("Pensão alimentícia").fill("1.234,56");
-  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  // Espera a gravação terminar antes de recarregar: sem isso, o reload pode
+  // chegar antes da action e mostrar o valor antigo.
+  await Promise.all([
+    page.waitForResponse((resposta) => resposta.request().method() === "POST"),
+    page.getByRole("button", { name: "Salvar alterações" }).click(),
+  ]);
   await page.reload();
   await expect(page.getByLabel("Pensão alimentícia")).toHaveValue("1234,56");
-  await expect(page.getByLabel("Aluguel")).toHaveValue("1500,00");
+  await expect(page.getByLabel("Aluguel")).toHaveValue("1800,00");
 });
 
 test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
@@ -154,12 +177,16 @@ test("CPF novo com nome vira cadastro, com o cônjuge", async ({ request }) => {
   const doConjuge = await request.get(`/api/ext/pessoas/${conjuge}`, { headers });
   expect(await doConjuge.json()).toMatchObject({ fullName: `CONJUGE NOVO ${sufixo}` });
 
-  // A mesma tela de novo não cria nada outra vez.
+  // A tela de novo não cria outra pessoa: atualiza a que já existe.
   const deNovo = await request.post("/api/ext/captura", {
     headers,
     data: { cpf, screenKey: "cadastro_dados", values: { "person.fullName": "OUTRO NOME" }, incomes: [] },
   });
-  expect(await deNovo.json()).toMatchObject({ found: true, created: false, applied: [] });
+  expect(await deNovo.json()).toMatchObject({
+    found: true,
+    created: false,
+    applied: ["person.fullName"],
+  });
 });
 
 test("listas da tela aparecem preenchidas no cadastro da web", async ({ page, request }) => {
@@ -238,8 +265,12 @@ test("declaração de propósitos e agência de relacionamento aparecem no cadas
   await caixa("Cartão de crédito").check();
   await caixa("Empréstimos e financiamentos").uncheck();
   await expect(page.getByRole("radio", { name: "Sim" })).toBeDisabled();
-  await page.getByRole("button", { name: "Salvar alterações" }).click();
-  await expect(page.getByRole("button", { name: "Salvar alterações" })).toBeEnabled();
+  // Espera a gravação terminar antes de recarregar: sem isso, o reload pode
+  // chegar antes da action e mostrar o valor antigo.
+  await Promise.all([
+    page.waitForResponse((resposta) => resposta.request().method() === "POST"),
+    page.getByRole("button", { name: "Salvar alterações" }).click(),
+  ]);
   await page.reload();
   await expect(caixa("Cartão de crédito")).toBeChecked();
   await expect(caixa("Empréstimos e financiamentos")).not.toBeChecked();

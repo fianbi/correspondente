@@ -162,6 +162,23 @@ export async function addPersonIncome(
   });
 }
 
+/** Atualiza só os campos informados de uma renda. */
+export async function updatePersonIncome(
+  ctx: OrgContext,
+  incomeId: string,
+  input: Partial<PersonIncomeInput>,
+) {
+  return withOrg(ctx, async (tx) => {
+    const [updated] = await tx
+      .update(personIncomes)
+      .set({ ...input, updatedAt: new Date() })
+      .where(and(eq(personIncomes.orgId, ctx.orgId), eq(personIncomes.id, incomeId)))
+      .returning();
+    if (!updated) throw new NotFoundError("Renda");
+    return updated;
+  });
+}
+
 export async function deletePersonIncome(ctx: OrgContext, incomeId: string) {
   return withOrg(ctx, async (tx) => {
     const deleted = await tx

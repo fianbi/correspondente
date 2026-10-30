@@ -83,24 +83,21 @@ test("o perfil do portal vem com as telas mapeadas", async ({ request }) => {
   expect(dados?.mappings.length).toBeGreaterThan(15);
 });
 
-test("captura não sobrescreve o que o cadastro já tem", async ({ request }) => {
-
+test("captura manual não regrava o que já está igual", async ({ request }) => {
   const lista = await request.get("/api/ext/processos", { headers });
   const [processo] = (await lista.json()) as { id: string }[];
 
-  // A pessoa do seed já tem nome: a captura não pode trocá-lo pelo que estiver
-  // na tela do banco, senão desfaz conferência humana em silêncio.
+  const antes = await request.get(`/api/ext/processos/${processo!.id}/dados`, { headers });
+  const { values } = (await antes.json()) as { values: Record<string, string | null> };
+
+  // A tela mostra o mesmo nome que o cadastro: nada a gravar. (A atualização
+  // de verdade é testada em captura-auto.spec, com pessoas criadas no teste:
+  // aqui a pessoa é do seed, e mudá-la sujaria a base dos outros testes.)
   const resposta = await request.post(`/api/ext/processos/${processo!.id}/captura`, {
     headers,
-    data: { values: { "person.fullName": "NOME VINDO DO PORTAL", "person.pis": "12345678901" } },
+    data: { values: { "person.fullName": values["person.fullName"] } },
   });
-
-  const corpo = (await resposta.json()) as { applied: string[] };
-  expect(corpo.applied).not.toContain("person.fullName");
-
-  const dados = await request.get(`/api/ext/processos/${processo!.id}/dados`, { headers });
-  const valores = (await dados.json()) as { values: Record<string, string | null> };
-  expect(valores.values["person.fullName"]).not.toBe("NOME VINDO DO PORTAL");
+  expect(((await resposta.json()) as { applied: string[] }).applied).toEqual([]);
 });
 
 test("sair na web desconecta a extensão", async ({ browser }) => {

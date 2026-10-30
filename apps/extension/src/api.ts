@@ -147,6 +147,7 @@ export const api = {
       found: boolean;
       applied: string[];
       incomesAdded?: number;
+      incomesUpdated?: number;
       created?: boolean;
       spouseCreated?: boolean;
       ignored?: string[];
