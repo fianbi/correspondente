@@ -74,6 +74,7 @@ export const CLOSED_STATUSES: readonly ProcessStatus[] = [
 export const MODALITIES = [
   "aquisicao_imovel_novo",
   "aquisicao_imovel_usado",
+  "aquisicao_terreno",
   "construcao",
   "aquisicao_terreno_construcao",
   "reforma_ampliacao",
@@ -84,7 +85,8 @@ export type Modality = (typeof MODALITIES)[number];
 export const MODALITY_LABELS: Record<Modality, string> = {
   aquisicao_imovel_novo: "Aquisição de imóvel novo",
   aquisicao_imovel_usado: "Aquisição de imóvel usado",
-  construcao: "Construção",
+  aquisicao_terreno: "Aquisição de terreno",
+  construcao: "Construção em terreno próprio",
   aquisicao_terreno_construcao: "Aquisição de terreno e construção",
   reforma_ampliacao: "Reforma e ampliação",
   emprestimo_garantia_imovel: "Empréstimo com garantia de imóvel",

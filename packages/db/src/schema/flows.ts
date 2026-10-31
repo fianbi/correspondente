@@ -129,6 +129,7 @@ export const processEventKind = pgEnum("process_event_kind", [
   "responsavel_alterado",
   "processo_criado",
   "avaliacao_risco_vinculada",
+  "andamento_alterado",
 ]);
 
 /**

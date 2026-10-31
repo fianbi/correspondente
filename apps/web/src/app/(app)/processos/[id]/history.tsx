@@ -3,6 +3,7 @@ import {
   PROCESS_STATUS_LABELS,
   formatFieldValue,
   getField,
+  stepLabel,
   type ProcessStage,
   type ProcessStatus,
 } from "@corr/core";
@@ -24,6 +25,12 @@ function describe(event: ProcessEvent, resolveRelation: (value: string | null) =
         label: "Fase",
         from: PROCESS_STAGE_LABELS[event.oldValue as ProcessStage] ?? event.oldValue,
         to: PROCESS_STAGE_LABELS[event.newValue as ProcessStage] ?? event.newValue,
+      };
+    case "andamento_alterado":
+      return {
+        label: "Andamento",
+        from: stepLabel(event.oldValue),
+        to: stepLabel(event.newValue),
       };
     case "status_alterado":
       return {

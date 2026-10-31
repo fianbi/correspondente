@@ -122,3 +122,32 @@ test("campo de relação aparece pelo nome no histórico, não pelo id", async (
   // Um uuid vazando na tela seria inútil para quem audita o processo.
   await expect(linha).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}/);
 });
+
+test("o andamento segue a modalidade e move a fase junto", async ({ page }) => {
+  await novoProcesso(page);
+
+  await expect(page.getByTestId("passo-atual")).toHaveText("Captação do cliente");
+  await page.getByRole("button", { name: "Concluir passo" }).click();
+  await expect(page.getByTestId("passo-atual")).toHaveText("Levantamento e simulação de crédito");
+
+  // Construção tem engenharia local e PEPT; o roteiro troca com a modalidade.
+  await page.getByLabel("Modalidade").selectOption("aquisicao_terreno_construcao");
+  await page.getByRole("button", { name: "Salvar etapa" }).click();
+  await expect(page.locator('p[role="status"]')).toContainText("1 campo(s)");
+
+  await page.getByRole("link", { name: "Andamento", exact: true }).click();
+  await page.getByRole("button", { name: "Mover andamento para Vistoria da engenharia Caixa" }).click();
+  await expect(page.getByText("Vistoria da engenharia Caixa (passo atual)")).toBeVisible();
+  await expect(page.getByLabel("Fase do processo")).toHaveValue("correspondente");
+
+  await page.getByRole("link", { name: "Etapas", exact: true }).click();
+  await page.getByRole("button", { name: "Ajustes de projeto (PEPT)" }).click();
+  await expect(page.getByTestId("passo-atual")).toHaveText("Ajustes de projeto (PEPT)");
+  await page.getByRole("button", { name: "Voltar para Vistoria da engenharia Caixa" }).click();
+  await expect(page.getByTestId("passo-atual")).toHaveText("Vistoria da engenharia Caixa");
+
+  await page.getByRole("link", { name: "Histórico" }).click();
+  await expect(page.getByRole("listitem").filter({ hasText: "Andamento" }).first()).toContainText(
+    "Ajustes de projeto (PEPT)",
+  );
+});

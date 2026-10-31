@@ -141,6 +141,13 @@
       "when": 1793451463701,
       "tag": "0019_remove_rendas_vazias",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793452934869,
+      "tag": "0020_andamento_por_modalidade",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   EDUCATION_LEVEL_LABELS,
   HOUSING_SITUATION_LABELS,
@@ -40,6 +40,31 @@ const ISSUER_OPTIONS: Record<string, { value: string; label: string }[]> = Objec
   ]),
 );
 
+const SECTIONS = [
+  { key: "identificacao", label: "Identificação" },
+  { key: "familia", label: "Estado civil e família" },
+  { key: "contato", label: "Contato e endereço" },
+  { key: "banco", label: "Banco" },
+  { key: "observacoes", label: "Observações" },
+] as const;
+type SectionKey = (typeof SECTIONS)[number]["key"];
+
+function FormSection({
+  id,
+  active,
+  children,
+}: {
+  id: SectionKey;
+  active: SectionKey;
+  children: ReactNode;
+}) {
+  return (
+    <div data-section={id} hidden={id !== active} className="flex flex-col gap-6">
+      {children}
+    </div>
+  );
+}
+
 export function PersonForm({ person }: { person?: Person }) {
   const action = savePerson.bind(null, person?.id ?? null);
   const [state, formAction] = useActionState<PersonFormState, FormData>(action, {});
@@ -64,8 +89,48 @@ export function PersonForm({ person }: { person?: Person }) {
 
   const errorOf = (field: string) => state.fieldErrors?.[field];
 
+  // Cada seção fica no DOM mesmo escondida: o formulário é um só e salva tudo
+  // de uma vez, então trocar de seção nunca perde o que já foi digitado.
+  const [section, setSection] = useState<SectionKey>("identificacao");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Erro do servidor ou campo obrigatório em branco numa seção escondida: abre
+  // a seção do campo, senão o operador clica em salvar e nada acontece.
+  const showSectionOf = (element: Element | null) => {
+    const key = element?.closest("[data-section]")?.getAttribute("data-section");
+    if (key) setSection(key as SectionKey);
+  };
+  useEffect(() => {
+    const first = Object.keys(state.fieldErrors ?? {})[0];
+    if (first) showSectionOf(formRef.current?.querySelector(`[name="${first}"]`) ?? null);
+  }, [state]);
+
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="flex flex-col gap-6"
+      onInvalidCapture={(event) => showSectionOf(event.target as Element)}
+    >
+      <nav aria-label="Seções do cadastro" className="flex flex-wrap gap-1 border-b border-line pb-2">
+        {SECTIONS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setSection(item.key)}
+            aria-current={section === item.key ? "page" : undefined}
+            className={
+              section === item.key
+                ? "rounded-md bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700"
+                : "rounded-md px-3 py-1.5 text-sm text-ink-muted transition hover:bg-surface-muted hover:text-ink"
+            }
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <FormSection id="identificacao" active={section}>
       <Card>
         <CardHeader title="Identificação" />
         <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -174,6 +239,9 @@ export function PersonForm({ person }: { person?: Person }) {
         </CardBody>
       </Card>
 
+      </FormSection>
+
+      <FormSection id="familia" active={section}>
       <Card>
         <CardHeader title="Estado civil" />
         <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -205,6 +273,45 @@ export function PersonForm({ person }: { person?: Person }) {
         </CardBody>
       </Card>
 
+      <Card>
+        <CardHeader title="Grupo familiar" />
+        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field
+            label="Dependentes sem renda"
+            name="dependentsCount"
+            inputMode="numeric"
+            maxLength={2}
+            defaultValue={person?.dependentsCount ?? ""}
+            error={errorOf("dependentsCount")}
+          />
+          <Field
+            label="Aluguel"
+            name="rentCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.rentCents)}
+          />
+          <Field
+            label="Condomínio"
+            name="condoFeeCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.condoFeeCents)}
+          />
+          <Field
+            label="Pensão alimentícia"
+            name="alimonyCents"
+            inputMode="decimal"
+            placeholder="0,00"
+            defaultValue={toPlainBRL(person?.alimonyCents)}
+            hint="Despesas mensais médias do grupo familiar."
+          />
+        </CardBody>
+      </Card>
+
+      </FormSection>
+
+      <FormSection id="contato" active={section}>
       <Card>
         <CardHeader title="Contato e endereço" />
         <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -252,42 +359,9 @@ export function PersonForm({ person }: { person?: Person }) {
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader title="Grupo familiar" />
-        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field
-            label="Dependentes sem renda"
-            name="dependentsCount"
-            inputMode="numeric"
-            maxLength={2}
-            defaultValue={person?.dependentsCount ?? ""}
-            error={errorOf("dependentsCount")}
-          />
-          <Field
-            label="Aluguel"
-            name="rentCents"
-            inputMode="decimal"
-            placeholder="0,00"
-            defaultValue={toPlainBRL(person?.rentCents)}
-          />
-          <Field
-            label="Condomínio"
-            name="condoFeeCents"
-            inputMode="decimal"
-            placeholder="0,00"
-            defaultValue={toPlainBRL(person?.condoFeeCents)}
-          />
-          <Field
-            label="Pensão alimentícia"
-            name="alimonyCents"
-            inputMode="decimal"
-            placeholder="0,00"
-            defaultValue={toPlainBRL(person?.alimonyCents)}
-            hint="Despesas mensais médias do grupo familiar."
-          />
-        </CardBody>
-      </Card>
+      </FormSection>
 
+      <FormSection id="banco" active={section}>
       <Card>
         <CardHeader title="Declaração de propósitos" />
         <CardBody>
@@ -324,6 +398,9 @@ export function PersonForm({ person }: { person?: Person }) {
         </CardBody>
       </Card>
 
+      </FormSection>
+
+      <FormSection id="observacoes" active={section}>
       <Card>
         <CardHeader title="Observações" />
         <CardBody>
@@ -335,6 +412,8 @@ export function PersonForm({ person }: { person?: Person }) {
           />
         </CardBody>
       </Card>
+
+      </FormSection>
 
       {state.error ? (
         <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-status-reprovado">
