@@ -67,6 +67,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ cpf:
       proposalNumber: avaliacao.proposalNumber,
       result: avaliacao.result,
       validUntil: avaliacao.validUntil,
+      product: avaliacao.product,
+      housing: avaliacao.housing,
     })),
   });
 }

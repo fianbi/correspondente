@@ -69,6 +69,9 @@ export interface PessoaDaTela {
     proposalNumber: string;
     result: string | null;
     validUntil: string | null;
+    product?: string | null;
+    /** Habitação é a que vale para o processo; CROT e cartão são extras. */
+    housing?: boolean;
   }[];
 }
 

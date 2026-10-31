@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { date, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, date, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { orgs, profiles } from "./orgs";
 import { people } from "./people";
 
@@ -35,6 +35,12 @@ export const riskAssessments = pgTable(
     details: text("details"),
     validUntil: date("valid_until"),
     requestType: text("request_type"),
+    /**
+     * Avaliação do financiamento habitacional: a única que pode ser vinculada
+     * ao processo. CROT, cartão e outros produtos ficam como extras. Calculado
+     * na gravação por `isHousingRiskAssessment` (`@corr/core`).
+     */
+    housing: boolean("housing").notNull().default(false),
 
     /** Última vez que a tela foi lida com esta linha. */
     capturedAt: timestamp("captured_at", { withTimezone: true }).notNull().defaultNow(),

@@ -77,6 +77,10 @@ export function Ficha({ pessoa }: { pessoa: PessoaDaTela }) {
   ];
 
   const preenchidos = linhas.filter(([, valor]) => valor !== null).length;
+  // Habitação é a avaliação do processo; sem a marca (sistema antigo), conta como habitação.
+  const avaliacoes = pessoa.riskAssessments ?? [];
+  const habitacao = avaliacoes.filter((avaliacao) => avaliacao.housing !== false);
+  const extras = avaliacoes.filter((avaliacao) => avaliacao.housing === false);
 
   return (
     <>
@@ -110,17 +114,11 @@ export function Ficha({ pessoa }: { pessoa: PessoaDaTela }) {
         <p className="discreto">Nenhuma renda cadastrada.</p>
       )}
 
-      <p className="rotulo">Avaliação de risco</p>
-      {pessoa.riskAssessments && pessoa.riskAssessments.length > 0 ? (
+      <p className="rotulo">Avaliação de risco (habitação)</p>
+      {habitacao.length > 0 ? (
         <ul className="ficha-lista">
-          {pessoa.riskAssessments.slice(0, 3).map((avaliacao) => (
-            <li key={avaliacao.proposalNumber}>
-              <span className="etiqueta">{avaliacao.result ?? "sem resultado"}</span> proposta{" "}
-              {avaliacao.proposalNumber}
-              {avaliacao.validUntil
-                ? ` · validade ${avaliacao.validUntil.split("-").reverse().join("/")}`
-                : ""}
-            </li>
+          {habitacao.slice(0, 3).map((avaliacao) => (
+            <LinhaDeAvaliacao key={avaliacao.proposalNumber} avaliacao={avaliacao} />
           ))}
         </ul>
       ) : (
@@ -129,11 +127,35 @@ export function Ficha({ pessoa }: { pessoa: PessoaDaTela }) {
         </p>
       )}
 
+      {extras.length > 0 ? (
+        <>
+          <p className="rotulo">Extras (CROT, cartão e outros)</p>
+          <ul className="ficha-lista">
+            {extras.slice(0, 3).map((avaliacao) => (
+              <LinhaDeAvaliacao key={avaliacao.proposalNumber} avaliacao={avaliacao} />
+            ))}
+          </ul>
+        </>
+      ) : null}
+
       <p className="discreto">
         {pessoa.processes.length === 0
           ? "Sem processo aberto."
           : `Processo(s): ${pessoa.processes.map((processo) => `#${processo.number}`).join(", ")}`}
       </p>
     </>
+  );
+}
+
+type Avaliacao = NonNullable<PessoaDaTela["riskAssessments"]>[number];
+
+function LinhaDeAvaliacao({ avaliacao }: { avaliacao: Avaliacao }) {
+  return (
+    <li>
+      <span className="etiqueta">{avaliacao.result ?? "sem resultado"}</span>{" "}
+      {avaliacao.housing === false && avaliacao.product ? `${avaliacao.product} · ` : ""}proposta{" "}
+      {avaliacao.proposalNumber}
+      {avaliacao.validUntil ? ` · validade ${avaliacao.validUntil.split("-").reverse().join("/")}` : ""}
+    </li>
   );
 }

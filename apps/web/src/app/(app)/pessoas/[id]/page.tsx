@@ -25,7 +25,11 @@ import { StatusBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PersonForm } from "../person-form";
 import { IncomeSection } from "./income-section";
-import { RiskAssessmentDetails, RiskResultBadge } from "@/components/risk/risk-assessment";
+import {
+  RiskAssessmentDetails,
+  RiskExtrasList,
+  RiskResultBadge,
+} from "@/components/risk/risk-assessment";
 
 export const metadata: Metadata = { title: "Pessoa" };
 
@@ -78,7 +82,11 @@ export default async function PessoaPage({
     listRiskAssessmentsForPeople(ctx, [id]),
   ]);
 
-  const latestRisk = riskAssessments[0];
+  // A avaliação que importa para o financiamento é a de habitação; CROT e
+  // cartão são extras e ficam à parte.
+  const housingRisks = riskAssessments.filter((a) => a.housing);
+  const extraRisks = riskAssessments.filter((a) => !a.housing);
+  const latestRisk = housingRisks[0];
   const counts: Partial<Record<Tab, number>> = {
     rendas: incomes.length,
     risco: riskAssessments.length,
@@ -151,12 +159,14 @@ export default async function PessoaPage({
               </Card>
               <Card>
                 <CardBody>
-                  <p className="text-xs text-ink-muted">Avaliação de risco</p>
+                  <p className="text-xs text-ink-muted">Avaliação de risco (habitação)</p>
                   <div className="mt-1.5">
                     {latestRisk ? (
                       <RiskResultBadge result={latestRisk.result} validUntil={latestRisk.validUntil} />
                     ) : (
-                      <span className="text-sm text-ink-muted">Nenhuma capturada</span>
+                      <span className="text-sm text-ink-muted">
+                        {extraRisks.length > 0 ? "Só extras capturadas" : "Nenhuma capturada"}
+                      </span>
                     )}
                   </div>
                 </CardBody>
@@ -242,19 +252,20 @@ export default async function PessoaPage({
         ) : tab === "rendas" ? (
           <IncomeSection personId={person.id} incomes={incomes} grossTotal={grossTotal} />
         ) : (
+          <div className="flex flex-col gap-6">
           <Card>
             <CardHeader
-              title="Avaliações de risco"
+              title="Avaliações de risco de habitação"
               description={
-                riskAssessments.length === 0
+                housingRisks.length === 0
                   ? "Nenhuma capturada. Abra \"Formulários Enviados\" no Caixa Aqui com este CPF e a extensão traz para cá."
-                  : "Lidas da tela \"Formulários Enviados\" do Caixa Aqui."
+                  : "Lidas da tela \"Formulários Enviados\" do Caixa Aqui. A vigente é a que entra no processo."
               }
             />
-            {riskAssessments.length > 0 ? (
+            {housingRisks.length > 0 ? (
               <CardBody className="p-0">
                 <ul className="divide-y divide-line">
-                  {riskAssessments.map((assessment) => (
+                  {housingRisks.map((assessment) => (
                     <li key={assessment.id} className="flex flex-col gap-3 px-5 py-4">
                       <div>
                         <RiskResultBadge result={assessment.result} validUntil={assessment.validUntil} />
@@ -266,6 +277,18 @@ export default async function PessoaPage({
               </CardBody>
             ) : null}
           </Card>
+          {extraRisks.length > 0 ? (
+            <Card>
+              <CardHeader
+                title="Extras"
+                description="CROT, cartão e outros produtos. Ficam aqui para consulta e não entram no processo."
+              />
+              <CardBody>
+                <RiskExtrasList assessments={extraRisks} />
+              </CardBody>
+            </Card>
+          ) : null}
+          </div>
         )}
       </main>
     </>

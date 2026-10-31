@@ -44,11 +44,13 @@ describe("avaliação de risco", () => {
     await setProcessStatus(orgA.ctx, fechado.id, "cancelado");
 
     const resultado = await saveRiskAssessments(orgA.ctx, ana, [
-      { proposalNumber: "100", sentOn: "2026-01-10", result: "VENCIDA", validUntil: "2026-02-10" },
-      { proposalNumber: "200", sentOn: "2026-09-01", result: "APROVADA", validUntil: daquiAUmAno },
+      { proposalNumber: "100", product: "Habitação", sentOn: "2026-01-10", result: "VENCIDA", validUntil: "2026-02-10" },
+      { proposalNumber: "200", product: "Habitação", sentOn: "2026-09-01", result: "APROVADA", validUntil: daquiAUmAno },
+      // Mais recente, mas é CROT: fica como extra, nunca no processo.
+      { proposalNumber: "900", product: "CROT", sentOn: "2026-10-01", result: "APROVADA", validUntil: daquiAUmAno },
     ]);
 
-    expect(resultado).toEqual({ added: 2, updated: 0, linkedProcesses: [processo.number] });
+    expect(resultado).toEqual({ added: 3, updated: 0, linkedProcesses: [processo.number] });
     const lido = await getProcess(orgA.ctx, processo.id);
     const avaliacoes = await listRiskAssessmentsForPeople(orgA.ctx, [ana]);
     expect(avaliacoes.find((a) => a.id === lido.riskAssessmentId)?.proposalNumber).toBe("200");
@@ -60,7 +62,7 @@ describe("avaliação de risco", () => {
 
   it("a mesma proposta lida de novo atualiza, sem duplicar", async () => {
     const resultado = await saveRiskAssessments(orgA.ctx, ana, [
-      { proposalNumber: "200", result: "CONDICIONADA", validUntil: daquiAUmAno },
+      { proposalNumber: "200", product: "Habitação", result: "CONDICIONADA", validUntil: daquiAUmAno },
     ]);
     expect(resultado.added).toBe(0);
     expect(resultado.updated).toBe(1);
@@ -77,7 +79,7 @@ describe("avaliação de risco", () => {
     );
     // O processo novo nasceu sem avaliação; a escolha manual vale.
     await linkRiskAssessment(orgA.ctx, processo.id, vencida!.id);
-    await saveRiskAssessments(orgA.ctx, ana, [{ proposalNumber: "300", validUntil: daquiAUmAno }]);
+    await saveRiskAssessments(orgA.ctx, ana, [{ proposalNumber: "300", product: "Habitação", validUntil: daquiAUmAno }]);
 
     expect((await getProcess(orgA.ctx, processo.id)).riskAssessmentId).toBe(vencida!.id);
   });
@@ -89,9 +91,18 @@ describe("avaliação de risco", () => {
     expect(avaliacoes.find((a) => a.id === lido.riskAssessmentId)?.proposalNumber).toBe("300");
   });
 
+  it("recusa vincular avaliação de CROT ou cartão", async () => {
+    const processo = await novoProcesso(orgA, ana);
+    const crot = (await listRiskAssessmentsForPeople(orgA.ctx, [ana])).find(
+      (a) => a.proposalNumber === "900",
+    );
+    expect(crot?.housing).toBe(false);
+    await expect(linkRiskAssessment(orgA.ctx, processo.id, crot!.id)).rejects.toThrow(/habitação/);
+  });
+
   it("recusa avaliação de quem não participa do processo", async () => {
     const processo = await novoProcesso(orgA, bruno);
-    const [daAna] = await listRiskAssessmentsForPeople(orgA.ctx, [ana]);
+    const daAna = (await listRiskAssessmentsForPeople(orgA.ctx, [ana])).find((a) => a.housing);
     await expect(linkRiskAssessment(orgA.ctx, processo.id, daAna!.id)).rejects.toThrow(
       /não participa/,
     );

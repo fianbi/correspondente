@@ -73,3 +73,31 @@ export function RiskAssessmentDetails({ assessment }: { assessment: RiskAssessme
     </div>
   );
 }
+
+/**
+ * Avaliações extras (CROT, cartão e outros produtos): informam o operador, mas
+ * nunca são a avaliação do processo. Uma linha por avaliação basta.
+ */
+export function RiskExtrasList({
+  assessments,
+  showPerson = false,
+}: {
+  assessments: RiskAssessmentRow[];
+  showPerson?: boolean;
+}) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {assessments.map((a) => (
+        <li key={a.id} className="flex flex-wrap items-center gap-2 text-sm">
+          <RiskResultBadge result={a.result} validUntil={a.validUntil} />
+          <span className="text-ink">{a.product ?? "Produto não informado"}</span>
+          <span className="text-ink-muted">
+            · proposta {a.proposalNumber}
+            {a.validUntil ? ` · validade ${dataBr(a.validUntil)}` : ""}
+            {showPerson ? ` · ${a.personName}` : ""}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}

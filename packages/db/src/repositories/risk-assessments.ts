@@ -1,4 +1,10 @@
-import { CLOSED_STATUSES, DomainError, NotFoundError, type OrgContext } from "@corr/core";
+import {
+  CLOSED_STATUSES,
+  DomainError,
+  NotFoundError,
+  isHousingRiskAssessment,
+  type OrgContext,
+} from "@corr/core";
 import { and, asc, desc, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { type Tx, withOrg } from "../client";
 import { people } from "../schema/people";
@@ -77,6 +83,7 @@ export async function saveRiskAssessments(
         details: textoOuNulo(row.details),
         validUntil: dataOuNulo(row.validUntil),
         requestType: textoOuNulo(row.requestType),
+        housing: isHousingRiskAssessment(row),
         capturedAt: agora,
         capturedBy: ctx.userId,
       };
@@ -96,8 +103,9 @@ export async function saveRiskAssessments(
 }
 
 /**
- * A avaliação que vale para a pessoa agora: entre as que ainda não venceram (ou
- * não dizem validade), a de remessa mais recente.
+ * A avaliação que vale para a pessoa agora: entre as de habitação que ainda
+ * não venceram (ou não dizem validade), a de remessa mais recente. CROT e
+ * cartão nunca entram no processo sozinhas.
  */
 async function avaliacaoVigente(tx: Tx, ctx: OrgContext, personId: string) {
   const [vigente] = await tx
@@ -107,6 +115,7 @@ async function avaliacaoVigente(tx: Tx, ctx: OrgContext, personId: string) {
       and(
         eq(riskAssessments.orgId, ctx.orgId),
         eq(riskAssessments.personId, personId),
+        eq(riskAssessments.housing, true),
         sql`(${riskAssessments.validUntil} is null or ${riskAssessments.validUntil} >= current_date)`,
       ),
     )
@@ -174,6 +183,7 @@ export async function listRiskAssessmentsForPeople(ctx: OrgContext, personIds: s
         details: riskAssessments.details,
         validUntil: riskAssessments.validUntil,
         requestType: riskAssessments.requestType,
+        housing: riskAssessments.housing,
         capturedAt: riskAssessments.capturedAt,
       })
       .from(riskAssessments)
@@ -193,7 +203,8 @@ export type RiskAssessmentRow = Awaited<ReturnType<typeof listRiskAssessmentsFor
 
 /**
  * Escolha manual da avaliação do processo (ou nenhuma). Só aceita avaliação de
- * quem participa do processo: a de outro cliente não tem nada a ver com ele.
+ * habitação, e de quem participa do processo: a de outro cliente não tem nada
+ * a ver com ele.
  */
 export async function linkRiskAssessment(
   ctx: OrgContext,
@@ -212,7 +223,11 @@ export async function linkRiskAssessment(
     const numeroDe = async (id: string | null) => {
       if (!id) return null;
       const [linha] = await tx
-        .select({ proposalNumber: riskAssessments.proposalNumber, personId: riskAssessments.personId })
+        .select({
+          proposalNumber: riskAssessments.proposalNumber,
+          personId: riskAssessments.personId,
+          housing: riskAssessments.housing,
+        })
         .from(riskAssessments)
         .where(and(eq(riskAssessments.orgId, ctx.orgId), eq(riskAssessments.id, id)))
         .limit(1);
@@ -222,6 +237,12 @@ export async function linkRiskAssessment(
     const nova = await numeroDe(assessmentId);
     if (assessmentId) {
       if (!nova) throw new NotFoundError("Avaliação de risco");
+      if (!nova.housing) {
+        throw new DomainError(
+          "Só a avaliação de habitação vale para o processo; CROT e cartão ficam como extras.",
+          "risk_assessment_not_housing",
+        );
+      }
       const [participa] = await tx
         .select({ personId: processParticipants.personId })
         .from(processParticipants)

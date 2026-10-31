@@ -148,6 +148,13 @@
       "when": 1793452934869,
       "tag": "0020_andamento_por_modalidade",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793459806271,
+      "tag": "0021_avaliacao_de_habitacao",
+      "breakpoints": true
     }
   ]
 }
