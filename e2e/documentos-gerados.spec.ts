@@ -116,7 +116,7 @@ test("modelo mapeado gera formulário preenchido com os dados do processo", asyn
   expect(form.getTextField("nome_escritorio").getText()).toBe("Escritório Demo");
 });
 
-test("painel mostra a distribuição por fase, banco e modalidade", async ({ page }) => {
+test("painel mostra a distribuição por etapa, banco e modalidade", async ({ page }) => {
   await page.goto("/painel");
 
   for (const titulo of ["Onde os processos estão", "Por banco", "Por modalidade"]) {
@@ -129,6 +129,6 @@ test("painel mostra a distribuição por fase, banco e modalidade", async ({ pag
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "Onde os processos estão" }) });
 
-  await expect(fases.getByText("Cadastro")).toBeVisible();
+  await expect(fases.getByText("Captação do cliente")).toBeVisible();
   await expect(fases.getByRole("listitem").first()).toContainText(/\d/);
 });

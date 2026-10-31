@@ -28,7 +28,7 @@ function describe(event: ProcessEvent, resolveRelation: (value: string | null) =
       };
     case "andamento_alterado":
       return {
-        label: "Andamento",
+        label: "Etapa",
         from: stepLabel(event.oldValue),
         to: stepLabel(event.newValue),
       };

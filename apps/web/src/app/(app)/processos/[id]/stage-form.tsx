@@ -1,20 +1,14 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
-import { Check, Play } from "lucide-react";
+import { useActionState, useTransition, type ReactNode } from "react";
 import type { FieldOption, FieldView } from "@corr/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FieldInput, type DynamicOptions } from "@/components/fields/field-input";
-import {
-  assignStageAction,
-  finishStageAction,
-  saveStageFields,
-  startStageAction,
-  type StageFormState,
-} from "./stage-actions";
+import { assignStageAction, saveStageFields, type StageFormState } from "./stage-actions";
+
+export type StepState = "concluida" | "atual" | "pendente";
 
 export interface RenderBlock {
   key: string;
@@ -23,35 +17,51 @@ export interface RenderBlock {
   fields: { def: FieldView; value: string | number | null }[];
 }
 
+/**
+ * Tela de uma etapa: quem é o responsável, os botões de movimento e os campos.
+ *
+ * `fieldsKey` é a tela de campos do fluxo do escritório que vale para a etapa
+ * — várias etapas seguidas (SICAQ, vistoria, PEPT) preenchem a mesma análise
+ * de crédito, então a configuração de campos não se repete etapa a etapa.
+ */
 export function StageForm({
   processId,
-  stageKey,
-  stageLabel,
+  stepKey,
+  fieldsKey,
+  stepLabel,
+  subtitle,
   blocks,
   options,
-  state: stageState,
+  state: stepState,
   assignedTo,
   members,
+  actions,
 }: {
   processId: string;
-  stageKey: string;
-  stageLabel: string;
+  stepKey: string;
+  fieldsKey: string;
+  stepLabel: string;
+  subtitle: string;
   blocks: RenderBlock[];
   options: DynamicOptions;
-  state: "pendente" | "em_andamento" | "concluida";
+  state: StepState;
   assignedTo: string | null;
   members: FieldOption[];
+  actions: ReactNode;
 }) {
-  const action = saveStageFields.bind(null, processId, stageKey);
+  const action = saveStageFields.bind(null, processId, fieldsKey);
   const [formState, formAction] = useActionState<StageFormState, FormData>(action, {});
   const [pending, startTransition] = useTransition();
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
-        <div className="flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-ink">{stageLabel}</h2>
-          <StageStateChip state={stageState} />
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-ink">{stepLabel}</h2>
+            <StepStateChip state={stepState} />
+          </div>
+          <p className="mt-0.5 text-xs text-ink-muted">{subtitle}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -62,32 +72,10 @@ export function StageForm({
             defaultValue={assignedTo ?? ""}
             disabled={pending}
             onChange={(event) =>
-              startTransition(() => void assignStageAction(processId, stageKey, event.target.value))
+              startTransition(() => void assignStageAction(processId, stepKey, event.target.value))
             }
           />
-          {stageState === "concluida" ? null : stageState === "em_andamento" ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={pending}
-              onClick={() => startTransition(() => void finishStageAction(processId, stageKey))}
-            >
-              <Check className="size-4" aria-hidden />
-              Finalizar etapa
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={pending}
-              onClick={() => startTransition(() => void startStageAction(processId, stageKey))}
-            >
-              <Play className="size-4" aria-hidden />
-              Iniciar etapa
-            </Button>
-          )}
+          {actions}
         </div>
       </div>
 
@@ -129,15 +117,15 @@ export function StageForm({
   );
 }
 
-function StageStateChip({ state }: { state: "pendente" | "em_andamento" | "concluida" }) {
+function StepStateChip({ state }: { state: StepState }) {
   const styles = {
     pendente: "bg-surface-muted text-ink-muted",
-    em_andamento: "bg-amber-50 text-status-aguardando",
+    atual: "bg-amber-50 text-status-aguardando",
     concluida: "bg-green-50 text-status-aprovado",
   } as const;
   const labels = {
     pendente: "Pendente",
-    em_andamento: "Em andamento",
+    atual: "Etapa atual",
     concluida: "Concluída",
   } as const;
 

@@ -1,20 +1,20 @@
 import type { Modality, ProcessStage } from "./process";
 
 /**
- * Andamento do processo: os passos reais de um financiamento, por modalidade.
+ * Etapas do processo, por modalidade.
  *
- * As fases (`PROCESS_STAGES`) são as colunas do Kanban e agrupam os campos de
- * cada tela; elas valem para qualquer modalidade. O andamento é o detalhe de
- * dentro delas — o que o operador de fato faz e espera, na ordem —, e esse
- * detalhe muda conforme a modalidade: construção tem engenheiro local, projeto
- * na prefeitura e PEPT; imóvel usado vai direto do SICAQ à vistoria; empréstimo
- * com garantia não tem vendedor nem ITBI.
+ * É o único conceito de "onde o processo está": o Kanban tem uma coluna por
+ * etapa, o cabeçalho do processo move a etapa e o histórico registra cada
+ * movimento. O roteiro muda com a modalidade: construção tem engenheiro local,
+ * projeto na prefeitura e PEPT; imóvel usado vai direto do SICAQ à vistoria;
+ * empréstimo com garantia não tem vendedor nem ITBI.
  *
- * Cada passo pertence a uma fase. Mover o andamento move a fase junto, então o
- * Kanban continua certo sem ninguém precisar mexer nele duas vezes.
+ * `phase` é só agrupamento interno: diz qual tela de campos do fluxo do
+ * escritório (`flow_stages`) e qual checklist de documentos valem na etapa.
+ * Não aparece para o operador.
  *
  * As chaves são comuns entre as modalidades: trocar a modalidade de um processo
- * mantém o passo em que ele está sempre que esse passo existir no novo roteiro.
+ * mantém a etapa em que ele está sempre que ela existir no novo roteiro.
  */
 
 export type StepSystem = "SICAQ" | "SIOPI" | "SICTD";
@@ -27,7 +27,7 @@ export interface ProcessStepDef {
   responsible: string;
   system?: StepSystem;
   /**
-   * Passo que só acontece quando algo dá errado (score condicionado, PEPT,
+   * Etapa que só acontece quando algo dá errado (score condicionado, PEPT,
    * pendência de conformidade). Ao concluir, o processo volta a `returnsTo`.
    */
   conditional?: boolean;
@@ -170,12 +170,7 @@ const STEPS = {
   assinatura: {
     label: "Assinatura do contrato",
     phase: "agencia",
-    responsible: "Cliente e vendedor",
-  },
-  assinatura_sem_vendedor: {
-    label: "Assinatura do contrato",
-    phase: "agencia",
-    responsible: "Cliente",
+    responsible: "Cliente (e vendedor, quando houver)",
   },
   itbi: {
     label: "Recolhimento do ITBI e encargos de transferência",
@@ -199,7 +194,7 @@ const STEPS = {
     phase: "cri",
     responsible: "Escritório",
     system: "SICTD",
-    hint: "Confirma a garantia: último passo acompanhado aqui.",
+    hint: "Confirma a garantia: última etapa acompanhada aqui.",
   },
 } as const satisfies StepCatalog;
 
@@ -255,7 +250,7 @@ export const STEP_TRACKS = {
       "vistoria_engenharia",
       "ajustes_pept",
       ...CONTRATACAO,
-      "assinatura_sem_vendedor",
+      "assinatura",
       "registro_cartorio",
       "envio_matricula",
     ],
@@ -292,7 +287,7 @@ export const STEP_TRACKS = {
       ...INICIO,
       "avaliacao_garantia",
       ...CONTRATACAO,
-      "assinatura_sem_vendedor",
+      "assinatura",
       "registro_garantia",
       "envio_matricula",
     ],
@@ -315,7 +310,7 @@ export const MODALITY_TRACK: Record<Modality, StepTrack> = {
 
 /**
  * Sem modalidade ainda (processo recém-aberto), vale o roteiro de aquisição:
- * os primeiros passos são os mesmos em todas, e é o caso mais comum.
+ * as primeiras etapas são as mesmas em todas, e é o caso mais comum.
  */
 const FALLBACK_TRACK: StepTrack = "aquisicao_imovel";
 
@@ -327,18 +322,26 @@ export function stepsForModality(modality: Modality | null | undefined): Process
   return STEP_TRACKS[trackForModality(modality)].steps.map((key) => ({ key, ...STEPS[key] }));
 }
 
-/** Rótulo de qualquer passo, para o histórico — que guarda só a chave. */
+/**
+ * Todas as etapas, na ordem do funil. É a ordem das colunas do Kanban quando
+ * ele mostra processos de modalidades diferentes juntos.
+ */
+export const STEP_ORDER: ProcessStepDef[] = Object.entries(STEPS as StepCatalog).map(
+  ([key, def]) => ({ key, ...def }),
+);
+
+/** Rótulo de qualquer etapa, para o histórico — que guarda só a chave. */
 export function stepLabel(key: string | null | undefined): string | null {
   if (!key) return null;
   return (STEPS as StepCatalog)[key]?.label ?? key;
 }
 
 /**
- * Passo em que o processo está.
+ * Etapa em que o processo está.
  *
  * A chave gravada vale quando existe no roteiro da modalidade atual. Senão —
- * processo anterior ao andamento, ou modalidade trocada para uma sem aquele
- * passo — cai no primeiro passo da fase em que o processo está, que é a melhor
+ * processo anterior às etapas por modalidade, ou modalidade trocada para uma sem
+ * aquela etapa — cai na primeira etapa da fase em que o processo está, que é a melhor
  * pista do quanto ele já andou.
  */
 export function resolveCurrentStep(
@@ -349,13 +352,13 @@ export function resolveCurrentStep(
   const stored = steps.find((step) => step.key === stepKey);
   if (stored) return stored;
   const first = steps[0];
-  if (!first) throw new Error("Roteiro sem passos.");
+  if (!first) throw new Error("Roteiro sem etapas.");
   return steps.find((step) => step.phase === stage && !step.conditional) ?? first;
 }
 
 /**
- * Próximo passo da sequência normal: pula os condicionais, que só se abrem
- * por escolha do operador. Um passo condicional volta para o que o originou.
+ * Próxima etapa da sequência normal: pula os condicionais, que só se abrem
+ * por escolha do operador. Uma etapa condicional volta para o que o originou.
  */
 export function nextStep(
   steps: ProcessStepDef[],
@@ -368,12 +371,12 @@ export function nextStep(
   return steps.slice(index + 1).find((step) => !step.conditional) ?? null;
 }
 
-/** Desvios que podem ser abertos a partir do passo atual (ex.: PEPT após a vistoria). */
+/** Desvios que podem ser abertos a partir da etapa atual (ex.: PEPT após a vistoria). */
 export function detoursFrom(steps: ProcessStepDef[], current: ProcessStepDef): ProcessStepDef[] {
   return steps.filter((step) => step.conditional && step.returnsTo === current.key);
 }
 
-/** Primeiro passo da fase, usado quando alguém move o processo pelo Kanban. */
+/** Primeira etapa de uma fase: onde caem processos anteriores às etapas. */
 export function firstStepOfPhase(
   steps: ProcessStepDef[],
   phase: ProcessStage,

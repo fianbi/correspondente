@@ -1,54 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("a lista de processos mostra a etapa em que cada um está", async ({ page }) => {
+  await page.goto("/processos");
 
-test("Kanban mostra todas as fases do funil, inclusive as vazias", async ({ page }) => {
-  await page.goto("/processos?view=kanban");
-
-  for (const fase of [
-    "Cadastro",
-    "Correspondente",
-    "Montagem",
-    "Conformidade de contrato",
-    "Agência",
-    "CRI",
-  ]) {
-    await expect(page.getByRole("region", { name: fase })).toBeVisible();
-  }
-});
-
-test("alterna entre Kanban e tabela", async ({ page }) => {
-  await page.goto("/processos?view=kanban");
-  await page.getByRole("link", { name: "tabela" }).click();
-
-  await expect(page).toHaveURL(/view=tabela/);
+  await expect(page.getByRole("columnheader", { name: "Etapa" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Cliente" })).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: "Financiamento" })).toBeVisible();
-});
-
-test("mover de fase no Kanban persiste depois de recarregar", async ({ page }) => {
-  await page.goto("/processos?view=kanban");
-
-  const cadastro = page.getByRole("region", { name: "Cadastro" });
-  const card = cadastro.getByRole("article").first();
-  const titulo = await card.getByRole("link").first().innerText();
-
-  await card.getByRole("combobox").selectOption("cri");
-
-  const cri = page.getByRole("region", { name: "CRI" });
-  await expect(cri.getByRole("link", { name: titulo })).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByRole("region", { name: "CRI" }).getByRole("link", { name: titulo })).toBeVisible();
-
-  // Devolve para a fase original, para a suíte poder rodar de novo sem depender
-  // de reseed.
-  await page
-    .getByRole("region", { name: "CRI" })
-    .getByRole("article")
-    .filter({ hasText: titulo })
-    .getByRole("combobox")
-    .selectOption("cadastro");
-  await expect(page.getByRole("region", { name: "Cadastro" }).getByRole("link", { name: titulo })).toBeVisible();
+  // Não há mais Kanban nem fases: a lista é a única visão.
+  await expect(page.getByRole("link", { name: "kanban" })).toHaveCount(0);
 });
 
 test("cria processo com valor em reais e mostra formatado", async ({ page }) => {

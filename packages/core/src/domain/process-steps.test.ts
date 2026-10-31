@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MODALITIES } from "./process";
 import {
+  STEP_ORDER,
   detoursFrom,
   nextStep,
   resolveCurrentStep,
@@ -25,11 +26,11 @@ describe("andamento por modalidade", () => {
     expect(usado).not.toContain("ajustes_pept");
   });
 
-  it("empréstimo com garantia não tem ITBI nem vendedor", () => {
+  it("empréstimo com garantia não tem ITBI nem transferência", () => {
     const keys = stepsForModality("emprestimo_garantia_imovel").map((s) => s.key);
     expect(keys).not.toContain("itbi");
-    expect(keys).not.toContain("assinatura");
     expect(keys).toContain("registro_garantia");
+    expect(keys).not.toContain("registro_cartorio");
   });
 
   it("as fases dos passos seguem a ordem do funil", () => {
@@ -38,6 +39,16 @@ describe("andamento por modalidade", () => {
       const idx = stepsForModality(modality).map((s) => order.indexOf(s.phase));
       expect([...idx].sort((a, b) => a - b)).toEqual(idx);
     }
+  });
+
+  it("toda etapa de todo roteiro está na ordem geral do Kanban, sem rótulo repetido", () => {
+    const order = STEP_ORDER.map((s) => s.key);
+    for (const modality of MODALITIES) {
+      const idx = stepsForModality(modality).map((s) => order.indexOf(s.key));
+      expect(idx).not.toContain(-1);
+      expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    }
+    expect(new Set(STEP_ORDER.map((s) => s.label)).size).toBe(STEP_ORDER.length);
   });
 
   it("concluir pula o desvio e o desvio volta para quem o abriu", () => {

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parseFieldPatch, personInputSchema, processInputSchema } from "@corr/core";
 import { CPFS_VALIDOS, createTestOrg, destroyTestOrg, type TestOrg } from "../testing/fixtures";
 import { createPerson } from "./people";
-import { createProcess, getProcess, moveProcessToStage, setProcessStatus } from "./processes";
+import { createProcess, getProcess, moveProcessToStep, setProcessStatus } from "./processes";
 import { ensureDefaultFlow, getFlowForProcess } from "./flows";
 import {
   applyProcessPatch,
@@ -130,17 +130,13 @@ describe("auditoria campo-a-campo", () => {
     expect(depois.length - antes).toBe(2);
   });
 
-  it("mudança de fase e de status viram eventos próprios", async () => {
-    await moveProcessToStage(org.ctx, processId, "agencia");
+  it("mudança de etapa e de status viram eventos próprios", async () => {
+    await moveProcessToStep(org.ctx, processId, "revisao_gerente");
     await setProcessStatus(org.ctx, processId, "aprovado");
 
     const eventos = await listProcessEvents(org.ctx, processId);
-    expect(eventos.find((e) => e.kind === "fase_alterada")).toMatchObject({
-      oldValue: "cadastro",
-      newValue: "agencia",
-    });
-    // O andamento acompanha a fase: vai para o primeiro passo da agência.
-    expect(eventos.find((e) => e.kind === "andamento_alterado")).toMatchObject({
+    expect(eventos[1]).toMatchObject({
+      kind: "andamento_alterado",
       oldValue: "captacao",
       newValue: "revisao_gerente",
     });
@@ -149,6 +145,8 @@ describe("auditoria campo-a-campo", () => {
       oldValue: "em_aberto",
       newValue: "aprovado",
     });
+    // A tela de campos acompanha a etapa sem virar evento à parte.
+    expect((await getProcess(org.ctx, processId)).stage).toBe("agencia");
   });
 
   it("criação do processo é o evento mais antigo", async () => {

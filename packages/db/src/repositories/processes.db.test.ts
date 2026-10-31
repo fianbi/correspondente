@@ -6,8 +6,8 @@ import {
   createProcess,
   getProcess,
   listProcesses,
-  listProcessesByStage,
-  moveProcessToStage,
+  currentStepOf,
+  moveProcessToStep,
   summarizeProcesses,
 } from "./processes";
 
@@ -75,29 +75,15 @@ describe("esteira de processos", () => {
     ]);
   });
 
-  it("agrupa por fase na ordem do funil, incluindo fases vazias", async () => {
-    const colunas = await listProcessesByStage(orgA.ctx);
-
-    expect(colunas.map((c) => c.stage)).toEqual([
-      "cadastro",
-      "correspondente",
-      "montagem",
-      "conformidade_contrato",
-      "agencia",
-      "cri",
-    ]);
-    // Coluna vazia precisa existir: o Kanban tem que mostrar a fase mesmo sem
-    // nenhum card, senão o operador não tem para onde arrastar.
-    expect(colunas.find((c) => c.stage === "cri")?.processes).toEqual([]);
-  });
-
-  it("mover de fase muda a coluna do Kanban", async () => {
+  it("mover de etapa muda a etapa que a lista mostra", async () => {
     const criado = await createProcess(orgA.ctx, processInput(pessoaA1));
-    await moveProcessToStage(orgA.ctx, criado.id, "agencia");
+    const antes = (await listProcesses(orgA.ctx)).find((p) => p.id === criado.id);
+    expect(antes && currentStepOf(antes).key).toBe("captacao");
 
-    const colunas = await listProcessesByStage(orgA.ctx);
-    const naAgencia = colunas.find((c) => c.stage === "agencia")?.processes ?? [];
-    expect(naAgencia.map((p) => p.id)).toContain(criado.id);
+    await moveProcessToStep(orgA.ctx, criado.id, "revisao_gerente");
+
+    const depois = (await listProcesses(orgA.ctx)).find((p) => p.id === criado.id);
+    expect(depois && currentStepOf(depois).key).toBe("revisao_gerente");
   });
 
   it("esconde processos encerrados por padrão", async () => {

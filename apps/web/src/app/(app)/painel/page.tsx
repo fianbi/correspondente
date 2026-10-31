@@ -3,19 +3,17 @@ import type { Metadata } from "next";
 import { AlertTriangle } from "lucide-react";
 import {
   MODALITY_LABELS,
-  PROCESS_STAGE_LABELS,
   PROCESS_STATUS_LABELS,
   PROCESS_STATUS_TOKENS,
   formatBRL,
   type Modality,
-  type ProcessStage,
   type ProcessStatus,
 } from "@corr/core";
 import {
   listExpiringProcesses,
   summarizeByBank,
   summarizeByModality,
-  summarizeByStage,
+  summarizeByStep,
   summarizeProcesses,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
@@ -52,7 +50,7 @@ export default async function PainelPage() {
     listExpiringProcesses(ctx, 30),
     summarizeByBank(ctx),
     summarizeByModality(ctx),
-    summarizeByStage(ctx),
+    summarizeByStep(ctx),
   ]);
 
   const byStatus = new Map(summary.map((row) => [row.status, row]));
@@ -114,14 +112,9 @@ export default async function PainelPage() {
           <Card>
             <CardHeader
               title="Onde os processos estão"
-              description="Processos ativos por fase da esteira."
+              description="Processos ativos por etapa."
             />
-            <BarList
-              items={porFase.map((linha) => ({
-                ...linha,
-                label: PROCESS_STAGE_LABELS[linha.label as ProcessStage] ?? linha.label,
-              }))}
-            />
+            <BarList items={porFase} emptyMessage="Nenhum processo ativo." />
           </Card>
 
           <Card>

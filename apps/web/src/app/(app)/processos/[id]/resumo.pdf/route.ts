@@ -1,4 +1,4 @@
-import { NotFoundError } from "@corr/core";
+import { NotFoundError, resolveCurrentStep, stepsForModality } from "@corr/core";
 import { getOrg, getProcess, listAgencies, listBanks, listBrokers } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { gerarResumoPdf } from "@/server/pdf/resumo";
@@ -34,7 +34,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       },
       process: {
         number: process.number,
-        stage: process.stage,
+        step: resolveCurrentStep(stepsForModality(process.modality), process.stepKey, process.stage).label,
         status: process.status,
         modality: process.modality,
         indexer: process.indexer,

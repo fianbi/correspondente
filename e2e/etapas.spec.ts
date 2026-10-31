@@ -18,22 +18,21 @@ test("a tela do processo é montada a partir do fluxo configurado", async ({ pag
 
   const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
   for (const etapa of [
-    "Cadastro",
-    "Correspondente",
-    "Montagem",
-    "Conformidade de contrato",
-    "Agência",
-    "CRI",
+    "Captação do cliente",
+    "Avaliação de risco",
+    "Vistoria da engenharia Caixa",
+    "Envio para conformidade",
+    "Registro em cartório de imóveis",
   ]) {
     await expect(etapas.getByRole("link", { name: etapa })).toBeVisible();
   }
 
-  // Cada etapa tem campos próprios: os da análise de crédito não aparecem no
-  // cadastro, que é a diferença entre esteira configurável e Kanban genérico.
+  // Cada etapa mostra os campos do seu momento: os da análise de crédito não
+  // aparecem na captação.
   await expect(page.getByLabel("Valor do imóvel")).toBeVisible();
   await expect(page.getByLabel("Valor de avaliação")).toHaveCount(0);
 
-  await etapas.getByRole("link", { name: "Correspondente" }).click();
+  await etapas.getByRole("link", { name: "Avaliação de risco" }).click();
   await expect(page.getByLabel("Valor de avaliação")).toBeVisible();
   await expect(page.getByLabel("Valor do imóvel")).toHaveCount(0);
 });
@@ -83,32 +82,6 @@ test("alteração seguinte guarda o valor anterior", async ({ page }) => {
   await expect(linha).toContainText("IPCA");
 });
 
-test("iniciar e finalizar etapa muda o estado e entra no histórico", async ({ page }) => {
-  await novoProcesso(page);
-
-  await page.getByRole("button", { name: "Iniciar etapa" }).click();
-  await expect(page.getByText("Em andamento")).toBeVisible();
-
-  await page.getByRole("button", { name: "Finalizar etapa" }).click();
-  await expect(page.getByText("Concluída")).toBeVisible();
-
-  await page.getByRole("link", { name: "Histórico" }).click();
-  await expect(page.getByText("Etapa finalizada")).toBeVisible();
-  await expect(page.getByText("Etapa iniciada")).toBeVisible();
-});
-
-test("trocar fase pelo cabeçalho vira evento com origem e destino", async ({ page }) => {
-  await novoProcesso(page);
-
-  await page.getByLabel("Fase do processo").selectOption("agencia");
-  await expect(page.getByLabel("Fase do processo")).toHaveValue("agencia");
-
-  await page.getByRole("link", { name: "Histórico" }).click();
-  const linha = page.getByRole("listitem").filter({ hasText: "Fase" }).first();
-  await expect(linha).toContainText("Cadastro");
-  await expect(linha).toContainText("Agência");
-});
-
 test("campo de relação aparece pelo nome no histórico, não pelo id", async ({ page }) => {
   await novoProcesso(page);
 
@@ -123,31 +96,50 @@ test("campo de relação aparece pelo nome no histórico, não pelo id", async (
   await expect(linha).not.toContainText(/[0-9a-f]{8}-[0-9a-f]{4}/);
 });
 
-test("o andamento segue a modalidade e move a fase junto", async ({ page }) => {
+
+test("trocar a etapa pelo cabeçalho vira evento com origem e destino", async ({ page }) => {
   await novoProcesso(page);
 
-  await expect(page.getByTestId("passo-atual")).toHaveText("Captação do cliente");
-  await page.getByRole("button", { name: "Concluir passo" }).click();
-  await expect(page.getByTestId("passo-atual")).toHaveText("Levantamento e simulação de crédito");
+  await page.getByLabel("Etapa do processo").selectOption("revisao_gerente");
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("revisao_gerente");
+
+  await page.getByRole("link", { name: "Histórico" }).click();
+  // O menu lateral também é lista: o histórico é a linha com origem e destino.
+  const linha = page
+    .getByRole("listitem")
+    .filter({ hasText: "Captação do cliente" })
+    .filter({ hasText: "Revisão final pelo gerente da agência" })
+    .first();
+  await expect(linha).toContainText("Etapa");
+  await expect(linha).toContainText("Revisão final pelo gerente da agência");
+});
+
+test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", async ({ page }) => {
+  await novoProcesso(page);
+  const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
+
+  await page.getByRole("button", { name: "Concluir etapa" }).click();
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("simulacao");
 
   // Construção tem engenharia local e PEPT; o roteiro troca com a modalidade.
+  await expect(etapas.getByRole("link", { name: "Projeto de engenharia e aprovação na prefeitura" })).toHaveCount(0);
   await page.getByLabel("Modalidade").selectOption("aquisicao_terreno_construcao");
   await page.getByRole("button", { name: "Salvar etapa" }).click();
   await expect(page.locator('p[role="status"]')).toContainText("1 campo(s)");
+  await expect(etapas.getByRole("link", { name: "Projeto de engenharia e aprovação na prefeitura" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Andamento", exact: true }).click();
-  await page.getByRole("button", { name: "Mover andamento para Vistoria da engenharia Caixa" }).click();
-  await expect(page.getByText("Vistoria da engenharia Caixa (passo atual)")).toBeVisible();
-  await expect(page.getByLabel("Fase do processo")).toHaveValue("correspondente");
+  // Abrir outra etapa só mostra; mover é um clique explícito.
+  await etapas.getByRole("link", { name: "Vistoria da engenharia Caixa" }).click();
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("simulacao");
+  await page.getByRole("button", { name: "Mover processo para esta etapa" }).click();
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
 
-  await page.getByRole("link", { name: "Etapas", exact: true }).click();
+  // PEPT só aparece no menu depois de acontecer.
+  await expect(etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" })).toHaveCount(0);
   await page.getByRole("button", { name: "Ajustes de projeto (PEPT)" }).click();
-  await expect(page.getByTestId("passo-atual")).toHaveText("Ajustes de projeto (PEPT)");
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("ajustes_pept");
+  await etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" }).click();
   await page.getByRole("button", { name: "Voltar para Vistoria da engenharia Caixa" }).click();
-  await expect(page.getByTestId("passo-atual")).toHaveText("Vistoria da engenharia Caixa");
-
-  await page.getByRole("link", { name: "Histórico" }).click();
-  await expect(page.getByRole("listitem").filter({ hasText: "Andamento" }).first()).toContainText(
-    "Ajustes de projeto (PEPT)",
-  );
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
+  await expect(etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" })).toBeVisible();
 });

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { DomainError, processInputSchema, processStageSchema, processStatusSchema } from "@corr/core";
-import { createProcess, moveProcessToStage, moveProcessToStep, setProcessStatus } from "@corr/db";
+import { DomainError, processInputSchema, processStatusSchema } from "@corr/core";
+import { createProcess, moveProcessToStep, setProcessStatus } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 
 export interface ProcessFormState {
@@ -44,18 +44,7 @@ export async function createProcessAction(
   redirect(`/processos/${savedId}`);
 }
 
-/** Usada pelo seletor de fase do Kanban e da tela do processo. */
-export async function moveStage(processId: string, stage: string): Promise<void> {
-  const ctx = await requireOrgContext();
-  const parsed = processStageSchema.safeParse(stage);
-  if (!parsed.success) throw new DomainError("Fase inválida.", "invalid_stage");
-
-  await moveProcessToStage(ctx, processId, parsed.data);
-  revalidatePath("/processos");
-  revalidatePath(`/processos/${processId}`);
-}
-
-/** Move o andamento; a fase acompanha o passo escolhido. */
+/** Move o processo para uma etapa do roteiro da modalidade dele. */
 export async function moveStep(processId: string, stepKey: string): Promise<void> {
   const ctx = await requireOrgContext();
   await moveProcessToStep(ctx, processId, stepKey);

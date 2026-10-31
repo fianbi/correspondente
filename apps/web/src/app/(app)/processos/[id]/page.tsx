@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata, Route } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Check } from "lucide-react";
 import {
   NotFoundError,
   PARTICIPANT_ROLE_LABELS,
@@ -15,6 +16,7 @@ import {
   trackForModality,
   toFieldView,
   type FieldOption,
+  type ProcessStepDef,
 } from "@corr/core";
 import {
   buildChecklist,
@@ -41,21 +43,20 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { DynamicOptions } from "@/components/fields/field-input";
 import { History } from "./history";
-import { StageForm, type RenderBlock } from "./stage-form";
+import { StageForm, type RenderBlock, type StepState } from "./stage-form";
 import { ProcessHeaderControls } from "./header-controls";
 import { ProcessDocuments } from "./process-documents";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
-import { StepSummary, StepTrackPanel, type StepTrackProps } from "./step-progress";
+import { StepActions } from "./step-progress";
 
 export const metadata: Metadata = { title: "Processo" };
 
-type Tab = "etapas" | "andamento" | "documentos" | "pendencias" | "historico";
+type Tab = "etapas" | "documentos" | "pendencias" | "historico";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "etapas", label: "Etapas" },
-  { key: "andamento", label: "Andamento" },
+  { key: "etapas", label: "Dados da etapa" },
   { key: "documentos", label: "Documentos" },
   { key: "pendencias", label: "Pendências" },
   { key: "historico", label: "Histórico" },
@@ -112,10 +113,16 @@ export default async function ProcessoPage({
       .map((option) => [option.value, option.label]),
   );
 
-  const stateByStage = new Map(stageStates.map((s) => [s.stageKey, s]));
-  const currentStageKey =
-    flow.stages.find((s) => s.key === etapa)?.key ?? process.stage ?? flow.stages[0]?.key;
-  const currentStage = flow.stages.find((s) => s.key === currentStageKey) ?? flow.stages[0];
+  const stateByStep = new Map(stageStates.map((s) => [s.stageKey, s]));
+
+  // Etapa atual (onde o processo está) e etapa aberta na tela (a que o
+  // operador clicou). A tela de campos e o checklist vêm do grupo da etapa
+  // aberta no fluxo do escritório.
+  const steps = stepsForModality(process.modality);
+  const currentStep = resolveCurrentStep(steps, process.stepKey, process.stage);
+  const viewedStep = steps.find((step) => step.key === etapa) ?? currentStep;
+  const currentStage =
+    flow.stages.find((stage) => stage.key === viewedStep.phase) ?? flow.stages[0];
 
   const participantIds = [...new Set(process.participants.map((p) => p.personId))];
   const [documents, pendencies, links, templates, riskAssessments, visitedSteps] = await Promise.all([
@@ -127,17 +134,20 @@ export default async function ProcessoPage({
     listVisitedSteps(ctx, id),
   ]);
 
-  const steps = stepsForModality(process.modality);
-  const currentStep = resolveCurrentStep(steps, process.stepKey, process.stage);
-  const stepTrack: StepTrackProps = {
-    processId: id,
-    trackName: STEP_TRACKS[trackForModality(process.modality)].name,
-    steps,
-    currentKey: currentStep.key,
-    nextKey: nextStep(steps, currentStep)?.key ?? null,
-    detourKeys: detoursFrom(steps, currentStep).map((step) => step.key),
-    visitedKeys: visitedSteps,
-  };
+  const currentIndex = steps.findIndex((step) => step.key === currentStep.key);
+  const stateOf = (step: ProcessStepDef): StepState =>
+    step.key === currentStep.key
+      ? "atual"
+      : (step.conditional ? visitedSteps.includes(step.key) : steps.indexOf(step) < currentIndex)
+        ? "concluida"
+        : "pendente";
+  // Desvio que nunca aconteceu só aparece quando é o atual: listar PEPT num
+  // processo que passou de primeira na vistoria seria ruído.
+  const visibleSteps = steps.filter(
+    (step) => !step.conditional || stateOf(step) !== "pendente" || step.key === viewedStep.key,
+  );
+  const mainSteps = steps.filter((step) => !step.conditional);
+  const trackName = STEP_TRACKS[trackForModality(process.modality)].name;
 
   const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
 
@@ -175,7 +185,7 @@ export default async function ProcessoPage({
   }));
 
   const tabHref = (target: Tab) =>
-    `/processos/${id}?aba=${target}${currentStage ? `&etapa=${currentStage.key}` : ""}` as Route;
+    `/processos/${id}?aba=${target}&etapa=${viewedStep.key}` as Route;
 
   return (
     <>
@@ -184,7 +194,12 @@ export default async function ProcessoPage({
         description={proponent ? `${proponent.fullName} · ${formatCpf(proponent.cpf)}` : undefined}
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <ProcessHeaderControls processId={id} stage={process.stage} status={process.status} />
+            <ProcessHeaderControls
+              processId={id}
+              steps={steps.map((step) => ({ value: step.key, label: step.label }))}
+              stepKey={currentStep.key}
+              status={process.status}
+            />
             <ProcessDocuments
               processId={id}
               templates={templates
@@ -196,42 +211,48 @@ export default async function ProcessoPage({
       />
 
       <main className="flex flex-col gap-5 p-6 lg:flex-row">
-        <nav className="lg:w-56 lg:shrink-0" aria-label="Etapas do processo">
+        <nav className="lg:w-64 lg:shrink-0" aria-label="Etapas do processo">
+          <p className="mb-2 hidden px-3 text-xs font-medium uppercase tracking-wide text-ink-muted lg:block">
+            {trackName}
+          </p>
           <ol className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {flow.stages.map((stage, index) => {
-              const state = stateByStage.get(stage.key)?.state ?? "pendente";
-              const active = stage.key === currentStage?.key;
+            {visibleSteps.map((step) => {
+              const state = stateOf(step);
+              const active = step.key === viewedStep.key;
+              const number = mainSteps.findIndex((s) => s.key === step.key) + 1;
               return (
-                <li key={stage.key} className="shrink-0 lg:shrink">
+                <li key={step.key} className="shrink-0 lg:shrink">
                   <Link
-                    href={`/processos/${id}?aba=etapas&etapa=${stage.key}` as Route}
+                    href={`/processos/${id}?aba=etapas&etapa=${step.key}` as Route}
                     aria-current={active ? "step" : undefined}
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
+                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition",
                       active
                         ? "bg-brand-50 font-medium text-brand-700"
                         : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+                      state === "atual" && !active ? "font-medium text-ink" : null,
                     )}
                   >
                     <span
+                      aria-hidden
                       className={cn(
                         "grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
                         state === "concluida"
                           ? "bg-status-aprovado text-white"
-                          : state === "em_andamento"
+                          : state === "atual"
                             ? "bg-status-aguardando text-white"
                             : "bg-surface-muted text-ink-muted",
                       )}
                     >
-                      {index + 1}
+                      {state === "concluida" ? <Check className="size-3" /> : step.conditional ? "↺" : number}
                     </span>
-                    {stage.label}
+                    {step.label}
+                    {state === "atual" ? <span className="sr-only"> (etapa atual)</span> : null}
                   </Link>
                 </li>
               );
             })}
           </ol>
-
         </nav>
 
         <div className="min-w-0 flex-1">
@@ -261,8 +282,6 @@ export default async function ProcessoPage({
             ))}
           </nav>
 
-          {tab !== "andamento" ? <StepSummary {...stepTrack} /> : null}
-
           {tab === "etapas" ? (
             <RiskCard
               processId={id}
@@ -274,8 +293,6 @@ export default async function ProcessoPage({
 
           {tab === "historico" ? (
             <HistoryTab processId={id} actors={members} relations={relations} />
-          ) : tab === "andamento" ? (
-            <StepTrackPanel {...stepTrack} />
           ) : tab === "documentos" ? (
             <DocumentsPanel
               processId={id}
@@ -293,14 +310,35 @@ export default async function ProcessoPage({
             />
           ) : currentStage ? (
             <StageForm
+              key={viewedStep.key}
               processId={id}
-              stageKey={currentStage.key}
-              stageLabel={currentStage.label}
+              stepKey={viewedStep.key}
+              fieldsKey={currentStage.key}
+              stepLabel={viewedStep.label}
+              subtitle={[
+                viewedStep.conditional
+                  ? "Desvio"
+                  : `Etapa ${mainSteps.findIndex((s) => s.key === viewedStep.key) + 1} de ${mainSteps.length}`,
+                viewedStep.responsible,
+                viewedStep.system,
+                viewedStep.hint,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
               blocks={blocks}
               options={options}
-              state={stateByStage.get(currentStage.key)?.state ?? "pendente"}
-              assignedTo={stateByStage.get(currentStage.key)?.assignedTo ?? null}
+              state={stateOf(viewedStep)}
+              assignedTo={stateByStep.get(viewedStep.key)?.assignedTo ?? null}
               members={memberOptions}
+              actions={
+                <StepActions
+                  processId={id}
+                  step={viewedStep}
+                  isCurrent={viewedStep.key === currentStep.key}
+                  next={nextStep(steps, currentStep)}
+                  detours={detoursFrom(steps, currentStep)}
+                />
+              }
             />
           ) : null}
 

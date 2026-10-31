@@ -7,8 +7,7 @@ import {
   CLOSED_STATUSES,
   DomainError,
   NotFoundError,
-  PROCESS_STAGES,
-  firstStepOfPhase,
+  STEP_ORDER,
   resolveCurrentStep,
   stepsForModality,
 } from "@corr/core";
@@ -98,22 +97,9 @@ export async function listProcesses(ctx: OrgContext, options: ListProcessesOptio
 
 export type ProcessListRow = Awaited<ReturnType<typeof listProcesses>>[number];
 
-export interface StageColumn {
-  stage: ProcessStage;
-  processes: ProcessListRow[];
-}
-
-/** Processos agrupados por fase, na ordem do funil — formato que o Kanban usa. */
-export async function listProcessesByStage(
-  ctx: OrgContext,
-  options: ListProcessesOptions = {},
-): Promise<StageColumn[]> {
-  const rows = await listProcesses(ctx, options);
-
-  return PROCESS_STAGES.map((stage) => ({
-    stage,
-    processes: rows.filter((row) => row.stage === stage),
-  }));
+/** Etapa em que uma linha da listagem está, com o roteiro da modalidade dela. */
+export function currentStepOf(row: Pick<ProcessListRow, "modality" | "stepKey" | "stage">) {
+  return resolveCurrentStep(stepsForModality(row.modality), row.stepKey, row.stage);
 }
 
 export async function getProcess(ctx: OrgContext, processId: string) {
@@ -187,54 +173,13 @@ export async function createProcess(ctx: OrgContext, input: ProcessInput) {
  */
 
 /**
- * Move a fase do processo (Kanban, cabeçalho).
- *
- * Se o passo do andamento era de outra fase, ele vai para o primeiro passo da
- * fase nova: fase e andamento contam a mesma história, senão o Kanban diria
- * "Agência" com o andamento ainda parado no SICAQ.
- */
-export async function moveProcessToStage(ctx: OrgContext, processId: string, stage: ProcessStage) {
-  return withOrg(ctx, async (tx) => {
-    const [before] = await tx
-      .select({ stage: processes.stage, stepKey: processes.stepKey, modality: processes.modality })
-      .from(processes)
-      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
-      .limit(1);
-    if (!before) throw new NotFoundError("Processo");
-    if (before.stage === stage) return { id: processId, stage };
-
-    const steps = stepsForModality(before.modality);
-    const currentStep = resolveCurrentStep(steps, before.stepKey, before.stage);
-    const targetStep =
-      currentStep.phase === stage ? currentStep : (firstStepOfPhase(steps, stage) ?? currentStep);
-
-    const [updated] = await tx
-      .update(processes)
-      .set({ stage, stepKey: targetStep.key, updatedAt: new Date() })
-      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
-      .returning({ id: processes.id, stage: processes.stage });
-    if (!updated) throw new NotFoundError("Processo");
-
-    await recordProcessEvent(tx, ctx, processId, "fase_alterada", {
-      oldValue: before.stage,
-      newValue: stage,
-    });
-    if (targetStep.key !== currentStep.key) {
-      await recordProcessEvent(tx, ctx, processId, "andamento_alterado", {
-        oldValue: currentStep.key,
-        newValue: targetStep.key,
-      });
-    }
-
-    return updated;
-  });
-}
-
-/**
- * Move o andamento para qualquer passo do roteiro da modalidade — para a
+ * Move o processo para qualquer etapa do roteiro da modalidade — para a
  * frente, para trás ou para um desvio (PEPT, pendência de conformidade). Nenhum
  * resultado ruim encerra o processo sozinho: quem decide é o operador, e cada
  * movimento fica no histórico.
+ *
+ * A coluna `stage` acompanha em silêncio: é o agrupamento interno que escolhe
+ * a tela de campos e o checklist da etapa, não algo que o operador move.
  */
 export async function moveProcessToStep(ctx: OrgContext, processId: string, stepKey: string) {
   return withOrg(ctx, async (tx) => {
@@ -247,7 +192,7 @@ export async function moveProcessToStep(ctx: OrgContext, processId: string, step
 
     const steps = stepsForModality(before.modality);
     const target = steps.find((step) => step.key === stepKey);
-    if (!target) throw new DomainError("Passo não existe nesta modalidade.", "invalid_step");
+    if (!target) throw new DomainError("Etapa não existe nesta modalidade.", "invalid_step");
 
     const currentStep = resolveCurrentStep(steps, before.stepKey, before.stage);
     if (currentStep.key === target.key && before.stepKey === target.key) {
@@ -267,18 +212,11 @@ export async function moveProcessToStep(ctx: OrgContext, processId: string, step
         newValue: target.key,
       });
     }
-    if (before.stage !== target.phase) {
-      await recordProcessEvent(tx, ctx, processId, "fase_alterada", {
-        oldValue: before.stage,
-        newValue: target.phase,
-      });
-    }
-
     return updated;
   });
 }
 
-/** Passos pelos quais o processo já passou, lidos do histórico. */
+/** Etapas pelas quais o processo já passou, lidos do histórico. */
 export async function listVisitedSteps(ctx: OrgContext, processId: string): Promise<string[]> {
   return withOrg(ctx, async (tx) => {
     const rows = await tx
@@ -479,11 +417,17 @@ export async function summarizeByModality(ctx: OrgContext): Promise<AgrupamentoD
   });
 }
 
-export async function summarizeByStage(ctx: OrgContext): Promise<AgrupamentoDoPainel[]> {
+/**
+ * Processos ativos por etapa. A etapa sai do roteiro da modalidade de cada
+ * processo, então a conta é feita aqui; o banco só agrupa as combinações.
+ */
+export async function summarizeByStep(ctx: OrgContext): Promise<AgrupamentoDoPainel[]> {
   return withOrg(ctx, async (tx) => {
     const rows = await tx
       .select({
-        label: sql<string>`${processes.stage}::text`,
+        modality: processes.modality,
+        stage: processes.stage,
+        stepKey: processes.stepKey,
         quantity: sql<number>`count(*)::int`,
         totalCents: sql<string>`coalesce(sum(${processes.financedValueCents}), 0)`,
       })
@@ -494,19 +438,20 @@ export async function summarizeByStage(ctx: OrgContext): Promise<AgrupamentoDoPa
           notInArray(processes.status, [...CLOSED_STATUSES]),
         ),
       )
-      .groupBy(processes.stage);
+      .groupBy(processes.modality, processes.stage, processes.stepKey);
 
-    const porFase = new Map(rows.map((row) => [row.label, row]));
+    const totals = new Map<string, { quantity: number; totalCents: number }>();
+    for (const row of rows) {
+      const key = currentStepOf(row).key;
+      const acc = totals.get(key) ?? { quantity: 0, totalCents: 0 };
+      acc.quantity += row.quantity;
+      acc.totalCents += Number(row.totalCents);
+      totals.set(key, acc);
+    }
 
-    // Fase vazia continua na lista: um funil com buraco escondido engana quem
-    // olha, porque some justamente a etapa onde nada está entrando.
-    return PROCESS_STAGES.map((stage) => {
-      const row = porFase.get(stage);
-      return {
-        label: stage,
-        quantity: row?.quantity ?? 0,
-        totalCents: Number(row?.totalCents ?? 0),
-      };
+    return STEP_ORDER.flatMap((step) => {
+      const total = totals.get(step.key);
+      return total ? [{ label: step.label, ...total }] : [];
     });
   });
 }

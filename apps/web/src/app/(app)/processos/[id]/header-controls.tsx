@@ -1,30 +1,26 @@
 "use client";
 
 import { useTransition } from "react";
-import {
-  PROCESS_STAGE_LABELS,
-  PROCESS_STATUS_LABELS,
-  type ProcessStage,
-  type ProcessStatus,
-} from "@corr/core";
-import { Select, optionsFromLabels } from "@/components/ui/select";
-import { changeStatus, moveStage } from "../actions";
+import { PROCESS_STATUS_LABELS, type ProcessStatus } from "@corr/core";
+import { Select, optionsFromLabels, type SelectOption } from "@/components/ui/select";
+import { changeStatus, moveStep } from "../actions";
 
-const STAGE_OPTIONS = optionsFromLabels(PROCESS_STAGE_LABELS);
 const STATUS_OPTIONS = optionsFromLabels(PROCESS_STATUS_LABELS);
 
 /**
- * Fase e status ficam no cabeçalho, fora do formulário da etapa: são do
- * processo inteiro, não de uma etapa, e mudam com um clique — cada troca vira
- * um evento próprio no histórico.
+ * Etapa e status ficam no cabeçalho: são do processo inteiro e mudam com um
+ * clique — cada troca vira um evento próprio no histórico. As etapas listadas
+ * são as do roteiro da modalidade do processo.
  */
 export function ProcessHeaderControls({
   processId,
-  stage,
+  steps,
+  stepKey,
   status,
 }: {
   processId: string;
-  stage: ProcessStage;
+  steps: SelectOption[];
+  stepKey: string;
   status: ProcessStatus;
 }) {
   const [pending, startTransition] = useTransition();
@@ -32,14 +28,14 @@ export function ProcessHeaderControls({
   return (
     <div className="flex items-center gap-2">
       <Select
-        aria-label="Fase do processo"
-        className="h-9 w-48 text-sm"
+        aria-label="Etapa do processo"
+        className="h-9 w-64 text-sm"
         placeholder={null}
-        options={STAGE_OPTIONS}
-        value={stage}
+        options={steps}
+        value={stepKey}
         disabled={pending}
         onChange={(event) =>
-          startTransition(() => void moveStage(processId, event.target.value))
+          startTransition(() => void moveStep(processId, event.target.value))
         }
       />
       <Select
