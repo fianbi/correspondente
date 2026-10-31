@@ -2,6 +2,7 @@ export * from "./orgs";
 export * from "./people";
 export * from "./catalogs";
 export * from "./processes";
+export * from "./participants";
 export * from "./flows";
 export * from "./process-fields";
 export * from "./documents";

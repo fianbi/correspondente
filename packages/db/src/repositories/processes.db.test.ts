@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { personInputSchema, processInputSchema } from "@corr/core";
+import { personIncomeInputSchema, personInputSchema, processInputSchema } from "@corr/core";
 import { createTestOrg, destroyTestOrg, CPFS_VALIDOS, type TestOrg } from "../testing/fixtures";
-import { createPerson } from "./people";
+import { addPersonIncome, createPerson } from "./people";
+import {
+  addProcessParticipant,
+  createProcessWithParticipants,
+  removeProcessParticipant,
+} from "./participants";
+import { listBrokers } from "./catalogs";
 import {
   createProcess,
   getProcess,
@@ -116,5 +122,53 @@ describe("esteira de processos", () => {
     const resumoB = await summarizeProcesses(orgB.ctx);
     const total = resumoB.reduce((acc, row) => acc + row.quantity, 0);
     expect(total).toBe(1);
+  });
+
+  it("abre com vários proponentes e põe como principal o de maior renda", async () => {
+    await addPersonIncome(
+      orgA.ctx,
+      pessoaA2,
+      personIncomeInputSchema.parse({ kind: "formal", grossCents: "9000" }),
+    );
+    await addPersonIncome(
+      orgA.ctx,
+      pessoaA1,
+      personIncomeInputSchema.parse({ kind: "formal", grossCents: "3000" }),
+    );
+
+    const criado = await createProcessWithParticipants(orgA.ctx, {
+      modality: "aquisicao_imovel_usado",
+      proponentIds: [pessoaA1, pessoaA2],
+      participants: [],
+      brokerId: null,
+      newBrokerName: "Corretor Novo de Teste",
+      realEstateAgencyId: null,
+      newRealEstateAgencyName: null,
+    });
+    const processo = await getProcess(orgA.ctx, criado.id);
+
+    expect(processo.personId).toBe(pessoaA2);
+    expect(processo.participants).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ personId: pessoaA2, role: "proponente" }),
+        expect.objectContaining({ personId: pessoaA1, role: "coproponente" }),
+      ]),
+    );
+    // Corretor digitado na abertura entra no cadastro de parceiros.
+    const corretores = await listBrokers(orgA.ctx);
+    expect(corretores.find((c) => c.id === processo.brokerId)?.name).toBe("Corretor Novo de Teste");
+
+    // Sai o principal: o outro proponente assume.
+    await removeProcessParticipant(orgA.ctx, criado.id, pessoaA2, "proponente");
+    expect((await getProcess(orgA.ctx, criado.id)).personId).toBe(pessoaA1);
+
+    // O último proponente não sai.
+    await expect(
+      removeProcessParticipant(orgA.ctx, criado.id, pessoaA1, "proponente"),
+    ).rejects.toThrow("pelo menos um proponente");
+
+    // Volta como proponente e, por ter mais renda, retoma o principal.
+    await addProcessParticipant(orgA.ctx, criado.id, pessoaA2, "proponente");
+    expect((await getProcess(orgA.ctx, criado.id)).personId).toBe(pessoaA2);
   });
 });

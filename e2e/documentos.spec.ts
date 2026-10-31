@@ -11,7 +11,8 @@ const PDF_MINIMO = Buffer.from(
 
 async function novoProcesso(page: Page): Promise<string> {
   await page.goto("/processos/novo");
-  await page.getByLabel("Proponente principal").selectOption({ index: 1 });
+  await page.getByLabel("Modalidade").selectOption("aquisicao_imovel_usado");
+  await page.getByLabel("Proponente 1", { exact: true }).selectOption({ index: 1 });
   await page.getByRole("button", { name: "Criar processo" }).click();
   await page.waitForURL(/\/processos\/[0-9a-f-]{36}/);
   return page.url().split("?")[0]!;
