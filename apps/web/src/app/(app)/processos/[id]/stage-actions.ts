@@ -5,10 +5,8 @@ import { DomainError, parseFieldPatch } from "@corr/core";
 import {
   applyProcessPatch,
   assignStage,
-  finishStage,
   getFlowForProcess,
   getProcess,
-  startStage,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 
@@ -53,18 +51,6 @@ export async function saveStageFields(
     if (error instanceof DomainError) return { error: error.message };
     throw error;
   }
-}
-
-export async function startStageAction(processId: string, stageKey: string): Promise<void> {
-  const ctx = await requireOrgContext();
-  await startStage(ctx, processId, stageKey);
-  revalidatePath(`/processos/${processId}`);
-}
-
-export async function finishStageAction(processId: string, stageKey: string): Promise<void> {
-  const ctx = await requireOrgContext();
-  await finishStage(ctx, processId, stageKey);
-  revalidatePath(`/processos/${processId}`);
 }
 
 export async function assignStageAction(

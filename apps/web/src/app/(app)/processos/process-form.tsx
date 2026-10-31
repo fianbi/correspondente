@@ -5,7 +5,6 @@ import { useActionState } from "react";
 import {
   AMORTIZATION_SYSTEM_LABELS,
   MODALITY_LABELS,
-  PROCESS_STAGE_LABELS,
   PROCESS_STATUS_LABELS,
   formatCpf,
 } from "@corr/core";
@@ -63,13 +62,6 @@ export function ProcessForm({
               hint="Outras pessoas (cônjuge, vendedor) entram depois, no processo."
             />
           </div>
-          <SelectField
-            label="Fase"
-            name="stage"
-            placeholder={null}
-            options={optionsFromLabels(PROCESS_STAGE_LABELS)}
-            defaultValue="cadastro"
-          />
           <SelectField
             label="Status"
             name="status"

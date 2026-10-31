@@ -4,7 +4,6 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf
 import {
   MODALITY_LABELS,
   PARTICIPANT_ROLE_LABELS,
-  PROCESS_STAGE_LABELS,
   PROCESS_STATUS_LABELS,
   formatBRL,
   formatCnpj,
@@ -12,7 +11,6 @@ import {
   formatPhone,
   type Modality,
   type ParticipantRole,
-  type ProcessStage,
   type ProcessStatus,
 } from "@corr/core";
 
@@ -36,7 +34,8 @@ export interface ResumoInput {
   };
   process: {
     number: number;
-    stage: ProcessStage;
+    /** Rótulo da etapa atual, já resolvido pelo roteiro da modalidade. */
+    step: string;
     status: ProcessStatus;
     modality: Modality | null;
     indexer: string | null;
@@ -204,7 +203,7 @@ export async function gerarResumoPdf(input: ResumoInput): Promise<Uint8Array> {
 
   caneta.secao("Situação");
   caneta.paresEmColunas([
-    ["Fase atual", PROCESS_STAGE_LABELS[input.process.stage]],
+    ["Etapa atual", input.process.step],
     ["Status", PROCESS_STATUS_LABELS[input.process.status]],
     ["Aberto em", DATA.format(input.process.createdAt)],
     ["Validade do crédito", dataBr(input.process.creditValidUntil)],

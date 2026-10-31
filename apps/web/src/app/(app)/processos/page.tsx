@@ -1,45 +1,30 @@
 import Link from "next/link";
 import type { Metadata, Route } from "next";
 import { Plus } from "lucide-react";
-import {
-  MODALITY_LABELS,
-  PROCESS_STAGE_LABELS,
-  formatBRL,
-  formatCpf,
-} from "@corr/core";
-import { listProcesses, listProcessesByStage } from "@corr/db";
+import { MODALITY_LABELS, formatBRL, formatCpf } from "@corr/core";
+import { currentStepOf, listProcesses } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader, EmptyState } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { KanbanBoard } from "./kanban";
 
 export const metadata: Metadata = { title: "Processos" };
 
-type View = "kanban" | "tabela";
-
+/**
+ * Lista de processos com a etapa em que cada um está. Já houve um Kanban
+ * aqui; com o roteiro variando por modalidade, as colunas viravam dezenas, e
+ * a lista com a etapa diz o mesmo de forma mais legível.
+ */
 export default async function ProcessosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; encerrados?: string }>;
+  searchParams: Promise<{ encerrados?: string }>;
 }) {
   const ctx = await requireOrgContext();
-  const { view: rawView, encerrados } = await searchParams;
-  const view: View = rawView === "tabela" ? "tabela" : "kanban";
+  const { encerrados } = await searchParams;
   const includeClosed = encerrados === "1";
 
-  const [columns, rows] = await Promise.all([
-    view === "kanban" ? listProcessesByStage(ctx, { includeClosed }) : Promise.resolve([]),
-    view === "tabela" ? listProcesses(ctx, { includeClosed }) : Promise.resolve([]),
-  ]);
-
-  const isEmpty = view === "kanban" ? columns.every((c) => c.processes.length === 0) : rows.length === 0;
-
-  // `typedRoutes` valida rotas literais; estas são montadas em tempo de
-  // execução a partir de valores que já vieram validados acima.
-  const viewHref = (target: View) =>
-    `/processos?view=${target}${includeClosed ? "&encerrados=1" : ""}` as Route;
+  const rows = await listProcesses(ctx, { includeClosed });
 
   return (
     <>
@@ -59,37 +44,19 @@ export default async function ProcessosPage({
 
       <main className="flex flex-col gap-4 p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <nav className="inline-flex rounded-md border border-line bg-white p-0.5" aria-label="Modo de visualização">
-            {(["kanban", "tabela"] as const).map((target) => (
-              <Link
-                key={target}
-                href={viewHref(target)}
-                aria-current={view === target ? "page" : undefined}
-                className={cn(
-                  "rounded px-3 py-1.5 text-sm font-medium capitalize transition",
-                  view === target ? "bg-brand-50 text-brand-700" : "text-ink-muted hover:text-ink",
-                )}
-              >
-                {target}
-              </Link>
-            ))}
-          </nav>
-
           <Link
-            href={`/processos?view=${view}${includeClosed ? "" : "&encerrados=1"}` as Route}
+            href={(includeClosed ? "/processos" : "/processos?encerrados=1") as Route}
             className="text-sm text-ink-muted underline-offset-2 hover:text-ink hover:underline"
           >
             {includeClosed ? "Ocultar encerrados" : "Mostrar encerrados"}
           </Link>
         </div>
 
-        {isEmpty ? (
+        {rows.length === 0 ? (
           <EmptyState
             title="Nenhum processo na esteira"
-            description="Cadastre o primeiro processo para acompanhar o andamento por fase."
+            description="Cadastre o primeiro processo para acompanhar o andamento por etapa."
           />
-        ) : view === "kanban" ? (
-          <KanbanBoard columns={columns} />
         ) : (
           <Card className="overflow-x-auto">
             <table className="w-full min-w-3xl text-sm">
@@ -99,7 +66,7 @@ export default async function ProcessosPage({
                   <th className="px-5 py-2.5 font-medium">Cliente</th>
                   <th className="px-5 py-2.5 font-medium">Modalidade</th>
                   <th className="px-5 py-2.5 font-medium">Banco</th>
-                  <th className="px-5 py-2.5 font-medium">Fase</th>
+                  <th className="px-5 py-2.5 font-medium">Etapa</th>
                   <th className="px-5 py-2.5 font-medium">Status</th>
                   <th className="px-5 py-2.5 text-right font-medium">Financiamento</th>
                 </tr>
@@ -122,7 +89,7 @@ export default async function ProcessosPage({
                     </td>
                     <td className="px-5 py-3 text-ink-muted">{process.bankShortName ?? "—"}</td>
                     <td className="px-5 py-3 text-ink-muted">
-                      {PROCESS_STAGE_LABELS[process.stage]}
+                      {currentStepOf(process).label}
                     </td>
                     <td className="px-5 py-3">
                       <StatusBadge status={process.status} />
