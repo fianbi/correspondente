@@ -263,6 +263,22 @@ describe("rendas da lista do portal", () => {
     expect(Object.keys(captura.values).some((chave) => chave.startsWith("income."))).toBe(false);
   });
 
+  it("entrada vazia da lista (só o IR 0,00) não vira renda", () => {
+    const doc = carregarFixture("cadastro-de-clientes-5.html");
+    const lista = doc.querySelector("#comprovada tbody")!;
+    // Como o SICAQ monta a linha de uma renda em alteração: rótulos sem valor.
+    lista.insertAdjacentHTML(
+      "beforeend",
+      `<tr><td class="textoAzul">Jurídica</td><td class="tdfon10"></td></tr>
+       <tr><td class="textoAzul">Bruta</td><td class="tdfon10"></td></tr>
+       <tr><td class="textoAzul">Valor do Imposto de Renda</td><td class="tdfon10">0,00</td></tr>
+       <tr><td class="tdfon10"><a>Alterar</a></td></tr>`,
+    );
+    const captura = readForAutoCapture(doc, CAIXA_PROFILE)!;
+    expect(captura.incomes).toHaveLength(1);
+    expect(captura.incomes[0]).toMatchObject({ grossCents: "5000,00" });
+  });
+
   it("renda informal", () => {
     const captura = readForAutoCapture(carregarFixture("cadastro-de-clientes-6.html"), CAIXA_PROFILE)!;
     expect(captura.screenKey).toBe("renda_informal");

@@ -203,6 +203,12 @@ export async function adicionarRendas(
     const parsed = personIncomeInputSchema.safeParse(recebida);
     // Uma renda ilegível não derruba as outras nem o resto da captura.
     if (!parsed.success) continue;
+    // Renda sem fonte, início nem valor não identifica nada: ficaria em
+    // branco no cadastro (versões anteriores da extensão mandavam assim).
+    const { sourceDocument, sourceName, occupation, startDate, grossCents, netCents } = parsed.data;
+    if (![sourceDocument, sourceName, occupation, startDate, grossCents, netCents].some((v) => v !== null)) {
+      continue;
+    }
 
     const identidade = identidadeDaRenda(parsed.data);
     const existente = existentes.get(identidade);

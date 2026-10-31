@@ -134,6 +134,13 @@
       "when": 1793366139322,
       "tag": "0018_rls_avaliacao_de_risco",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793451463701,
+      "tag": "0019_remove_rendas_vazias",
+      "breakpoints": true
     }
   ]
 }

@@ -126,10 +126,34 @@ function semVazios(renda: SavedIncome): SavedIncome {
 /** Rendas da lista da tela aberta; `null` quando a tela não tem lista. */
 export function readSavedIncomes(root: Document): SavedIncome[] | null {
   const formal = root.querySelector("#comprovada");
-  if (formal) return lerEntradas(formal).map((entrada) => semVazios(rendaFormal(root, entrada)));
+  if (formal) {
+    return lerEntradas(formal)
+      .map((entrada) => semVazios(rendaFormal(root, entrada)))
+      .filter(temConteudo);
+  }
 
   const informal = root.querySelector("#informal");
-  if (informal) return lerEntradas(informal).map((entrada) => semVazios(rendaInformal(entrada)));
+  if (informal) {
+    return lerEntradas(informal)
+      .map((entrada) => semVazios(rendaInformal(entrada)))
+      .filter(temConteudo);
+  }
 
   return null;
+}
+
+/**
+ * Entrada da lista sem fonte, início nem valor não é renda: é linha que o
+ * portal monta vazia (no meio de uma alteração, por exemplo). Gravá-la
+ * criava uma renda em branco no cadastro.
+ */
+export function temConteudo(renda: SavedIncome): boolean {
+  return Boolean(
+    renda.sourceDocument ||
+      renda.sourceName ||
+      renda.occupation ||
+      renda.startDate ||
+      renda.grossCents ||
+      renda.netCents,
+  );
 }
