@@ -5,8 +5,12 @@ import {
   type ProcessStatus,
   type ParticipantRole,
   CLOSED_STATUSES,
+  DomainError,
   NotFoundError,
   PROCESS_STAGES,
+  firstStepOfPhase,
+  resolveCurrentStep,
+  stepsForModality,
 } from "@corr/core";
 import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { withOrg, type Tx } from "../client";
@@ -14,6 +18,7 @@ import { orgCounters, profiles } from "../schema/orgs";
 import { agencies, banks, brokers } from "../schema/catalogs";
 import { people } from "../schema/people";
 import { processParticipants, processes } from "../schema/processes";
+import { processEvents } from "../schema/flows";
 import { linkCurrentRiskAssessment } from "./risk-assessments";
 import { recordProcessEvent } from "./process-fields";
 
@@ -41,6 +46,7 @@ const listSelection = {
   id: processes.id,
   number: processes.number,
   stage: processes.stage,
+  stepKey: processes.stepKey,
   status: processes.status,
   modality: processes.modality,
   propertyValueCents: processes.propertyValueCents,
@@ -180,19 +186,31 @@ export async function createProcess(ctx: OrgContext, input: ProcessInput) {
  * silencioso na auditoria — alterações que ninguém consegue explicar depois.
  */
 
+/**
+ * Move a fase do processo (Kanban, cabeçalho).
+ *
+ * Se o passo do andamento era de outra fase, ele vai para o primeiro passo da
+ * fase nova: fase e andamento contam a mesma história, senão o Kanban diria
+ * "Agência" com o andamento ainda parado no SICAQ.
+ */
 export async function moveProcessToStage(ctx: OrgContext, processId: string, stage: ProcessStage) {
   return withOrg(ctx, async (tx) => {
     const [before] = await tx
-      .select({ stage: processes.stage })
+      .select({ stage: processes.stage, stepKey: processes.stepKey, modality: processes.modality })
       .from(processes)
       .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
       .limit(1);
     if (!before) throw new NotFoundError("Processo");
     if (before.stage === stage) return { id: processId, stage };
 
+    const steps = stepsForModality(before.modality);
+    const currentStep = resolveCurrentStep(steps, before.stepKey, before.stage);
+    const targetStep =
+      currentStep.phase === stage ? currentStep : (firstStepOfPhase(steps, stage) ?? currentStep);
+
     const [updated] = await tx
       .update(processes)
-      .set({ stage, updatedAt: new Date() })
+      .set({ stage, stepKey: targetStep.key, updatedAt: new Date() })
       .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
       .returning({ id: processes.id, stage: processes.stage });
     if (!updated) throw new NotFoundError("Processo");
@@ -201,8 +219,79 @@ export async function moveProcessToStage(ctx: OrgContext, processId: string, sta
       oldValue: before.stage,
       newValue: stage,
     });
+    if (targetStep.key !== currentStep.key) {
+      await recordProcessEvent(tx, ctx, processId, "andamento_alterado", {
+        oldValue: currentStep.key,
+        newValue: targetStep.key,
+      });
+    }
 
     return updated;
+  });
+}
+
+/**
+ * Move o andamento para qualquer passo do roteiro da modalidade — para a
+ * frente, para trás ou para um desvio (PEPT, pendência de conformidade). Nenhum
+ * resultado ruim encerra o processo sozinho: quem decide é o operador, e cada
+ * movimento fica no histórico.
+ */
+export async function moveProcessToStep(ctx: OrgContext, processId: string, stepKey: string) {
+  return withOrg(ctx, async (tx) => {
+    const [before] = await tx
+      .select({ stage: processes.stage, stepKey: processes.stepKey, modality: processes.modality })
+      .from(processes)
+      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
+      .limit(1);
+    if (!before) throw new NotFoundError("Processo");
+
+    const steps = stepsForModality(before.modality);
+    const target = steps.find((step) => step.key === stepKey);
+    if (!target) throw new DomainError("Passo não existe nesta modalidade.", "invalid_step");
+
+    const currentStep = resolveCurrentStep(steps, before.stepKey, before.stage);
+    if (currentStep.key === target.key && before.stepKey === target.key) {
+      return { id: processId, stepKey: target.key, stage: before.stage };
+    }
+
+    const [updated] = await tx
+      .update(processes)
+      .set({ stepKey: target.key, stage: target.phase, updatedAt: new Date() })
+      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
+      .returning({ id: processes.id, stepKey: processes.stepKey, stage: processes.stage });
+    if (!updated) throw new NotFoundError("Processo");
+
+    if (currentStep.key !== target.key) {
+      await recordProcessEvent(tx, ctx, processId, "andamento_alterado", {
+        oldValue: currentStep.key,
+        newValue: target.key,
+      });
+    }
+    if (before.stage !== target.phase) {
+      await recordProcessEvent(tx, ctx, processId, "fase_alterada", {
+        oldValue: before.stage,
+        newValue: target.phase,
+      });
+    }
+
+    return updated;
+  });
+}
+
+/** Passos pelos quais o processo já passou, lidos do histórico. */
+export async function listVisitedSteps(ctx: OrgContext, processId: string): Promise<string[]> {
+  return withOrg(ctx, async (tx) => {
+    const rows = await tx
+      .selectDistinct({ key: processEvents.newValue })
+      .from(processEvents)
+      .where(
+        and(
+          eq(processEvents.orgId, ctx.orgId),
+          eq(processEvents.processId, processId),
+          eq(processEvents.kind, "andamento_alterado"),
+        ),
+      );
+    return rows.flatMap((row) => (row.key ? [row.key] : []));
   });
 }
 

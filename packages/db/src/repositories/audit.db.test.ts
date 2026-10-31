@@ -135,10 +135,14 @@ describe("auditoria campo-a-campo", () => {
     await setProcessStatus(org.ctx, processId, "aprovado");
 
     const eventos = await listProcessEvents(org.ctx, processId);
-    expect(eventos[1]).toMatchObject({
-      kind: "fase_alterada",
+    expect(eventos.find((e) => e.kind === "fase_alterada")).toMatchObject({
       oldValue: "cadastro",
       newValue: "agencia",
+    });
+    // O andamento acompanha a fase: vai para o primeiro passo da agência.
+    expect(eventos.find((e) => e.kind === "andamento_alterado")).toMatchObject({
+      oldValue: "captacao",
+      newValue: "revisao_gerente",
     });
     expect(eventos[0]).toMatchObject({
       kind: "status_alterado",

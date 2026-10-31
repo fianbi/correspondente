@@ -72,6 +72,13 @@ export const processes = pgTable(
     stage: processStage("stage").notNull().default("cadastro"),
     status: processStatus("status").notNull().default("em_aberto"),
 
+    /**
+     * Passo do andamento (`@corr/core` process-steps). Nulo até alguém mexer:
+     * a leitura deduz o passo pela fase. Texto, não enum, porque o roteiro é
+     * código e muda sem migration.
+     */
+    stepKey: text("step_key"),
+
     bankId: uuid("bank_id").references(() => banks.id),
     agencyId: uuid("agency_id").references(() => agencies.id, { onDelete: "set null" }),
     modality: modality("modality"),

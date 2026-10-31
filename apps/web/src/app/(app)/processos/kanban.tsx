@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useTransition } from "react";
-import { PROCESS_STAGES, PROCESS_STAGE_LABELS, formatBRL, formatCpf, type ProcessStage } from "@corr/core";
+import {
+  PROCESS_STAGES,
+  PROCESS_STAGE_LABELS,
+  formatBRL,
+  formatCpf,
+  resolveCurrentStep,
+  stepsForModality,
+  type ProcessStage,
+} from "@corr/core";
 import type { StageColumn } from "@corr/db";
 import { StatusBadge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
@@ -59,6 +67,15 @@ export function KanbanBoard({ columns }: { columns: StageColumn[] }) {
                   </div>
 
                   <p className="mt-1 text-xs text-ink-muted">{formatCpf(process.personCpf)}</p>
+                  <p className="mt-1 text-xs font-medium text-ink">
+                    {
+                      resolveCurrentStep(
+                        stepsForModality(process.modality),
+                        process.stepKey,
+                        process.stage,
+                      ).label
+                    }
+                  </p>
                   <p className="tabular mt-1 text-sm font-medium text-ink">
                     {formatBRL(process.financedValueCents)}
                   </p>

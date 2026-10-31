@@ -60,7 +60,7 @@ test("o portal atualiza o cadastro achado pelo CPF, e o que está igual não é 
   });
   expect(((await vazia.json()) as { applied: string[] }).applied).toEqual([]);
 
-  await page.reload();
+  await page.goto(`${new URL(page.url()).pathname}?aba=dados`);
   await expect(page.getByRole("heading", { name: "NOME QUE ESTAVA NO PORTAL" })).toBeVisible();
   await expect(page.getByLabel("Nome da mãe")).toHaveValue("MAE VINDA DO PORTAL");
 
@@ -117,13 +117,14 @@ test("dependentes e despesas entram no grupo familiar e acompanham o portal", as
   // O aluguel mudou no portal: o cadastro acompanha.
   await enviar("despesas", { "person.rentCents": "180000" });
 
-  await page.reload();
+  await page.goto(`${new URL(page.url()).pathname}?aba=dados`);
   await expect(page.getByLabel("Dependentes sem renda")).toHaveValue("2");
   await expect(page.getByLabel("Aluguel")).toHaveValue("1800,00");
   await expect(page.getByLabel("Condomínio")).toHaveValue("350,50");
   await expect(page.getByLabel("Pensão alimentícia")).toHaveValue("");
 
   // O formulário da web grava em reais e mostra de volta o mesmo valor.
+  await page.getByRole("button", { name: "Estado civil e família" }).click();
   await page.getByLabel("Pensão alimentícia").fill("1.234,56");
   // Espera a gravação terminar antes de recarregar: sem isso, o reload pode
   // chegar antes da action e mostrar o valor antigo.
@@ -131,7 +132,7 @@ test("dependentes e despesas entram no grupo familiar e acompanham o portal", as
     page.waitForResponse((resposta) => resposta.request().method() === "POST"),
     page.getByRole("button", { name: "Salvar alterações" }).click(),
   ]);
-  await page.reload();
+  await page.goto(`${new URL(page.url()).pathname}?aba=dados`);
   await expect(page.getByLabel("Pensão alimentícia")).toHaveValue("1234,56");
   await expect(page.getByLabel("Aluguel")).toHaveValue("1800,00");
 });
@@ -217,7 +218,7 @@ test("listas da tela aparecem preenchidas no cadastro da web", async ({ page, re
   const corpo = (await resposta.json()) as { personId: string; ignored: string[] };
   expect(corpo.ignored).toEqual([]);
 
-  await page.goto(`/pessoas/${corpo.personId}`);
+  await page.goto(`/pessoas/${corpo.personId}?aba=dados`);
   await expect(page.getByLabel("Sexo")).toHaveValue("feminino");
   await expect(page.getByLabel("Nacionalidade")).toHaveValue("brasileiro");
   await expect(page.getByLabel("UF de naturalidade")).toHaveValue("SP");
@@ -250,7 +251,8 @@ test("declaração de propósitos e agência de relacionamento aparecem no cadas
     "person.relationshipAgencyNumber": "2352",
   });
 
-  await page.goto(`/pessoas/${personId}`);
+  await page.goto(`/pessoas/${personId}?aba=dados`);
+  await page.getByRole("button", { name: "Banco", exact: true }).click();
   const caixa = (nome: string) => page.getByRole("checkbox", { name: nome });
   await expect(caixa("Movimentação de conta, depósito e poupança")).toBeChecked();
   await expect(caixa("Empréstimos e financiamentos")).toBeChecked();
@@ -272,6 +274,7 @@ test("declaração de propósitos e agência de relacionamento aparecem no cadas
     page.getByRole("button", { name: "Salvar alterações" }).click(),
   ]);
   await page.reload();
+  await page.getByRole("button", { name: "Banco", exact: true }).click();
   await expect(caixa("Cartão de crédito")).toBeChecked();
   await expect(caixa("Empréstimos e financiamentos")).not.toBeChecked();
   await expect(caixa("Movimentação de conta, depósito e poupança")).toBeChecked();

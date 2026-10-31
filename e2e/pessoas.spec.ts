@@ -63,6 +63,7 @@ test("o bloco do cônjuge aparece conforme o estado civil", async ({ page }) => 
 
   await expect(page.getByLabel("Nome do cônjuge/companheiro")).toHaveCount(0);
 
+  await page.getByRole("button", { name: "Estado civil e família" }).click();
   await page.getByLabel("Estado civil").selectOption("casado_comunhao_parcial");
   await expect(page.getByLabel("Nome do cônjuge/companheiro")).toBeVisible();
 
@@ -75,13 +76,17 @@ test("cadastra pessoa e registra renda", async ({ page }) => {
   await page.getByLabel("CPF").fill(cpfFicticio());
   const nome = `DANIELA FERRAZ CAMPOS ${Date.now().toString().slice(-5)}`;
   await page.getByLabel("Nome completo").fill(nome);
+  await page.getByRole("button", { name: "Contato e endereço" }).click();
   await page.getByLabel("E-mail").fill("daniela.campos@exemplo.test");
   await page.getByLabel("Cidade", { exact: true }).fill("Santos");
   await page.getByRole("button", { name: "Cadastrar pessoa" }).click();
 
   await expect(page).toHaveURL(/\/pessoas\/[0-9a-f-]{36}/);
   await expect(page.getByRole("heading", { name: nome })).toBeVisible();
+  // O resumo mostra o que foi digitado, sem precisar abrir o formulário.
+  await expect(page.getByText("Santos")).toBeVisible();
 
+  await page.getByRole("link", { name: "Rendas" }).click();
   await page.getByRole("button", { name: "Adicionar renda" }).first().click();
   await page.getByLabel("Fonte pagadora").fill("EMPRESA EXEMPLO LTDA");
   await page.getByLabel("Renda bruta").fill("7.500,00");
@@ -146,4 +151,14 @@ test("nacionalidade estrangeira exige o país", async ({ page }) => {
   await page.getByRole("button", { name: "Cadastrar pessoa" }).click();
 
   await expect(page.getByText("Informe o país de nacionalidade.")).toBeVisible();
+});
+
+test("campo obrigatório em branco abre a seção dele", async ({ page }) => {
+  await page.goto("/pessoas/nova");
+  await page.getByRole("button", { name: "Observações" }).click();
+  await page.getByRole("button", { name: "Cadastrar pessoa" }).click();
+
+  // CPF fica na primeira seção: sem trocar de seção, o navegador barraria o
+  // envio sem mostrar nada.
+  await expect(page.getByLabel("CPF")).toBeVisible();
 });

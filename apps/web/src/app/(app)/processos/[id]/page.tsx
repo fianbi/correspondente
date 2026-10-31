@@ -5,8 +5,14 @@ import { notFound } from "next/navigation";
 import {
   NotFoundError,
   PARTICIPANT_ROLE_LABELS,
+  STEP_TRACKS,
+  detoursFrom,
   formatCpf,
+  nextStep,
   requireField,
+  resolveCurrentStep,
+  stepsForModality,
+  trackForModality,
   toFieldView,
   type FieldOption,
 } from "@corr/core";
@@ -27,6 +33,7 @@ import {
   listRealEstateAgencies,
   listRiskAssessmentsForPeople,
   listStageStates,
+  listVisitedSteps,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
@@ -40,13 +47,15 @@ import { ProcessDocuments } from "./process-documents";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
+import { StepSummary, StepTrackPanel, type StepTrackProps } from "./step-progress";
 
 export const metadata: Metadata = { title: "Processo" };
 
-type Tab = "etapas" | "documentos" | "pendencias" | "historico";
+type Tab = "etapas" | "andamento" | "documentos" | "pendencias" | "historico";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "etapas", label: "Etapas" },
+  { key: "andamento", label: "Andamento" },
   { key: "documentos", label: "Documentos" },
   { key: "pendencias", label: "Pendências" },
   { key: "historico", label: "Histórico" },
@@ -109,13 +118,26 @@ export default async function ProcessoPage({
   const currentStage = flow.stages.find((s) => s.key === currentStageKey) ?? flow.stages[0];
 
   const participantIds = [...new Set(process.participants.map((p) => p.personId))];
-  const [documents, pendencies, links, templates, riskAssessments] = await Promise.all([
+  const [documents, pendencies, links, templates, riskAssessments, visitedSteps] = await Promise.all([
     listProcessDocuments(ctx, id),
     listProcessPendencies(ctx, id),
     listAccessLinks(ctx, id),
     listFormTemplates(ctx),
     listRiskAssessmentsForPeople(ctx, participantIds),
+    listVisitedSteps(ctx, id),
   ]);
+
+  const steps = stepsForModality(process.modality);
+  const currentStep = resolveCurrentStep(steps, process.stepKey, process.stage);
+  const stepTrack: StepTrackProps = {
+    processId: id,
+    trackName: STEP_TRACKS[trackForModality(process.modality)].name,
+    steps,
+    currentKey: currentStep.key,
+    nextKey: nextStep(steps, currentStep)?.key ?? null,
+    detourKeys: detoursFrom(steps, currentStep).map((step) => step.key),
+    visitedKeys: visitedSteps,
+  };
 
   const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
 
@@ -239,6 +261,8 @@ export default async function ProcessoPage({
             ))}
           </nav>
 
+          {tab !== "andamento" ? <StepSummary {...stepTrack} /> : null}
+
           {tab === "etapas" ? (
             <RiskCard
               processId={id}
@@ -250,6 +274,8 @@ export default async function ProcessoPage({
 
           {tab === "historico" ? (
             <HistoryTab processId={id} actors={members} relations={relations} />
+          ) : tab === "andamento" ? (
+            <StepTrackPanel {...stepTrack} />
           ) : tab === "documentos" ? (
             <DocumentsPanel
               processId={id}
