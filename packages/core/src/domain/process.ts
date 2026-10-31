@@ -100,22 +100,37 @@ export const AMORTIZATION_SYSTEM_LABELS: Record<AmortizationSystem, string> = {
   sac: "SAC",
 };
 
-/** Papel de uma pessoa dentro de um processo. */
+/**
+ * Papel de uma pessoa dentro de um processo.
+ *
+ * Proponentes podem ser vários (casal, irmãos, três compradores). O principal
+ * (`proponente`) é sempre o de maior renda, e os demais ficam como
+ * `coproponente`: ninguém escolhe isso à mão, o sistema reordena a cada
+ * mudança (ver `reorderProponents` em `@corr/db`).
+ */
 export const PARTICIPANT_ROLES = [
   "proponente",
   "coproponente",
   "conjuge",
   "vendedor",
   "anuente",
+  "engenheiro",
 ] as const;
 export type ParticipantRole = (typeof PARTICIPANT_ROLES)[number];
 export const PARTICIPANT_ROLE_LABELS: Record<ParticipantRole, string> = {
-  proponente: "Proponente",
-  coproponente: "Coproponente",
-  conjuge: "Cônjuge",
+  proponente: "Proponente principal",
+  coproponente: "Proponente",
+  conjuge: "Cônjuge (não proponente)",
   vendedor: "Vendedor",
   anuente: "Anuente",
+  engenheiro: "Engenheiro",
 };
+
+export const PROPONENT_ROLES: readonly ParticipantRole[] = ["proponente", "coproponente"];
+
+/** Papéis que se escolhem para "outros participantes": proponente é à parte. */
+export const OTHER_PARTICIPANT_ROLES = ["vendedor", "engenheiro", "conjuge", "anuente"] as const;
+export type OtherParticipantRole = (typeof OTHER_PARTICIPANT_ROLES)[number];
 
 export const processStageSchema = z.enum(PROCESS_STAGES);
 export const processStatusSchema = z.enum(PROCESS_STATUSES);

@@ -129,39 +129,51 @@ export async function getProcess(ctx: OrgContext, processId: string) {
   });
 }
 
-export async function createProcess(ctx: OrgContext, input: ProcessInput) {
-  return withOrg(ctx, async (tx) => {
-    const number = await nextProcessNumber(tx, ctx.orgId);
+/**
+ * Insere o processo com o proponente principal, dentro de uma transação já
+ * aberta. Os dois caminhos de criação (formulário completo e abertura só com
+ * participantes) passam por aqui, então número, participante e evento de
+ * criação nunca divergem.
+ */
+export async function insertProcess(
+  tx: Tx,
+  ctx: OrgContext,
+  input: Partial<ProcessInput> & { personId: string },
+) {
+  const number = await nextProcessNumber(tx, ctx.orgId);
 
-    const [created] = await tx
-      .insert(processes)
-      .values({ ...input, orgId: ctx.orgId, number, createdBy: ctx.userId })
-      .returning();
+  const [created] = await tx
+    .insert(processes)
+    .values({ ...input, orgId: ctx.orgId, number, createdBy: ctx.userId })
+    .returning();
 
-    if (!created) throw new Error("Falha ao criar o processo.");
+  if (!created) throw new Error("Falha ao criar o processo.");
 
-    // O proponente principal também entra na lista de participantes, para a
-    // aba de pessoas do processo não precisar tratar um caso especial.
-    await tx
-      .insert(processParticipants)
-      .values({
-        orgId: ctx.orgId,
-        processId: created.id,
-        personId: input.personId,
-        role: "proponente",
-      })
-      .onConflictDoNothing();
+  // O proponente principal também entra na lista de participantes, para a
+  // aba de pessoas do processo não precisar tratar um caso especial.
+  await tx
+    .insert(processParticipants)
+    .values({
+      orgId: ctx.orgId,
+      processId: created.id,
+      personId: input.personId,
+      role: "proponente",
+    })
+    .onConflictDoNothing();
 
-    await recordProcessEvent(tx, ctx, created.id, "processo_criado", {
-      newValue: String(created.number),
-    });
-
-    // A pessoa já passou pela avaliação de risco do SICAQ antes de o processo
-    // existir: a vigente entra nele desde o começo.
-    await linkCurrentRiskAssessment(tx, ctx, input.personId);
-
-    return created;
+  await recordProcessEvent(tx, ctx, created.id, "processo_criado", {
+    newValue: String(created.number),
   });
+
+  // A pessoa já passou pela avaliação de risco do SICAQ antes de o processo
+  // existir: a vigente entra nele desde o começo.
+  await linkCurrentRiskAssessment(tx, ctx, input.personId);
+
+  return created;
+}
+
+export async function createProcess(ctx: OrgContext, input: ProcessInput) {
+  return withOrg(ctx, (tx) => insertProcess(tx, ctx, input));
 }
 
 /*

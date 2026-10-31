@@ -18,8 +18,8 @@ export default async function NovoProcessoPage({
 
   return (
     <>
-      <PageHeader title="Novo processo" />
-      <main className="max-w-5xl p-6">
+      <PageHeader title="Novo processo" description="Só a modalidade e quem participa. O resto se preenche etapa por etapa." />
+      <main className="max-w-3xl p-6">
         {options.people.length === 0 ? (
           <EmptyState
             title="Cadastre uma pessoa primeiro"

@@ -35,6 +35,7 @@ import {
   listRealEstateAgencies,
   listRiskAssessmentsForPeople,
   listStageStates,
+  listPeople,
   listVisitedSteps,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
@@ -50,6 +51,7 @@ import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
 import { StepActions } from "./step-progress";
+import { ParticipantsCard } from "./participants-card";
 
 export const metadata: Metadata = { title: "Processo" };
 
@@ -125,13 +127,14 @@ export default async function ProcessoPage({
     flow.stages.find((stage) => stage.key === viewedStep.phase) ?? flow.stages[0];
 
   const participantIds = [...new Set(process.participants.map((p) => p.personId))];
-  const [documents, pendencies, links, templates, riskAssessments, visitedSteps] = await Promise.all([
+  const [documents, pendencies, links, templates, riskAssessments, visitedSteps, people] = await Promise.all([
     listProcessDocuments(ctx, id),
     listProcessPendencies(ctx, id),
     listAccessLinks(ctx, id),
     listFormTemplates(ctx),
     listRiskAssessmentsForPeople(ctx, participantIds),
     listVisitedSteps(ctx, id),
+    listPeople(ctx, { limit: 200 }),
   ]);
 
   const currentIndex = steps.findIndex((step) => step.key === currentStep.key);
@@ -343,32 +346,14 @@ export default async function ProcessoPage({
           ) : null}
 
           {tab === "etapas" ? (
-          <Card className="mt-5">
-            <CardHeader title="Pessoas do processo" />
-            <CardBody className="p-0">
-              <ul className="divide-y divide-line">
-                {process.participants.map((participant) => (
-                  <li
-                    key={`${participant.personId}-${participant.role}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3"
-                  >
-                    <div className="min-w-0">
-                      <Link
-                        href={`/pessoas/${participant.personId}` as Route}
-                        className="text-sm font-medium text-ink hover:text-brand-600 hover:underline"
-                      >
-                        {participant.fullName}
-                      </Link>
-                      <p className="text-xs text-ink-muted">{formatCpf(participant.cpf)}</p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-ink-muted">
-                      {PARTICIPANT_ROLE_LABELS[participant.role]}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
+            <ParticipantsCard
+              processId={id}
+              participants={process.participants}
+              people={people.rows.map((person) => ({
+                value: person.id,
+                label: `${person.fullName} — ${formatCpf(person.cpf)}`,
+              }))}
+            />
           ) : null}
         </div>
       </main>

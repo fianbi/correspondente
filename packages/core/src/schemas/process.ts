@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AMORTIZATION_SYSTEMS,
   MODALITIES,
+  OTHER_PARTICIPANT_ROLES,
   PARTICIPANT_ROLES,
   PROCESS_STAGES,
   PROCESS_STATUSES,
@@ -50,6 +51,38 @@ export const processInputSchema = z.object({
 });
 
 export type ProcessInput = z.infer<typeof processInputSchema>;
+
+/**
+ * Abertura de processo: só modalidade e quem participa. O resto se preenche
+ * etapa por etapa, que é onde cada alteração vira histórico.
+ *
+ * Corretor e imobiliária vêm do cadastro de parceiros: escolhe um existente
+ * ou digita o nome de um novo, que é criado junto.
+ */
+export const processCreateSchema = z
+  .object({
+    modality: z.enum(MODALITIES, "Escolha a modalidade."),
+    proponentIds: z
+      .array(z.uuid("Selecione a pessoa."))
+      .min(1, "Informe pelo menos um proponente."),
+    participants: z.array(
+      z.object({ personId: z.uuid("Selecione a pessoa."), role: z.enum(OTHER_PARTICIPANT_ROLES) }),
+    ),
+    brokerId: uuidOrNull,
+    newBrokerName: optionalText,
+    realEstateAgencyId: uuidOrNull,
+    newRealEstateAgencyName: optionalText,
+  })
+  .refine((input) => new Set(input.proponentIds).size === input.proponentIds.length, {
+    message: "A mesma pessoa aparece duas vezes como proponente.",
+    path: ["proponentIds"],
+  })
+  .refine(
+    (input) => input.participants.every((p) => !input.proponentIds.includes(p.personId)),
+    { message: "Quem é proponente não precisa entrar de novo como participante.", path: ["participants"] },
+  );
+
+export type ProcessCreateInput = z.infer<typeof processCreateSchema>;
 
 export const processParticipantInputSchema = z.object({
   personId: z.uuid("Selecione a pessoa."),
