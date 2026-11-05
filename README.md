@@ -109,11 +109,16 @@ pnpm dev                            # http://localhost:3000
 
 Depois do seed, entre com `dev@correspondente.local` / `dev12345678`.
 
-> **Depois de reiniciar a máquina, a stack não volta sozinha.** Suba o Docker Desktop e
-> rode `pnpm supabase start` de novo — sem ela, o login falha com
-> `AuthRetryableFetchError: fetch failed` e cada tentativa demora ~25s até desistir.
+> **O `pnpm dev` sobe a stack sozinho.** Antes do Next, `scripts/garantir-supabase.mjs`
+> testa a API do Supabase; se ela não responde, abre o Docker Desktop (se preciso), roda
+> `supabase start` e espera. Para pular: `SKIP_SUPABASE_CHECK=1 pnpm dev`.
 >
-> O `pnpm supabase start` precisa do Docker Desktop rodando. Não rode `next build`
+> Se o Supabase cair com o `pnpm dev` já de pé (Docker fechado, máquina dormiu), as
+> páginas respondem 503 em poucos segundos dizendo isso, em vez de o login travar ~25s
+> com `AuthRetryableFetchError: fetch failed`. Rode `pnpm dev` de novo (ou
+> `pnpm supabase start`).
+>
+> Não rode `next build`
 > enquanto o `pnpm dev` estiver de pé: os dois compartilham o diretório `.next` e o
 > dev server quebra no meio.
 

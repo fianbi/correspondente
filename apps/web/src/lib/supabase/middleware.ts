@@ -1,6 +1,22 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { publicEnv } from "@/lib/env";
+import { fetchComTimeout } from "./fetch-com-timeout";
+
+function supabaseForaDoAr(pathname: string) {
+  const msg =
+    process.env.NODE_ENV === "development"
+      ? "Supabase local inacessível. Rode `pnpm dev` de novo (ele sobe o Docker e o Supabase) ou `pnpm supabase start`."
+      : "Serviço de autenticação indisponível. Tente novamente em instantes.";
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: msg }, { status: 503 });
+  }
+  return new NextResponse(
+    `<!doctype html><meta charset="utf-8"><title>Indisponível</title><body style="font-family:system-ui;max-width:40rem;margin:4rem auto;padding:0 1rem"><h1>Indisponível</h1><p>${msg}</p><p><a href="">Tentar de novo</a></p></body>`,
+    { status: 503, headers: { "content-type": "text/html; charset=utf-8", "retry-after": "5" } },
+  );
+}
 
 /**
  * Rotas que não exigem sessão. A API da extensão (`/api/ext/`) autentica pela
@@ -25,6 +41,7 @@ export async function updateSession(request: NextRequest) {
     publicEnv.NEXT_PUBLIC_SUPABASE_URL,
     publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      global: { fetch: fetchComTimeout },
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
@@ -44,9 +61,17 @@ export async function updateSession(request: NextRequest) {
   // e aceitaria um token forjado.
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Supabase fora do ar (Docker parado/dormindo): não adianta mandar para o
+  // /login, que cairia no mesmo erro. Responde na hora com o motivo.
+  if (error && isAuthRetryableFetchError(error)) {
+    console.error(`[auth] Supabase inacessível em ${publicEnv.NEXT_PUBLIC_SUPABASE_URL}: ${error.message}`);
+    return supabaseForaDoAr(pathname);
+  }
 
   if (!user && !isPublic(pathname)) {
     const loginUrl = request.nextUrl.clone();

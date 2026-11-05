@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { publicEnv } from "@/lib/env";
+import { fetchComTimeout } from "./fetch-com-timeout";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -11,6 +12,7 @@ export async function createSupabaseServerClient() {
     publicEnv.NEXT_PUBLIC_SUPABASE_URL,
     publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      global: { fetch: fetchComTimeout },
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll: (cookiesToSet) => {

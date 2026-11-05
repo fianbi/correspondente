@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @corr/web dev",
+    "dev": "node scripts/garantir-supabase.mjs && pnpm --filter @corr/web dev",
     "build": "pnpm --recursive build",
     "typecheck": "pnpm --recursive typecheck",
     "lint": "pnpm --filter @corr/web lint",
