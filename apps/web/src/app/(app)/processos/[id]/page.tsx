@@ -56,7 +56,7 @@ export const metadata: Metadata = { title: "Processo" };
 type Tab = "etapas" | "documentos" | "pendencias" | "historico";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "etapas", label: "Dados da etapa" },
+  { key: "etapas", label: "Etapas e dados" },
   { key: "documentos", label: "Documentos" },
   { key: "pendencias", label: "Pendências" },
   { key: "historico", label: "Histórico" },
@@ -126,7 +126,7 @@ export default async function ProcessoPage({
 
   const participantIds = [...new Set(process.participants.map((p) => p.personId))];
   const [documents, pendencies, links, templates, riskAssessments, visitedSteps, people] = await Promise.all([
-    listProcessDocuments(ctx, id),
+    listProcessDocuments(ctx, id, participantIds),
     listProcessPendencies(ctx, id),
     listAccessLinks(ctx, id),
     listFormTemplates(ctx),
@@ -149,7 +149,23 @@ export default async function ProcessoPage({
   );
   const mainSteps = steps.filter((step) => !step.conditional);
 
-  const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
+  const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? [], participantIds);
+
+  // Uma linha por pessoa, com todos os papéis dela no processo: o mesmo
+  // cônjuge pode ser proponente e fiador, mas os documentos são um só.
+  const processPeople = participantIds.map((personId) => {
+    const entries = process.participants.filter((p) => p.personId === personId);
+    return {
+      personId,
+      fullName: entries[0]!.fullName,
+      roles: entries.map((p) => PARTICIPANT_ROLE_LABELS[p.role]),
+    };
+  });
+
+  const counts: Partial<Record<Tab, number>> = {
+    documentos: documents.length,
+    pendencias: pendencies.filter((p) => p.status === "aberta").length,
+  };
 
   const linkRows = links.map((link) => ({
     id: link.id,
@@ -275,6 +291,18 @@ export default async function ProcessoPage({
                 )}
               >
                 {target.label}
+                {counts[target.key] ? (
+                  <span
+                    className={cn(
+                      "ml-1.5 rounded-full px-1.5 text-xs",
+                      target.key === "pendencias"
+                        ? "bg-amber-100 text-status-aguardando"
+                        : "bg-surface-muted text-ink-muted",
+                    )}
+                  >
+                    {counts[target.key]}
+                  </span>
+                ) : null}
               </Link>
             ))}
           </nav>
@@ -294,16 +322,18 @@ export default async function ProcessoPage({
             <DocumentsPanel
               processId={id}
               stageKey={currentStage?.key ?? null}
+              stepLabel={viewedStep.label}
               documents={documents}
               checklist={checklist}
+              people={processPeople}
+              links={linkRows}
+              portalBaseUrl={portalBaseUrl}
             />
           ) : tab === "pendencias" ? (
             <PendenciesPanel
               processId={id}
               stageKey={currentStage?.key ?? null}
               pendencies={pendencies}
-              links={linkRows}
-              portalBaseUrl={portalBaseUrl}
             />
           ) : currentStage ? (
             <StageForm

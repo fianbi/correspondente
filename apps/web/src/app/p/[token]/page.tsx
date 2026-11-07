@@ -137,7 +137,13 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       ) : null}
 
       {session.canUpload ? (
-        <PortalUpload token={token} defaultSenderName={session.label} />
+        <PortalUpload
+          token={token}
+          defaultSenderName={session.label}
+          people={[...new Map(participants.map((p) => [p.personId, p.fullName])).entries()].map(
+            ([value, label]) => ({ value, label }),
+          )}
+        />
       ) : (
         <p className="rounded-lg border border-line bg-surface px-5 py-4 text-sm text-ink-muted">
           Este link é apenas para acompanhamento. Para enviar documentos, peça ao escritório um

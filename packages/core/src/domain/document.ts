@@ -65,11 +65,41 @@ export const DOCUMENT_TYPE_GROUPS: Record<DocumentType, "identidade" | "renda" |
   outro: "outro",
 };
 
+/**
+ * Documentos do imóvel e do negócio: pertencem ao processo, não a uma pessoa.
+ * Os demais (identidade, renda, ficha do banco) são de quem participa e ficam
+ * no cadastro da pessoa, reaproveitados em qualquer processo dela.
+ */
+export const PROCESS_DOCUMENT_TYPES: readonly DocumentType[] = [
+  "matricula_imovel",
+  "iptu",
+  "contrato_compra_venda",
+  "laudo_avaliacao",
+];
+
+export function isProcessDocumentType(type: DocumentType): boolean {
+  return PROCESS_DOCUMENT_TYPES.includes(type);
+}
+
+/** Grupos do seletor de tipo, na ordem em que o operador procura. */
+export const DOCUMENT_TYPE_OPTION_GROUPS: { label: string; types: DocumentType[] }[] = [
+  {
+    label: "Identificação",
+    types: ["rg", "cnh", "certidao_nascimento", "certidao_casamento", "carteira_trabalho"],
+  },
+  {
+    label: "Renda e endereço",
+    types: ["comprovante_renda", "extrato_fgts", "declaracao_ir", "comprovante_residencia"],
+  },
+  { label: "Imóvel e contrato", types: ["matricula_imovel", "iptu", "contrato_compra_venda", "laudo_avaliacao"] },
+  { label: "Outros", types: ["ficha_cadastral_banco", "documento_vendedor", "outro"] },
+];
+
 export const DOCUMENT_STATUSES = ["recebido", "aprovado", "rejeitado"] as const;
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 
 export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
-  recebido: "Recebido",
+  recebido: "A conferir",
   aprovado: "Aprovado",
   rejeitado: "Rejeitado",
 };

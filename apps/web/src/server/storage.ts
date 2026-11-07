@@ -13,14 +13,24 @@ export const DOCUMENTS_BUCKET = "documentos";
  * separados, e usa um uuid no nome para dois envios do mesmo arquivo não se
  * sobrescreverem.
  */
-export function buildStoragePath(orgId: string, processId: string, fileName: string): string {
+export function buildStoragePath(orgId: string, folder: string, fileName: string): string {
   const safeName = fileName
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .slice(-80);
 
-  return `${orgId}/${processId}/${randomUUID()}-${safeName}`;
+  return `${orgId}/${folder}/${randomUUID()}-${safeName}`;
+}
+
+/**
+ * Pasta do documento dentro do escritório: a do processo, quando ele vem de
+ * um processo, ou a da pessoa, quando entra direto pelo cadastro.
+ */
+export function storageFolder(owner: { processId?: string | null; personId?: string | null }): string {
+  if (owner.processId) return owner.processId;
+  if (owner.personId) return `pessoas/${owner.personId}`;
+  throw new DomainError("Documento precisa de processo ou pessoa.", "missing_owner");
 }
 
 export interface UploadTarget {
@@ -38,7 +48,7 @@ export interface UploadTarget {
  */
 export async function createUploadTarget(
   orgId: string,
-  processId: string,
+  folder: string,
   fileName: string,
   mimeType: string,
   sizeBytes: number,
@@ -50,7 +60,7 @@ export async function createUploadTarget(
     throw new DomainError("Arquivo acima de 20 MB.", "file_too_large");
   }
 
-  const path = buildStoragePath(orgId, processId, fileName);
+  const path = buildStoragePath(orgId, folder, fileName);
   const { data, error } = await getSupabaseAdmin()
     .storage.from(DOCUMENTS_BUCKET)
     .createSignedUploadUrl(path);

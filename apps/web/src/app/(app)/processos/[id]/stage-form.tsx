@@ -97,21 +97,23 @@ export function StageForm({
         </Card>
       ))}
 
-      {formState.error ? (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-status-reprovado">
-          {formState.error}
-        </p>
-      ) : null}
-      {formState.savedCount !== undefined && !formState.error ? (
-        <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-status-aprovado">
-          {formState.savedCount === 0
-            ? "Nada mudou — nenhum registro novo no histórico."
-            : `${formState.savedCount} campo(s) alterado(s) e registrado(s) no histórico.`}
-        </p>
-      ) : null}
-
-      <div>
+      {/*
+        Barra de salvar presa ao rodapé: com três ou quatro blocos de campos,
+        o botão sumia da tela e o operador rolava até o fim só para salvar.
+      */}
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-line bg-surface-muted/95 py-3 backdrop-blur">
         <SubmitButton>Salvar etapa</SubmitButton>
+        {formState.error ? (
+          <p role="alert" className="rounded-md bg-red-50 px-3 py-1.5 text-sm text-status-reprovado">
+            {formState.error}
+          </p>
+        ) : formState.savedCount !== undefined ? (
+          <p role="status" className="rounded-md bg-green-50 px-3 py-1.5 text-sm text-status-aprovado">
+            {formState.savedCount === 0
+              ? "Nada mudou — nenhum registro novo no histórico."
+              : `${formState.savedCount} campo(s) alterado(s) e registrado(s) no histórico.`}
+          </p>
+        ) : null}
       </div>
     </form>
   );

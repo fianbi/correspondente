@@ -34,18 +34,19 @@ test("checklist da etapa mostra o que falta e marca o que chegou", async ({ page
   // que tem o próprio título.
   const checklist = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Checklist da etapa" }) });
+    .filter({ has: page.getByRole("heading", { name: /O que a etapa pede/ }) });
 
   await expect(checklist).toBeVisible();
   await expect(checklist.getByText("RG", { exact: true })).toBeVisible();
-  await expect(checklist.getByText("Falta").first()).toBeVisible();
 
-  await page.getByLabel("Tipo", { exact: true }).selectOption("rg");
+  // "Enviar" no item já deixa o tipo escolhido no formulário de envio.
+  await checklist.getByRole("button", { name: "Enviar RG" }).click();
+  await expect(page.getByLabel("Tipo", { exact: true })).toHaveValue("rg");
   await enviarArquivo(page, "rg.pdf");
 
   await expect(page.getByText("rg.pdf")).toBeVisible({ timeout: 15_000 });
   // O mesmo checklist agora marca o item como recebido.
-  await expect(checklist.getByText("Recebido").first()).toBeVisible();
+  await expect(checklist.getByText(/^Recebido/).first()).toBeVisible();
 });
 
 test("documento pode ser aprovado e rejeitado", async ({ page }) => {
@@ -61,7 +62,10 @@ test("documento pode ser aprovado e rejeitado", async ({ page }) => {
   await expect(linha.getByText("Aprovado")).toBeVisible();
 
   await linha.getByRole("button", { name: "Rejeitar" }).click();
+  await linha.getByLabel("Motivo da rejeição").fill("ilegível");
+  await linha.getByRole("button", { name: "Confirmar rejeição" }).click();
   await expect(linha.getByText("Rejeitado")).toBeVisible();
+  await expect(linha.getByText("Motivo: ilegível")).toBeVisible();
 });
 
 test("pendência aparece na visão global e some ao ser resolvida", async ({ page }) => {
@@ -91,7 +95,7 @@ test("pendência aparece na visão global e some ao ser resolvida", async ({ pag
 
 test("link de acesso abre o portal do terceiro e aceita envio", async ({ page, context }) => {
   const url = await novoProcesso(page);
-  await page.goto(`${url}?aba=pendencias`);
+  await page.goto(`${url}?aba=documentos`);
 
   await page.getByLabel("Para quem é o link").fill("Cliente — teste");
   await page.getByRole("button", { name: "Gerar link" }).click();
@@ -133,7 +137,7 @@ test("link de acesso abre o portal do terceiro e aceita envio", async ({ page, c
 
 test("link revogado deixa de abrir", async ({ page, context }) => {
   const url = await novoProcesso(page);
-  await page.goto(`${url}?aba=pendencias`);
+  await page.goto(`${url}?aba=documentos`);
 
   await page.getByLabel("Para quem é o link").fill("Para revogar");
   await page.getByRole("button", { name: "Gerar link" }).click();
@@ -151,6 +155,30 @@ test("link revogado deixa de abrir", async ({ page, context }) => {
   const response = await visitante.goto(portalUrl);
   expect(response?.status()).toBe(404);
   await anonimo.close();
+});
+
+test("documento pessoal enviado no processo aparece na pessoa", async ({ page }) => {
+  const url = await novoProcesso(page);
+  await page.goto(`${url}?aba=documentos`);
+
+  await page.getByLabel("Tipo", { exact: true }).selectOption("cnh");
+  const dono = page.getByLabel("De quem é");
+  const pessoaId = await dono.inputValue();
+  await enviarArquivo(page, "cnh-pessoal.pdf");
+  await expect(page.getByText("cnh-pessoal.pdf")).toBeVisible({ timeout: 15_000 });
+
+  // Matrícula puxa o dono para o processo sozinha.
+  await page.getByLabel("Tipo", { exact: true }).selectOption("matricula_imovel");
+  await expect(dono).toHaveValue("processo");
+
+  await page.goto(`/pessoas/${pessoaId}?aba=documentos`);
+  await expect(page.getByText("cnh-pessoal.pdf").first()).toBeVisible();
+});
+
+test("área separada de documentos não existe mais", async ({ page }) => {
+  await page.goto("/documentos");
+  await expect(page).toHaveURL(/\/processos$/);
+  await expect(page.getByRole("navigation", { name: "Navegação principal" }).getByText("Documentos")).toHaveCount(0);
 });
 
 test("token inventado não abre portal nenhum", async ({ page }) => {

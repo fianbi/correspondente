@@ -5,10 +5,12 @@ import {
   type StageRequirement,
   NotFoundError,
 } from "@corr/core";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { type SQL, and, desc, eq, inArray, or } from "drizzle-orm";
 import { withOrg } from "../client";
 import { documents } from "../schema/documents";
 import { profiles } from "../schema/orgs";
+import { people } from "../schema/people";
+import { processes } from "../schema/processes";
 
 export interface NewDocumentInput {
   processId?: string | null;
@@ -51,7 +53,9 @@ export async function registerDocument(ctx: OrgContext, input: NewDocumentInput)
 const documentSelection = {
   id: documents.id,
   processId: documents.processId,
+  processNumber: processes.number,
   personId: documents.personId,
+  personName: people.fullName,
   type: documents.type,
   title: documents.title,
   storagePath: documents.storagePath,
@@ -66,29 +70,66 @@ const documentSelection = {
   createdAt: documents.createdAt,
 } as const;
 
-export async function listProcessDocuments(ctx: OrgContext, processId: string) {
+/**
+ * Documentos que a tela de um processo mostra: os do próprio processo e os
+ * documentos pessoais de quem participa dele, venham de onde vierem. RG e
+ * comprovante de renda são da pessoa; pedir de novo a cada processo seria
+ * retrabalho para o escritório e para o cliente.
+ */
+function processScope(processId: string, participantIds: readonly string[]): SQL {
+  const own = eq(documents.processId, processId);
+  if (participantIds.length === 0) return own;
+  return or(own, inArray(documents.personId, [...participantIds]))!;
+}
+
+export async function listProcessDocuments(
+  ctx: OrgContext,
+  processId: string,
+  participantIds: readonly string[] = [],
+) {
   return withOrg(ctx, (tx) =>
     tx
       .select(documentSelection)
       .from(documents)
       .leftJoin(profiles, eq(profiles.id, documents.uploadedBy))
-      .where(and(eq(documents.orgId, ctx.orgId), eq(documents.processId, processId)))
+      .leftJoin(people, eq(people.id, documents.personId))
+      .leftJoin(processes, eq(processes.id, documents.processId))
+      .where(and(eq(documents.orgId, ctx.orgId), processScope(processId, participantIds)))
       .orderBy(desc(documents.createdAt)),
   );
 }
 
 export type DocumentRow = Awaited<ReturnType<typeof listProcessDocuments>>[number];
 
-export async function listOrgDocuments(ctx: OrgContext, limit = 200) {
+/** Tudo que é da pessoa, do cadastro ou de qualquer processo em que ela entrou. */
+export async function listPersonDocuments(ctx: OrgContext, personId: string): Promise<DocumentRow[]> {
   return withOrg(ctx, (tx) =>
     tx
-      .select({ ...documentSelection, processIdRef: documents.processId })
+      .select(documentSelection)
       .from(documents)
       .leftJoin(profiles, eq(profiles.id, documents.uploadedBy))
-      .where(eq(documents.orgId, ctx.orgId))
-      .orderBy(desc(documents.createdAt))
-      .limit(limit),
+      .leftJoin(people, eq(people.id, documents.personId))
+      .leftJoin(processes, eq(processes.id, documents.processId))
+      .where(and(eq(documents.orgId, ctx.orgId), eq(documents.personId, personId)))
+      .orderBy(desc(documents.createdAt)),
   );
+}
+
+/** Corrige tipo e dono de um documento (o cliente mandou pelo link sem dizer de quem era). */
+export async function updateDocumentDetails(
+  ctx: OrgContext,
+  documentId: string,
+  input: { type: DocumentType; personId: string | null },
+) {
+  return withOrg(ctx, async (tx) => {
+    const [updated] = await tx
+      .update(documents)
+      .set({ type: input.type, personId: input.personId, updatedAt: new Date() })
+      .where(and(eq(documents.orgId, ctx.orgId), eq(documents.id, documentId)))
+      .returning({ id: documents.id, processId: documents.processId, personId: documents.personId });
+    if (!updated) throw new NotFoundError("Documento");
+    return updated;
+  });
 }
 
 export async function getDocument(ctx: OrgContext, documentId: string) {
@@ -139,7 +180,7 @@ export async function deleteDocument(ctx: OrgContext, documentId: string) {
 
 export interface ChecklistItem extends StageRequirement {
   /** Documentos já recebidos para este tipo. */
-  received: { id: string; title: string; status: DocumentStatus }[];
+  received: { id: string; title: string; status: DocumentStatus; personName: string | null }[];
   satisfied: boolean;
 }
 
@@ -153,6 +194,7 @@ export async function buildChecklist(
   ctx: OrgContext,
   processId: string,
   requirements: StageRequirement[],
+  participantIds: readonly string[] = [],
 ): Promise<ChecklistItem[]> {
   if (requirements.length === 0) return [];
 
@@ -165,12 +207,14 @@ export async function buildChecklist(
         title: documents.title,
         type: documents.type,
         status: documents.status,
+        personName: people.fullName,
       })
       .from(documents)
+      .leftJoin(people, eq(people.id, documents.personId))
       .where(
         and(
           eq(documents.orgId, ctx.orgId),
-          eq(documents.processId, processId),
+          processScope(processId, participantIds),
           inArray(documents.type, types),
         ),
       ),
@@ -180,7 +224,7 @@ export async function buildChecklist(
     const received = rows.filter((row) => row.type === requirement.documentType);
     return {
       ...requirement,
-      received: received.map(({ id, title, status }) => ({ id, title, status })),
+      received: received.map(({ id, title, status, personName }) => ({ id, title, status, personName })),
       satisfied: received.some((row) => row.status !== "rejeitado"),
     };
   });

@@ -1,9 +1,10 @@
 "use client";
 
-import { FileDown } from "lucide-react";
+import { ChevronDown, Printer } from "lucide-react";
 
 /**
  * Saídas em PDF do processo: o resumo e os formulários do banco já mapeados.
+ * Chamava "Documentos" e se confundia com a aba de anexos; agora diz o que faz.
  *
  * São links diretos para rotas de servidor — abrir em aba nova é o
  * comportamento que o operador espera de documento para impressão.
@@ -18,8 +19,9 @@ export function ProcessDocuments({
   return (
     <details className="relative">
       <summary className="inline-flex h-9 cursor-pointer list-none items-center gap-2 rounded-md border border-line bg-white px-3 text-sm font-medium text-ink hover:bg-surface-muted">
-        <FileDown className="size-4" aria-hidden />
-        Documentos
+        <Printer className="size-4" aria-hidden />
+        Gerar PDF
+        <ChevronDown className="size-3.5 text-ink-muted" aria-hidden />
       </summary>
 
       <div className="absolute right-0 z-10 mt-1 w-64 rounded-md border border-line bg-white py-1 shadow-lg">
@@ -51,7 +53,7 @@ export function ProcessDocuments({
           </>
         ) : (
           <p className="border-t border-line px-3 py-2 text-xs text-ink-muted">
-            Nenhum formulário mapeado. Configure em Configurações → Formulários.
+            Nenhum formulário mapeado. Configure em Formulários, no menu lateral.
           </p>
         )}
       </div>

@@ -11,7 +11,7 @@ import {
   resolveCurrentStep,
   stepsForModality,
 } from "@corr/core";
-import { and, asc, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
 import { withOrg, type Tx } from "../client";
 import { orgCounters, profiles } from "../schema/orgs";
 import { agencies, banks, brokers } from "../schema/catalogs";
@@ -78,6 +78,8 @@ export interface ListProcessesOptions {
   status?: ProcessStatus;
   /** Por padrão a listagem esconde reprovados, cancelados e concluídos. */
   includeClosed?: boolean;
+  /** Nome ou CPF do cliente principal, ou número do processo. */
+  search?: string;
 }
 
 export async function listProcesses(ctx: OrgContext, options: ListProcessesOptions = {}) {
@@ -87,6 +89,16 @@ export async function listProcesses(ctx: OrgContext, options: ListProcessesOptio
     if (options.status) filters.push(eq(processes.status, options.status));
     else if (!options.includeClosed) {
       filters.push(notInArray(processes.status, [...CLOSED_STATUSES]));
+    }
+    const search = options.search?.trim();
+    if (search) {
+      const digits = search.replace(/\D/g, "");
+      const byText = or(
+        ilike(people.fullName, `%${search}%`),
+        digits.length >= 3 ? ilike(people.cpf, `${digits}%`) : undefined,
+        /^\d{1,6}$/.test(search) ? eq(processes.number, Number(search)) : undefined,
+      );
+      if (byText) filters.push(byText);
     }
 
     return baseQuery(tx)

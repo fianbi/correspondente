@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { type OrgContext, DomainError } from "@corr/core";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { getAdminDb, withOrg } from "../client";
 import { accessLinks, documents } from "../schema/documents";
 import { people } from "../schema/people";
@@ -173,7 +173,11 @@ export async function getPortalProcessSummary(session: PortalSession) {
 /** Participantes do processo, só nome — para o portal confirmar de quem é. */
 export async function getPortalParticipants(session: PortalSession) {
   return getAdminDb()
-    .select({ fullName: people.fullName, role: processParticipants.role })
+    .select({
+      personId: processParticipants.personId,
+      fullName: people.fullName,
+      role: processParticipants.role,
+    })
     .from(processParticipants)
     .innerJoin(people, eq(people.id, processParticipants.personId))
     .where(
@@ -229,6 +233,8 @@ export interface PortalUploadInput {
   mimeType: string;
   sizeBytes: number;
   senderName: string;
+  /** De quem é o documento, entre os participantes do processo. */
+  personId?: string | null;
 }
 
 /**
@@ -246,11 +252,20 @@ export async function registerPortalDocument(
     throw new DomainError("Este link não permite envio de documentos.", "forbidden", 403);
   }
 
+  // O visitante só pode atribuir o documento a quem está no processo do link;
+  // qualquer outro id vindo do formulário é descartado.
+  let personId: string | null = null;
+  if (input.personId) {
+    const participants = await getPortalParticipants(session);
+    personId = participants.some((p) => p.personId === input.personId) ? input.personId : null;
+  }
+
   const [created] = await getAdminDb()
     .insert(documents)
     .values({
       orgId: session.orgId,
       processId: session.processId,
+      personId,
       type: input.type as never,
       title: input.title,
       storagePath: input.storagePath,
@@ -272,15 +287,22 @@ export async function getPortalStageRequirements(
   if (requirements.length === 0) return [];
   const types = requirements.map((r) => r.documentType);
 
+  // Documento pessoal de quem participa vale mesmo que tenha chegado por outro
+  // processo ou pelo cadastro: o cliente não precisa reenviar o RG.
+  const participantIds = (await getPortalParticipants(session)).map((p) => p.personId);
+  const scope =
+    participantIds.length > 0
+      ? or(
+          eq(documents.processId, session.processId),
+          inArray(documents.personId, participantIds),
+        )
+      : eq(documents.processId, session.processId);
+
   const rows = await getAdminDb()
     .select({ type: documents.type, status: documents.status })
     .from(documents)
     .where(
-      and(
-        eq(documents.orgId, session.orgId),
-        eq(documents.processId, session.processId),
-        inArray(documents.type, types as never[]),
-      ),
+      and(eq(documents.orgId, session.orgId), scope, inArray(documents.type, types as never[])),
     );
 
   return requirements.map((requirement) => ({

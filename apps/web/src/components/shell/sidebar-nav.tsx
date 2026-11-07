@@ -6,7 +6,6 @@ import {
   AlertCircle,
   FileSignature,
   FileText,
-  FolderOpen,
   Home,
   Settings,
   Users,
@@ -17,7 +16,6 @@ const ITEMS = [
   { href: "/painel", label: "Painel", icon: Home },
   { href: "/processos", label: "Processos", icon: FileText },
   { href: "/pessoas", label: "Pessoas", icon: Users },
-  { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/pendencias", label: "Pendências", icon: AlertCircle },
 ] as const;
 

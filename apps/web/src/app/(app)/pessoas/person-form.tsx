@@ -432,7 +432,8 @@ export function PersonForm({ person }: { person?: Person }) {
         </p>
       ) : null}
 
-      <div className="flex gap-2">
+      {/* Sempre à vista: o cadastro tem cinco seções e salva todas de uma vez. */}
+      <div className="sticky bottom-0 z-10 flex items-center gap-2 border-t border-line bg-surface-muted/95 py-3 backdrop-blur">
         <SubmitButton>{person ? "Salvar alterações" : "Cadastrar pessoa"}</SubmitButton>
         <Link
           href="/pessoas"
@@ -440,6 +441,7 @@ export function PersonForm({ person }: { person?: Person }) {
         >
           Cancelar
         </Link>
+        <span className="text-xs text-ink-muted">Salva todas as seções de uma vez.</span>
       </div>
     </form>
   );

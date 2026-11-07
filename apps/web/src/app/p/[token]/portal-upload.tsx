@@ -1,13 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { DOCUMENT_TYPE_LABELS, MAX_UPLOAD_BYTES, type DocumentType } from "@corr/core";
+import { MAX_UPLOAD_BYTES, isProcessDocumentType, type DocumentType } from "@corr/core";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Label } from "@/components/ui/field";
-import { Select, optionsFromLabels } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
+import { DocumentTypeSelect } from "@/components/documents/document-type-select";
 import { confirmPortalUpload, preparePortalUpload } from "./portal-actions";
-
-const TYPE_OPTIONS = optionsFromLabels(DOCUMENT_TYPE_LABELS);
 
 /**
  * Envio de documento pelo terceiro.
@@ -19,11 +18,16 @@ const TYPE_OPTIONS = optionsFromLabels(DOCUMENT_TYPE_LABELS);
 export function PortalUpload({
   token,
   defaultSenderName,
+  people,
 }: {
   token: string;
   defaultSenderName: string;
+  /** Participantes do processo: o cliente diz de quem é o documento. */
+  people: { value: string; label: string }[];
 }) {
   const [type, setType] = useState<DocumentType>("rg");
+  const [personId, setPersonId] = useState(people[0]?.value ?? "");
+  const processDocument = isProcessDocumentType(type);
   const [senderName, setSenderName] = useState(defaultSenderName);
   const [status, setStatus] = useState<"idle" | "enviando" | "ok">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +72,7 @@ export function PortalUpload({
         title: file.name,
         type,
         senderName,
+        personId: processDocument ? null : personId || null,
       });
 
       if (result.error) {
@@ -100,14 +105,25 @@ export function PortalUpload({
 
         <div>
           <Label htmlFor="portal-type">Tipo de documento</Label>
-          <Select
+          <DocumentTypeSelect
             id="portal-type"
-            placeholder={null}
-            options={TYPE_OPTIONS}
             value={type}
             onChange={(event) => setType(event.target.value as DocumentType)}
           />
         </div>
+
+        {people.length > 1 && !processDocument ? (
+          <div>
+            <Label htmlFor="portal-owner">De quem é o documento</Label>
+            <Select
+              id="portal-owner"
+              placeholder={null}
+              options={people}
+              value={personId}
+              onChange={(event) => setPersonId(event.target.value)}
+            />
+          </div>
+        ) : null}
 
         <div>
           <Label htmlFor="portal-file">Arquivo</Label>

@@ -47,6 +47,7 @@ export async function confirmPortalUpload(input: {
   title: string;
   type: string;
   senderName: string;
+  personId?: string | null;
 }): Promise<{ error?: string }> {
   try {
     const session = await requirePortalSession(input.token);
@@ -65,6 +66,7 @@ export async function confirmPortalUpload(input: {
       mimeType: file.mimeType,
       sizeBytes: file.size,
       senderName: input.senderName.trim(),
+      personId: input.personId ?? null,
     });
   } catch (error) {
     if (error instanceof DomainError) return { error: error.message };

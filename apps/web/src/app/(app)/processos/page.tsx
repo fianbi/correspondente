@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Metadata, Route } from "next";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { MODALITY_LABELS, formatBRL, formatCpf } from "@corr/core";
 import { currentStepOf, listProcesses } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader, EmptyState } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Processos" };
 
@@ -18,19 +20,26 @@ export const metadata: Metadata = { title: "Processos" };
 export default async function ProcessosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ encerrados?: string }>;
+  searchParams: Promise<{ encerrados?: string; q?: string }>;
 }) {
   const ctx = await requireOrgContext();
-  const { encerrados } = await searchParams;
+  const { encerrados, q } = await searchParams;
   const includeClosed = encerrados === "1";
 
-  const rows = await listProcesses(ctx, { includeClosed });
+  const rows = await listProcesses(ctx, { includeClosed, search: q });
+  const filterHref = (closed: boolean) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (closed) params.set("encerrados", "1");
+    const query = params.toString();
+    return (query ? `/processos?${query}` : "/processos") as Route;
+  };
 
   return (
     <>
       <PageHeader
         title="Processos"
-        description="A esteira do escritório, da montagem do cadastro ao registro em cartório."
+        description="Todos os processos e a etapa em que cada um está."
         action={
           <Link
             href="/processos/novo"
@@ -44,18 +53,51 @@ export default async function ProcessosPage({
 
       <main className="flex flex-col gap-4 p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href={(includeClosed ? "/processos" : "/processos?encerrados=1") as Route}
-            className="text-sm text-ink-muted underline-offset-2 hover:text-ink hover:underline"
-          >
-            {includeClosed ? "Ocultar encerrados" : "Mostrar encerrados"}
-          </Link>
+          <form className="relative max-w-md min-w-60 flex-1" role="search">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted"
+              aria-hidden
+            />
+            <Input
+              type="search"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Buscar por cliente, CPF ou número"
+              aria-label="Buscar processo"
+              className="pl-9"
+            />
+            {includeClosed ? <input type="hidden" name="encerrados" value="1" /> : null}
+          </form>
+          <div className="flex rounded-md border border-line bg-white p-0.5 text-sm" role="group" aria-label="Quais processos">
+            {[
+              { closed: false, label: "Em andamento" },
+              { closed: true, label: "Todos, inclusive encerrados" },
+            ].map((option) => (
+              <Link
+                key={option.label}
+                href={filterHref(option.closed)}
+                aria-current={includeClosed === option.closed ? "page" : undefined}
+                className={cn(
+                  "rounded px-3 py-1.5 transition",
+                  includeClosed === option.closed
+                    ? "bg-brand-50 font-medium text-brand-700"
+                    : "text-ink-muted hover:text-ink",
+                )}
+              >
+                {option.label}
+              </Link>
+            ))}
+          </div>
         </div>
 
         {rows.length === 0 ? (
           <EmptyState
-            title="Nenhum processo na esteira"
-            description="Cadastre o primeiro processo para acompanhar o andamento por etapa."
+            title={q ? "Nenhum processo encontrado" : "Nenhum processo em andamento"}
+            description={
+              q
+                ? "Confira o nome ou o CPF, ou inclua os encerrados na busca."
+                : "Abra o primeiro processo para acompanhar o andamento por etapa."
+            }
           />
         ) : (
           <Card className="overflow-x-auto">

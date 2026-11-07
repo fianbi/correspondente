@@ -13,6 +13,7 @@ import {
 } from "@corr/core";
 import {
   getPerson,
+  listPersonDocuments,
   listPersonIncomes,
   listProcessesForPerson,
   listRiskAssessmentsForPeople,
@@ -25,6 +26,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PersonForm } from "../person-form";
 import { IncomeSection } from "./income-section";
+import { PersonDocuments } from "./person-documents";
 import {
   RiskAssessmentDetails,
   RiskExtrasList,
@@ -33,11 +35,12 @@ import {
 
 export const metadata: Metadata = { title: "Pessoa" };
 
-type Tab = "resumo" | "dados" | "rendas" | "risco";
+type Tab = "resumo" | "dados" | "documentos" | "rendas" | "risco";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "resumo", label: "Resumo" },
   { key: "dados", label: "Dados cadastrais" },
+  { key: "documentos", label: "Documentos" },
   { key: "rendas", label: "Rendas" },
   { key: "risco", label: "Avaliações de risco" },
 ];
@@ -75,11 +78,12 @@ export default async function PessoaPage({
     throw error;
   });
 
-  const [incomes, processes, grossTotal, riskAssessments] = await Promise.all([
+  const [incomes, processes, grossTotal, riskAssessments, documents] = await Promise.all([
     listPersonIncomes(ctx, id),
     listProcessesForPerson(ctx, id),
     sumPersonGrossIncome(ctx, id),
     listRiskAssessmentsForPeople(ctx, [id]),
+    listPersonDocuments(ctx, id),
   ]);
 
   // A avaliação que importa para o financiamento é a de habitação; CROT e
@@ -87,7 +91,9 @@ export default async function PessoaPage({
   const housingRisks = riskAssessments.filter((a) => a.housing);
   const extraRisks = riskAssessments.filter((a) => !a.housing);
   const latestRisk = housingRisks[0];
+  const toReview = documents.filter((d) => d.status === "recebido").length;
   const counts: Partial<Record<Tab, number>> = {
+    documentos: documents.length,
     rendas: incomes.length,
     risco: riskAssessments.length,
   };
@@ -149,7 +155,7 @@ export default async function PessoaPage({
 
         {tab === "resumo" ? (
           <>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardBody>
                   <p className="text-xs text-ink-muted">Renda bruta somada</p>
@@ -175,6 +181,18 @@ export default async function PessoaPage({
                 <CardBody>
                   <p className="text-xs text-ink-muted">Processos</p>
                   <p className="mt-1 text-lg font-semibold text-ink">{processes.length}</p>
+                </CardBody>
+              </Card>
+              <Card>
+                <CardBody>
+                  <p className="text-xs text-ink-muted">Documentos</p>
+                  <p className="mt-1 text-lg font-semibold text-ink">{documents.length}</p>
+                  <Link
+                    href={`/pessoas/${id}?aba=documentos` as Route}
+                    className="text-xs text-brand-600 hover:underline"
+                  >
+                    {toReview > 0 ? `${toReview} a conferir` : "Ver documentos"}
+                  </Link>
                 </CardBody>
               </Card>
             </div>
@@ -249,6 +267,15 @@ export default async function PessoaPage({
           </>
         ) : tab === "dados" ? (
           <PersonForm person={person} />
+        ) : tab === "documentos" ? (
+          <PersonDocuments
+            personId={person.id}
+            documents={documents}
+            processes={processes.map((process) => ({
+              value: process.id,
+              label: `#${process.number} ${process.modality ? MODALITY_LABELS[process.modality] : "Sem modalidade"}`,
+            }))}
+          />
         ) : tab === "rendas" ? (
           <IncomeSection personId={person.id} incomes={incomes} grossTotal={grossTotal} />
         ) : (

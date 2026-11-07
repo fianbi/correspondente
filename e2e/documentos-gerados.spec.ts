@@ -99,7 +99,7 @@ test("modelo mapeado gera formulário preenchido com os dados do processo", asyn
 
   // Do lado do processo, o modelo aparece pronto para gerar.
   const url = await primeiroProcesso(page);
-  await page.getByRole("group").filter({ hasText: "Documentos" }).click();
+  await page.getByRole("group").filter({ hasText: "Gerar PDF" }).click();
   const link = page.getByRole("link", { name: nomeDoModelo });
   await expect(link).toBeVisible();
 
