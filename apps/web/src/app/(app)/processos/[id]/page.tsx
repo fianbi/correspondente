@@ -6,14 +6,12 @@ import { Check } from "lucide-react";
 import {
   NotFoundError,
   PARTICIPANT_ROLE_LABELS,
-  STEP_TRACKS,
   detoursFrom,
   formatCpf,
   nextStep,
   requireField,
   resolveCurrentStep,
   stepsForModality,
-  trackForModality,
   toFieldView,
   type FieldOption,
   type ProcessStepDef,
@@ -150,7 +148,6 @@ export default async function ProcessoPage({
     (step) => !step.conditional || stateOf(step) !== "pendente" || step.key === viewedStep.key,
   );
   const mainSteps = steps.filter((step) => !step.conditional);
-  const trackName = STEP_TRACKS[trackForModality(process.modality)].name;
 
   const checklist = await buildChecklist(ctx, id, currentStage?.requirements ?? []);
 
@@ -215,9 +212,6 @@ export default async function ProcessoPage({
 
       <main className="flex flex-col gap-5 p-6 lg:flex-row">
         <nav className="lg:w-64 lg:shrink-0" aria-label="Etapas do processo">
-          <p className="mb-2 hidden px-3 text-xs font-medium uppercase tracking-wide text-ink-muted lg:block">
-            {trackName}
-          </p>
           <ol className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
             {visibleSteps.map((step) => {
               const state = stateOf(step);

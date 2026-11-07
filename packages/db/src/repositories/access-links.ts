@@ -154,6 +154,8 @@ export async function getPortalProcessSummary(session: PortalSession) {
     .select({
       number: processes.number,
       stage: processes.stage,
+      stepKey: processes.stepKey,
+      modality: processes.modality,
       status: processes.status,
       updatedAt: processes.updatedAt,
       clientName: people.fullName,

@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { Check, FileText } from "lucide-react";
 import {
   DOCUMENT_TYPE_LABELS,
-  PROCESS_STAGES,
-  PROCESS_STAGE_LABELS,
+  resolveCurrentStep,
+  stepsForModality,
   type DocumentType,
-  type ProcessStage,
 } from "@corr/core";
 import {
   getFlowConfig,
@@ -46,7 +45,13 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
   const stageConfig = flow?.stages.find((stage) => stage.key === summary.stage);
   const checklist = await getPortalStageRequirements(session, stageConfig?.requirements ?? []);
 
-  const currentIndex = PROCESS_STAGES.indexOf(summary.stage as ProcessStage);
+  // As etapas são as do roteiro da modalidade, as mesmas que o escritório vê.
+  // Desvios (PEPT, pendências) ficam de fora, a não ser quando são o atual:
+  // ao cliente interessa o caminho, não os tropeços possíveis.
+  const steps = stepsForModality(summary.modality);
+  const currentStep = resolveCurrentStep(steps, summary.stepKey, summary.stage);
+  const visibleSteps = steps.filter((step) => !step.conditional || step.key === currentStep.key);
+  const currentIndex = visibleSteps.findIndex((step) => step.key === currentStep.key);
   const proponent = participants.find((p) => p.role === "proponente");
 
   return (
@@ -70,11 +75,11 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       >
         <h2 className="text-sm font-semibold text-ink">Andamento</h2>
         <ol className="mt-3 flex flex-col gap-2">
-          {PROCESS_STAGES.map((stage, index) => {
+          {visibleSteps.map((step, index) => {
             const done = index < currentIndex;
             const current = index === currentIndex;
             return (
-              <li key={stage} className="flex items-center gap-2.5">
+              <li key={step.key} className="flex items-center gap-2.5">
                 <span
                   className={cn(
                     "grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
@@ -93,7 +98,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     current ? "font-medium text-ink" : done ? "text-ink-muted" : "text-ink-muted/70",
                   )}
                 >
-                  {PROCESS_STAGE_LABELS[stage]}
+                  {step.label}
                   {current ? " — etapa atual" : ""}
                 </span>
               </li>

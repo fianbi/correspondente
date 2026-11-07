@@ -67,8 +67,9 @@ function describe(event: ProcessEvent, resolveRelation: (value: string | null) =
   }
 }
 
+// Responsável é por etapa do roteiro; eventos antigos guardavam a fase.
 const stageLabel = (key: string | null) =>
-  key ? (PROCESS_STAGE_LABELS[key as ProcessStage] ?? key) : "—";
+  key ? (PROCESS_STAGE_LABELS[key as ProcessStage] ?? stepLabel(key) ?? key) : "—";
 
 /**
  * Histórico agrupado por dia, com o "de → para" de cada alteração.
