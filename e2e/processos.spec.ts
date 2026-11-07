@@ -9,6 +9,20 @@ test("a lista de processos mostra a etapa em que cada um está", async ({ page }
   await expect(page.getByRole("link", { name: "kanban" })).toHaveCount(0);
 });
 
+test("busca de processos filtra ao digitar", async ({ page }) => {
+  await page.goto("/processos");
+  await expect(page.getByRole("link", { name: "ANA PAULA RIBEIRO" })).toBeVisible();
+
+  await page.getByRole("searchbox").fill("bruno");
+  await expect(page).toHaveURL(/q=bruno/);
+  await expect(page.getByRole("link", { name: "BRUNO MARTINS DE SOUZA" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ANA PAULA RIBEIRO" })).toHaveCount(0);
+
+  await page.getByRole("searchbox").fill("");
+  await expect(page).not.toHaveURL(/q=/);
+  await expect(page.getByRole("link", { name: "ANA PAULA RIBEIRO" })).toBeVisible();
+});
+
 test("abre processo só com modalidade e participantes; o de maior renda vira o principal", async ({ page }) => {
   await page.goto("/processos/novo");
 

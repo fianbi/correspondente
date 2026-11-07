@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Metadata, Route } from "next";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { MODALITY_LABELS, formatBRL, formatCpf } from "@corr/core";
 import { currentStepOf, listProcesses } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader, EmptyState } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/field";
+import { SearchInput } from "@/components/ui/search-input";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Processos" };
@@ -53,21 +53,7 @@ export default async function ProcessosPage({
 
       <main className="flex flex-col gap-4 p-6">
         <div className="flex flex-wrap items-center gap-3">
-          <form className="relative max-w-md min-w-60 flex-1" role="search">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              name="q"
-              defaultValue={q ?? ""}
-              placeholder="Buscar por cliente, CPF ou número"
-              aria-label="Buscar processo"
-              className="pl-9"
-            />
-            {includeClosed ? <input type="hidden" name="encerrados" value="1" /> : null}
-          </form>
+          <SearchInput placeholder="Buscar por cliente, CPF ou número" label="Buscar processo" />
           <div className="flex rounded-md border border-line bg-white p-0.5 text-sm" role="group" aria-label="Quais processos">
             {[
               { closed: false, label: "Em andamento" },

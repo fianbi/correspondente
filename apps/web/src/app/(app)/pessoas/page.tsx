@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { formatCpf, formatPhone } from "@corr/core";
 import { listPeople } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader, EmptyState } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/field";
+import { SearchInput } from "@/components/ui/search-input";
 
 export const metadata: Metadata = { title: "Pessoas" };
 
@@ -36,22 +36,7 @@ export default async function PessoasPage({
       />
 
       <main className="flex flex-col gap-4 p-6">
-        <form className="flex gap-2" role="search">
-          <div className="relative max-w-md flex-1">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-muted"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              name="q"
-              defaultValue={q ?? ""}
-              placeholder="Buscar por nome ou CPF"
-              aria-label="Buscar por nome ou CPF"
-              className="pl-9"
-            />
-          </div>
-        </form>
+        <SearchInput placeholder="Buscar por nome ou CPF" label="Buscar por nome ou CPF" />
 
         {rows.length === 0 ? (
           <EmptyState

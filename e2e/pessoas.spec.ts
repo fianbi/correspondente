@@ -22,8 +22,9 @@ test("busca encontra pessoa por nome e por CPF", async ({ page }) => {
   await page.goto("/pessoas");
   await expect(page.getByRole("link", { name: "ANA PAULA RIBEIRO" })).toBeVisible();
 
+  // Busca ao digitar: sem Enter, só a pausa na digitação.
   await page.getByRole("searchbox").fill("bruno");
-  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/q=bruno/);
   await expect(page.getByRole("link", { name: "BRUNO MARTINS DE SOUZA" })).toBeVisible();
   await expect(page.getByRole("link", { name: "ANA PAULA RIBEIRO" })).toHaveCount(0);
 
