@@ -49,7 +49,7 @@ export function StageForm({
   members: FieldOption[];
   actions: ReactNode;
 }) {
-  const action = saveStageFields.bind(null, processId, fieldsKey);
+  const action = saveStageFields.bind(null, processId, fieldsKey, stepKey);
   const [formState, formAction] = useActionState<StageFormState, FormData>(action, {});
   const [pending, startTransition] = useTransition();
 

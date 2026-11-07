@@ -162,6 +162,13 @@
       "when": 1793460209302,
       "tag": "0022_engenheiro_no_processo",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794091197514,
+      "tag": "0023_etapa_unica_simulacao",
+      "breakpoints": true
     }
   ]
 }

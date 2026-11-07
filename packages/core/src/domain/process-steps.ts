@@ -1,3 +1,4 @@
+import type { FieldBlock } from "../fields/types";
 import type { Modality, ProcessStage } from "./process";
 
 /**
@@ -33,27 +34,65 @@ export interface ProcessStepDef {
   conditional?: boolean;
   returnsTo?: string;
   hint?: string;
+  /**
+   * Campos próprios da etapa. Sem isto, a etapa mostra a tela de campos da
+   * fase no fluxo do escritório; com isto, mostra estes — caso da Simulação,
+   * que tem um questionário que nenhuma outra etapa usa.
+   */
+  blocks?: FieldBlock[];
 }
 
 type StepCatalog = Record<string, Omit<ProcessStepDef, "key">>;
 
 const STEPS = {
-  captacao: {
-    label: "Captação do cliente",
-    phase: "cadastro",
-    responsible: "Escritório",
-    hint: "Direto ou por indicação de corretor ou engenheiro parceiro.",
-  },
   simulacao: {
-    label: "Levantamento e simulação de crédito",
+    label: "Simulação",
     phase: "cadastro",
-    responsible: "Escritório",
-    hint: "Uma ou mais simulações para o cliente comparar.",
-  },
-  definicao_simulacao: {
-    label: "Definição da simulação",
-    phase: "cadastro",
-    responsible: "Cliente",
+    responsible: "Escritório e cliente",
+    hint: "Questionário, simulações e a escolhida pelo cliente.",
+    blocks: [
+      {
+        key: "perfil",
+        title: "Perfil do cliente",
+        description: "O que o simulador pergunta sobre quem vai financiar.",
+        fields: [
+          "simulation.family_income",
+          "simulation.oldest_birth_date",
+          "simulation.dependents",
+          "credit.fgts_three_years",
+          "simulation.owns_property",
+          "simulation.had_subsidy",
+        ],
+      },
+      {
+        key: "imovel",
+        title: "Imóvel e financiamento",
+        description: "Digite valores como preferir: 350000, 350.000,00 ou R$ 350.000,00.",
+        fields: [
+          "process.modality",
+          "simulation.program",
+          "simulation.property_type",
+          "simulation.property_city",
+          "simulation.property_uf",
+          "process.property_value",
+          "simulation.down_payment",
+          "process.fgts",
+          "process.financed_value",
+          "process.term_months",
+          "process.amortization",
+        ],
+      },
+      {
+        key: "resultado",
+        title: "Simulação escolhida",
+        fields: [
+          "simulation.interest_rate",
+          "simulation.first_installment",
+          "process.subsidy",
+          "simulation.notes",
+        ],
+      },
+    ],
   },
   documentacao_pessoal: {
     label: "Documentação pessoal e dados cadastrais",
@@ -201,9 +240,7 @@ const STEPS = {
 type StepKey = keyof typeof STEPS;
 
 const INICIO: StepKey[] = [
-  "captacao",
   "simulacao",
-  "definicao_simulacao",
   "documentacao_pessoal",
   "analise_risco",
   "evolucao_score",
@@ -330,10 +367,19 @@ export const STEP_ORDER: ProcessStepDef[] = Object.entries(STEPS as StepCatalog)
   ([key, def]) => ({ key, ...def }),
 );
 
+/**
+ * Etapas que deixaram de existir. O histórico guarda a chave, e um evento
+ * antigo precisa continuar legível.
+ */
+const RETIRED_STEP_LABELS: Record<string, string> = {
+  captacao: "Captação do cliente",
+  definicao_simulacao: "Definição da simulação",
+};
+
 /** Rótulo de qualquer etapa, para o histórico — que guarda só a chave. */
 export function stepLabel(key: string | null | undefined): string | null {
   if (!key) return null;
-  return (STEPS as StepCatalog)[key]?.label ?? key;
+  return (STEPS as StepCatalog)[key]?.label ?? RETIRED_STEP_LABELS[key] ?? key;
 }
 
 /**

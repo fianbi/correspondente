@@ -185,7 +185,9 @@ export default async function ProcessoPage({
 
   const proponent = process.participants.find((p) => p.role === "proponente");
 
-  const blocks: RenderBlock[] = (currentStage?.blocks ?? []).map((block) => ({
+  // Etapa com questionário próprio (Simulação) usa os campos dela; as demais,
+  // a tela de campos da fase no fluxo do escritório.
+  const blocks: RenderBlock[] = (viewedStep.blocks ?? currentStage?.blocks ?? []).map((block) => ({
     key: block.key,
     title: block.title,
     description: block.description,

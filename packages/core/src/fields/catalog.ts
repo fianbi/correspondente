@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UFS } from "../domain/person";
 import {
   AMORTIZATION_SYSTEM_LABELS,
   MODALITY_LABELS,
@@ -382,6 +383,108 @@ export const PROCESS_FIELDS: FieldDef[] = [
     label: "Registro finalizado em",
     type: "date",
     storage: { kind: "value" },
+  }),
+
+  // ── Simulação (questionário do simulador habitacional) ───────────────────
+  field({
+    key: "simulation.program",
+    label: "Enquadramento pretendido",
+    type: "select",
+    options: [
+      { value: "mcmv", label: "Minha Casa, Minha Vida (FGTS)" },
+      { value: "pro_cotista", label: "Pró-Cotista FGTS" },
+      { value: "sbpe", label: "SBPE (poupança)" },
+      { value: "nao_sei", label: "Ainda não sei — o simulador indica" },
+    ],
+    storage: { kind: "value" },
+    help: "Renda e valor do imóvel decidem o que cabe; a faixa do MCMV vem da renda.",
+  }),
+  field({
+    key: "simulation.property_type",
+    label: "Tipo do imóvel",
+    type: "select",
+    options: [
+      { value: "casa", label: "Casa" },
+      { value: "apartamento", label: "Apartamento" },
+      { value: "terreno", label: "Terreno" },
+    ],
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "simulation.property_city",
+    label: "Cidade do imóvel",
+    type: "text",
+    storage: { kind: "value" },
+    help: "O limite de valor do imóvel no MCMV muda por município.",
+  }),
+  field({
+    key: "simulation.property_uf",
+    label: "UF do imóvel",
+    type: "select",
+    options: UFS.map((uf) => ({ value: uf, label: uf })),
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "simulation.family_income",
+    label: "Renda bruta familiar mensal",
+    type: "money",
+    storage: { kind: "value" },
+    help: "Soma da renda bruta de todos os proponentes.",
+  }),
+  field({
+    key: "simulation.oldest_birth_date",
+    label: "Nascimento do proponente mais velho",
+    type: "date",
+    storage: { kind: "value" },
+    help: "Idade + prazo não pode passar de 80 anos e 6 meses.",
+  }),
+  field({
+    key: "simulation.dependents",
+    label: "Dependentes",
+    type: "int",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "simulation.down_payment",
+    label: "Recursos próprios (entrada)",
+    type: "money",
+    storage: { kind: "value" },
+    help: "Sem contar o FGTS, que vai no campo próprio.",
+  }),
+  field({
+    key: "simulation.owns_property",
+    label: "Já tem imóvel residencial",
+    type: "boolean",
+    options: SIM_NAO,
+    storage: { kind: "value" },
+    help: "No município onde mora ou trabalha, ou financiamento ativo no SFH: barra MCMV e uso do FGTS.",
+  }),
+  field({
+    key: "simulation.had_subsidy",
+    label: "Já recebeu subsídio habitacional",
+    type: "boolean",
+    options: SIM_NAO,
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "simulation.interest_rate",
+    label: "Taxa de juros (% a.a.)",
+    type: "text",
+    storage: { kind: "value" },
+    placeholder: "8,16",
+  }),
+  field({
+    key: "simulation.first_installment",
+    label: "Primeira parcela",
+    type: "money",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "simulation.notes",
+    label: "Observações da simulação",
+    type: "textarea",
+    storage: { kind: "value" },
+    help: "Cenários comparados e qual o cliente escolheu.",
   }),
 ];
 

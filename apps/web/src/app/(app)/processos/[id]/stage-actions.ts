@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DomainError, parseFieldPatch } from "@corr/core";
+import { DomainError, parseFieldPatch, stepsForModality } from "@corr/core";
 import {
   applyProcessPatch,
   assignStage,
@@ -25,17 +25,20 @@ export interface StageFormState {
 export async function saveStageFields(
   processId: string,
   stageKey: string,
+  stepKey: string,
   _prev: StageFormState,
   formData: FormData,
 ): Promise<StageFormState> {
   const ctx = await requireOrgContext();
 
   const process = await getProcess(ctx, processId);
+  const step = stepsForModality(process.modality).find((s) => s.key === stepKey);
   const flow = await getFlowForProcess(ctx, process.flowId);
   const stage = flow.stages.find((s) => s.key === stageKey);
-  if (!stage) return { error: "Etapa não encontrada neste fluxo." };
+  const blocks = step?.blocks ?? stage?.blocks;
+  if (!blocks) return { error: "Etapa não encontrada neste fluxo." };
 
-  const allowedKeys = stage.blocks.flatMap((block) => block.fields);
+  const allowedKeys = blocks.flatMap((block) => block.fields);
   const { values, errors } = parseFieldPatch(Object.fromEntries(formData), allowedKeys);
 
   if (Object.keys(errors).length > 0) {

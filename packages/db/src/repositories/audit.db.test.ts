@@ -137,7 +137,7 @@ describe("auditoria campo-a-campo", () => {
     const eventos = await listProcessEvents(org.ctx, processId);
     expect(eventos[1]).toMatchObject({
       kind: "andamento_alterado",
-      oldValue: "captacao",
+      oldValue: "simulacao",
       newValue: "revisao_gerente",
     });
     expect(eventos[0]).toMatchObject({

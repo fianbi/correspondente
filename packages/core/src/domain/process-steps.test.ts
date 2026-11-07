@@ -9,10 +9,10 @@ import {
 } from "./process-steps";
 
 describe("andamento por modalidade", () => {
-  it("toda modalidade tem roteiro que começa na captação e termina na matrícula", () => {
+  it("toda modalidade tem roteiro que começa na simulação e termina na matrícula", () => {
     for (const modality of MODALITIES) {
       const steps = stepsForModality(modality);
-      expect(steps[0]?.key).toBe("captacao");
+      expect(steps[0]?.key).toBe("simulacao");
       expect(steps.at(-1)?.key).toBe("envio_matricula");
     }
   });
@@ -62,7 +62,7 @@ describe("andamento por modalidade", () => {
 
   it("sem passo gravado, o andamento é deduzido pela fase", () => {
     const steps = stepsForModality("aquisicao_imovel_usado");
-    expect(resolveCurrentStep(steps, null, "cadastro").key).toBe("captacao");
+    expect(resolveCurrentStep(steps, null, "cadastro").key).toBe("simulacao");
     expect(resolveCurrentStep(steps, null, "agencia").key).toBe("revisao_gerente");
     // Passo de outro roteiro (PEPT num imóvel usado) também cai na fase.
     expect(resolveCurrentStep(steps, "ajustes_pept", "correspondente").key).toBe("analise_risco");

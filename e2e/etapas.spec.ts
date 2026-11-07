@@ -5,13 +5,18 @@ import { expect, test, type Page } from "@playwright/test";
  * registro só seu — o histórico é acumulativo e testes que compartilham
  * processo passariam a depender da ordem de execução.
  */
-async function novoProcesso(page: Page): Promise<string> {
+async function novoProcesso(page: Page, etapa?: string): Promise<string> {
   await page.goto("/processos/novo");
   await page.getByLabel("Modalidade").selectOption("aquisicao_imovel_usado");
   await page.getByLabel("Proponente 1", { exact: true }).selectOption({ index: 1 });
   await page.getByRole("button", { name: "Criar processo" }).click();
   await page.waitForURL(/\/processos\/[0-9a-f-]{36}/);
-  return page.url();
+  if (!etapa) return page.url();
+  // Indexador, banco e os demais dados da proposta ficam nas etapas depois da
+  // simulação, que tem questionário próprio.
+  const url = `${page.url().split("?")[0]}?aba=etapas&etapa=${etapa}`;
+  await page.goto(url);
+  return url;
 }
 
 test("a tela do processo é montada a partir do fluxo configurado", async ({ page }) => {
@@ -19,7 +24,7 @@ test("a tela do processo é montada a partir do fluxo configurado", async ({ pag
 
   const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
   for (const etapa of [
-    "Captação do cliente",
+    "Simulação",
     "Avaliação de risco",
     "Vistoria da engenharia Caixa",
     "Envio para conformidade",
@@ -39,7 +44,7 @@ test("a tela do processo é montada a partir do fluxo configurado", async ({ pag
 });
 
 test("salvar campo de etapa registra o de → para no histórico", async ({ page }) => {
-  await novoProcesso(page);
+  await novoProcesso(page, "documentacao_pessoal");
 
   await page.getByLabel("Valor do imóvel").fill("R$ 350.000,00");
   await page.getByLabel("Indexador").fill("TR");
@@ -54,7 +59,7 @@ test("salvar campo de etapa registra o de → para no histórico", async ({ page
 });
 
 test("salvar sem alterar nada não sujeita o histórico", async ({ page }) => {
-  const url = await novoProcesso(page);
+  const url = await novoProcesso(page, "documentacao_pessoal");
 
   await page.getByLabel("Indexador").fill("IPCA");
   await page.getByRole("button", { name: "Salvar etapa" }).click();
@@ -66,7 +71,7 @@ test("salvar sem alterar nada não sujeita o histórico", async ({ page }) => {
 });
 
 test("alteração seguinte guarda o valor anterior", async ({ page }) => {
-  const url = await novoProcesso(page);
+  const url = await novoProcesso(page, "documentacao_pessoal");
 
   await page.getByLabel("Indexador").fill("TR");
   await page.getByRole("button", { name: "Salvar etapa" }).click();
@@ -84,7 +89,7 @@ test("alteração seguinte guarda o valor anterior", async ({ page }) => {
 });
 
 test("campo de relação aparece pelo nome no histórico, não pelo id", async ({ page }) => {
-  await novoProcesso(page);
+  await novoProcesso(page, "documentacao_pessoal");
 
   await page.getByLabel("Banco").selectOption({ label: "Caixa" });
   await page.getByRole("button", { name: "Salvar etapa" }).click();
@@ -108,7 +113,7 @@ test("trocar a etapa pelo cabeçalho vira evento com origem e destino", async ({
   // O menu lateral também é lista: o histórico é a linha com origem e destino.
   const linha = page
     .getByRole("listitem")
-    .filter({ hasText: "Captação do cliente" })
+    .filter({ hasText: "Simulação" })
     .filter({ hasText: "Revisão final pelo gerente da agência" })
     .first();
   await expect(linha).toContainText("Etapa");
@@ -120,7 +125,7 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
   const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
 
   await page.getByRole("button", { name: "Concluir etapa" }).click();
-  await expect(page.getByLabel("Etapa do processo")).toHaveValue("simulacao");
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("documentacao_pessoal");
 
   // Construção tem engenharia local e PEPT; o roteiro troca com a modalidade.
   await expect(etapas.getByRole("link", { name: "Projeto de engenharia e aprovação na prefeitura" })).toHaveCount(0);
@@ -131,7 +136,7 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
 
   // Abrir outra etapa só mostra; mover é um clique explícito.
   await etapas.getByRole("link", { name: "Vistoria da engenharia Caixa" }).click();
-  await expect(page.getByLabel("Etapa do processo")).toHaveValue("simulacao");
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("documentacao_pessoal");
   await page.getByRole("button", { name: "Mover processo para esta etapa" }).click();
   await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
 
@@ -143,4 +148,19 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
   await page.getByRole("button", { name: "Voltar para Vistoria da engenharia Caixa" }).click();
   await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
   await expect(etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" })).toBeVisible();
+});
+
+test("a simulação tem o questionário próprio e grava no histórico", async ({ page }) => {
+  await novoProcesso(page);
+
+  await expect(page.getByRole("heading", { name: "Perfil do cliente" })).toBeVisible();
+  await page.getByLabel("Renda bruta familiar mensal").fill("6.500,00");
+  await page.getByLabel("Enquadramento pretendido").selectOption("mcmv");
+  await page.getByLabel("UF do imóvel").selectOption("SP");
+  await page.getByRole("button", { name: "Salvar etapa" }).click();
+  await expect(page.locator('p[role="status"]')).toContainText("3 campo(s)");
+
+  await page.getByRole("link", { name: "Histórico" }).click();
+  await expect(page.getByText("Renda bruta familiar mensal")).toBeVisible();
+  await expect(page.getByText("R$ 6.500,00")).toBeVisible();
 });
