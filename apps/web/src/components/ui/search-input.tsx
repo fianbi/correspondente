@@ -17,7 +17,7 @@ export function SearchInput({
   placeholder,
   label,
   param = "q",
-  delay = 300,
+  delay = 700,
 }: {
   placeholder: string;
   label: string;

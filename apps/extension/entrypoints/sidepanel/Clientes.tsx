@@ -54,7 +54,7 @@ export function Clientes({
           setErro(null);
         })
         .catch((falha: Error) => setErro(falha.message));
-    }, 300);
+    }, 700);
     return () => clearTimeout(espera);
   }, [config, busca, versao]);
 
