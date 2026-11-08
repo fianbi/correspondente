@@ -63,7 +63,7 @@ export function Clientes({
       <input
         type="search"
         value={busca}
-        placeholder="Buscar por nome ou CPF"
+        placeholder="Buscar por nome, CPF ou celular"
         aria-label="Buscar cliente"
         onChange={(e) => setBusca(e.target.value)}
       />

@@ -36,7 +36,7 @@ export default async function PessoasPage({
       />
 
       <main className="flex flex-col gap-4 p-6">
-        <SearchInput placeholder="Buscar por nome ou CPF" label="Buscar por nome ou CPF" />
+        <SearchInput placeholder="Buscar por nome, CPF ou celular" label="Buscar pessoa" />
 
         {rows.length === 0 ? (
           <EmptyState

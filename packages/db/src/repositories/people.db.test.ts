@@ -114,6 +114,22 @@ describe("cadastro de pessoas", () => {
     expect(porCpf.rows.map((r) => r.cpf)).toContain(CPFS_VALIDOS[1]);
   });
 
+  it("busca pelo celular, com ou sem formatação", async () => {
+    const bruno = (await listPeople(orgA.ctx, { search: "bruno" })).rows[0]!;
+    await updatePerson(
+      orgA.ctx,
+      bruno.id,
+      personInput({ cpf: CPFS_VALIDOS[1], fullName: "Bruno Martins de Souza", phone: "(11) 99876-5432" }),
+    );
+
+    for (const termo of ["99876-5432", "998765432", "(11) 99876"]) {
+      const achou = await listPeople(orgA.ctx, { search: termo });
+      expect(achou.rows.map((r) => r.fullName), termo).toContain("Bruno Martins de Souza");
+    }
+    const nada = await listPeople(orgA.ctx, { search: "0000-1111" });
+    expect(nada.rows).toHaveLength(0);
+  });
+
   it("a listagem de um escritório não enxerga pessoas do outro", async () => {
     const deA = await listPeople(orgA.ctx, {});
     const deB = await listPeople(orgB.ctx, {});

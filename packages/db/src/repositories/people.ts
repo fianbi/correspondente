@@ -40,6 +40,11 @@ export async function listPeople(ctx: OrgContext, options: ListPeopleOptions = {
       ? or(
           ilike(people.fullName, `%${search}%`),
           digits.length >= 3 ? ilike(people.cpf, `${digits}%`) : undefined,
+          // Celular em qualquer formato: compara só os dígitos, em qualquer
+          // posição, para "99876-5432" achar "(11) 99876-5432".
+          digits.length >= 4
+            ? sql`regexp_replace(coalesce(${people.phone}, ''), '[^0-9]', '', 'g') like ${`%${digits}%`}`
+            : undefined,
         )
       : undefined;
 
