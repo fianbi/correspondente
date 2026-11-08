@@ -49,7 +49,6 @@ import { ProcessDocuments } from "./process-documents";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
-import { StepActions } from "./step-progress";
 import { ParticipantsCard } from "./participants-card";
 import { DeleteProcess } from "./delete-process";
 
@@ -363,15 +362,12 @@ export default async function ProcessoPage({
               state={stateOf(viewedStep)}
               assignedTo={stateByStep.get(viewedStep.key)?.assignedTo ?? null}
               members={memberOptions}
-              actions={
-                <StepActions
-                  processId={id}
-                  step={viewedStep}
-                  isCurrent={viewedStep.key === currentStep.key}
-                  next={nextStep(steps, currentStep)}
-                  detours={detoursFrom(steps, currentStep)}
-                />
-              }
+              actions={{
+                step: viewedStep,
+                isCurrent: viewedStep.key === currentStep.key,
+                next: nextStep(steps, currentStep),
+                detours: detoursFrom(steps, currentStep),
+              }}
             />
           ) : null}
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useTransition, type ReactNode } from "react";
+import { useActionState, useTransition, type ComponentProps } from "react";
 import type { FieldOption, FieldView } from "@corr/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FieldInput, type DynamicOptions } from "@/components/fields/field-input";
 import { assignStageAction, saveStageFields, type StageFormState } from "./stage-actions";
+import { StepActions } from "./step-progress";
 
 export type StepState = "concluida" | "atual" | "pendente";
 
@@ -47,7 +48,12 @@ export function StageForm({
   state: StepState;
   assignedTo: string | null;
   members: FieldOption[];
-  actions: ReactNode;
+  /**
+   * Dados dos botões de movimento. Vão como dados, não como elemento pronto:
+   * um elemento montado na página do servidor e renderizado aqui entre outros
+   * filhos dispara o aviso de `key` do React em desenvolvimento.
+   */
+  actions: Omit<ComponentProps<typeof StepActions>, "processId">;
 }) {
   const action = saveStageFields.bind(null, processId, fieldsKey, stepKey);
   const [formState, formAction] = useActionState<StageFormState, FormData>(action, {});
@@ -75,7 +81,7 @@ export function StageForm({
               startTransition(() => void assignStageAction(processId, stepKey, event.target.value))
             }
           />
-          {actions}
+          <StepActions processId={processId} {...actions} />
         </div>
       </div>
 
