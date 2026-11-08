@@ -11,13 +11,14 @@ import {
   resolveCurrentStep,
   stepsForModality,
 } from "@corr/core";
-import { and, asc, desc, eq, ilike, inArray, notInArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNotNull, notInArray, or, sql } from "drizzle-orm";
 import { withOrg, type Tx } from "../client";
 import { orgCounters, profiles } from "../schema/orgs";
 import { agencies, banks, brokers } from "../schema/catalogs";
 import { people } from "../schema/people";
 import { processParticipants, processes } from "../schema/processes";
 import { processEvents } from "../schema/flows";
+import { documents } from "../schema/documents";
 import { linkCurrentRiskAssessment } from "./risk-assessments";
 import { recordProcessEvent } from "./process-fields";
 
@@ -254,6 +255,61 @@ export async function listVisitedSteps(ctx: OrgContext, processId: string): Prom
         ),
       );
     return rows.flatMap((row) => (row.key ? [row.key] : []));
+  });
+}
+
+/**
+ * Exclui o processo de vez. Quem chama confirma digitando o número do
+ * processo: a conferência é feita aqui também, para nenhum outro caminho
+ * apagar sem ela.
+ *
+ * O que é da pessoa continua com a pessoa: documento pessoal enviado pelo
+ * processo (RG, comprovante de renda) só perde o vínculo com ele. O resto
+ * — documentos só do processo, pendências, links de acesso, campos e
+ * histórico — vai junto. A simulação de origem volta a ficar em aberto.
+ *
+ * Devolve os caminhos dos arquivos que saíram, para quem chama apagar do
+ * armazenamento (o banco não alcança o bucket).
+ */
+export async function deleteProcess(
+  ctx: OrgContext,
+  processId: string,
+  typedNumber: string,
+): Promise<{ removedFiles: string[] }> {
+  return withOrg(ctx, async (tx) => {
+    const [process] = await tx
+      .select({ number: processes.number })
+      .from(processes)
+      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)))
+      .limit(1);
+    if (!process) throw new NotFoundError("Processo");
+    if (typedNumber.trim().replace(/^#/, "") !== String(process.number)) {
+      throw new DomainError(
+        `Para excluir, digite o número do processo (${process.number}).`,
+        "confirmation_mismatch",
+      );
+    }
+
+    await tx
+      .update(documents)
+      .set({ processId: null, stageKey: null })
+      .where(
+        and(
+          eq(documents.orgId, ctx.orgId),
+          eq(documents.processId, processId),
+          isNotNull(documents.personId),
+        ),
+      );
+    const removed = await tx
+      .delete(documents)
+      .where(and(eq(documents.orgId, ctx.orgId), eq(documents.processId, processId)))
+      .returning({ storagePath: documents.storagePath });
+
+    await tx
+      .delete(processes)
+      .where(and(eq(processes.orgId, ctx.orgId), eq(processes.id, processId)));
+
+    return { removedFiles: removed.map((row) => row.storagePath) };
   });
 }
 

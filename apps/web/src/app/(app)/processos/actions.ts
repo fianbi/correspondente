@@ -13,6 +13,7 @@ import {
 import {
   addProcessParticipant,
   createProcessWithParticipants,
+  deleteProcess,
   moveProcessToStep,
   removeProcessParticipant,
   setProcessStatus,
@@ -20,6 +21,7 @@ import {
 
 const participantChoiceSchema = z.enum(["proponente", ...OTHER_PARTICIPANT_ROLES]);
 import { requireOrgContext } from "@/server/session";
+import { removeStoredFile } from "@/server/storage";
 
 export interface ProcessFormState {
   error?: string;
@@ -138,4 +140,28 @@ export async function changeStatus(processId: string, status: string): Promise<v
   await setProcessStatus(ctx, processId, parsed.data);
   revalidatePath("/processos");
   revalidatePath(`/processos/${processId}`);
+}
+
+/**
+ * Exclui o processo depois da confirmação digitada. Os arquivos que eram só
+ * do processo saem do armazenamento depois que o banco confirmou a exclusão:
+ * ao contrário, uma falha no banco deixaria registro apontando para arquivo
+ * que não existe mais.
+ */
+export async function deleteProcessAction(
+  processId: string,
+  typedNumber: string,
+): Promise<{ error?: string }> {
+  const ctx = await requireOrgContext();
+  let removedFiles: string[];
+  try {
+    ({ removedFiles } = await deleteProcess(ctx, processId, typedNumber));
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  await Promise.allSettled(removedFiles.map((path) => removeStoredFile(path)));
+  revalidatePath("/processos");
+  redirect("/processos");
 }

@@ -51,6 +51,7 @@ import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
 import { StepActions } from "./step-progress";
 import { ParticipantsCard } from "./participants-card";
+import { DeleteProcess } from "./delete-process";
 
 export const metadata: Metadata = { title: "Processo" };
 
@@ -226,6 +227,7 @@ export default async function ProcessoPage({
                 .filter((template) => Object.keys(template.fieldMap).length > 0)
                 .map((template) => ({ id: template.id, name: template.name }))}
             />
+            <DeleteProcess processId={id} number={process.number} />
           </div>
         }
       />

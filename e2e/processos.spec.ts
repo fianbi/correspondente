@@ -88,3 +88,25 @@ test("processo de outro escritório dá 404 pela URL", async ({ page }) => {
   const response = await page.goto("/processos/00000000-0000-4000-8000-000000000000");
   expect(response?.status()).toBe(404);
 });
+
+test("excluir processo só vai depois de digitar o número dele", async ({ page }) => {
+  await page.goto("/processos/novo");
+  await page.getByLabel("Modalidade").selectOption("aquisicao_imovel_usado");
+  await page.getByLabel("Proponente 1", { exact: true }).selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Criar processo" }).click();
+  await page.waitForURL(/\/processos\/[0-9a-f-]{36}/);
+  const url = page.url().split("?")[0]!;
+  const numero = (await page.getByRole("heading", { level: 1 }).innerText()).replace("Processo #", "");
+
+  await page.getByRole("button", { name: "Excluir", exact: true }).click();
+  const confirmar = page.getByRole("button", { name: "Excluir processo" });
+  await expect(confirmar).toBeDisabled();
+  await page.getByLabel("Número do processo para confirmar").fill("0");
+  await expect(confirmar).toBeDisabled();
+  await page.getByLabel("Número do processo para confirmar").fill(numero);
+  await confirmar.click();
+
+  await expect(page).toHaveURL(/\/processos$/);
+  const resposta = await page.goto(url);
+  expect(resposta?.status()).toBe(404);
+});

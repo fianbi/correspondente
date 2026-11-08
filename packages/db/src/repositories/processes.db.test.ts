@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { personIncomeInputSchema, personInputSchema, processInputSchema } from "@corr/core";
 import { createTestOrg, destroyTestOrg, CPFS_VALIDOS, type TestOrg } from "../testing/fixtures";
 import { addPersonIncome, createPerson } from "./people";
+import { listPersonDocuments, registerDocument } from "./documents";
 import {
   addProcessParticipant,
   createProcessWithParticipants,
@@ -13,7 +14,9 @@ import {
   getProcess,
   listProcesses,
   currentStepOf,
+  deleteProcess,
   moveProcessToStep,
+  setProcessStatus,
   summarizeProcesses,
 } from "./processes";
 
@@ -172,5 +175,30 @@ describe("esteira de processos", () => {
     // Volta como proponente e, por ter mais renda, retoma o principal.
     await addProcessParticipant(orgA.ctx, criado.id, pessoaA2, "proponente");
     expect((await getProcess(orgA.ctx, criado.id)).personId).toBe(pessoaA2);
+  });
+
+  it("excluir exige o número, leva o que é do processo e deixa o da pessoa", async () => {
+    const criado = await createProcess(orgA.ctx, processInput(pessoaA1));
+    await setProcessStatus(orgA.ctx, criado.id, "aprovado");
+    const doc = (title: string, personId: string | null) =>
+      registerDocument(orgA.ctx, {
+        processId: criado.id,
+        personId,
+        type: "outro",
+        title,
+        storagePath: `teste/${criado.id}/${title}`,
+        mimeType: "application/pdf",
+        sizeBytes: 10,
+      });
+    await doc("so-do-processo.pdf", null);
+    const pessoal = await doc("rg.pdf", pessoaA1);
+
+    await expect(deleteProcess(orgA.ctx, criado.id, "999999")).rejects.toThrow("digite o número");
+
+    const { removedFiles } = await deleteProcess(orgA.ctx, criado.id, `#${criado.number}`);
+    expect(removedFiles).toEqual([`teste/${criado.id}/so-do-processo.pdf`]);
+    await expect(getProcess(orgA.ctx, criado.id)).rejects.toThrow();
+    const daPessoa = await listPersonDocuments(orgA.ctx, pessoaA1);
+    expect(daPessoa.find((d) => d.id === pessoal.id)).toBeTruthy();
   });
 });
