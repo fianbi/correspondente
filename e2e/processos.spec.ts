@@ -45,7 +45,12 @@ test("abre processo só com modalidade e participantes; o de maior renda vira o 
 
   await expect(page).toHaveURL(/\/processos\/[0-9a-f-]{36}/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Processo #");
-  await expect(page.getByLabel("Modalidade")).toHaveValue("construcao");
+  // Construção em terreno próprio: o roteiro tem engenheiro local.
+  await expect(
+    page.getByRole("navigation", { name: "Etapas do processo" }).getByRole("link", {
+      name: "Escolha do engenheiro local",
+    }),
+  ).toBeVisible();
 
   const participantes = page
     .locator("section")

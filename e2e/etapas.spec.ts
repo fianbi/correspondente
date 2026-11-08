@@ -153,14 +153,14 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
 test("a simulação tem o questionário próprio e grava no histórico", async ({ page }) => {
   await novoProcesso(page);
 
-  await expect(page.getByRole("heading", { name: "Perfil do cliente" })).toBeVisible();
-  await page.getByLabel("Renda bruta familiar mensal").fill("6.500,00");
-  await page.getByLabel("Enquadramento pretendido").selectOption("mcmv");
-  await page.getByLabel("UF do imóvel").selectOption("SP");
+  await expect(page.getByRole("heading", { name: "Questionário" })).toBeVisible();
+  await page.getByLabel("Renda bruta mensal (soma dos proponentes)").fill("6.500,00");
+  await page.getByLabel("Já recebeu subsídio").selectOption("nao");
+  await page.getByLabel("Já tem imóvel").selectOption("nao");
   await page.getByRole("button", { name: "Salvar etapa" }).click();
-  await expect(page.locator('p[role="status"]')).toContainText("3 campo(s)");
+  await expect(page.locator('p[role="status"]')).toContainText("campo(s)");
 
   await page.getByRole("link", { name: "Histórico" }).click();
-  await expect(page.getByText("Renda bruta familiar mensal")).toBeVisible();
+  await expect(page.getByText("Renda bruta mensal (soma dos proponentes)")).toBeVisible();
   await expect(page.getByText("R$ 6.500,00")).toBeVisible();
 });

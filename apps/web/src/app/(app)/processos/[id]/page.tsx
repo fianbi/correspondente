@@ -33,6 +33,8 @@ import {
   listRealEstateAgencies,
   listRiskAssessmentsForPeople,
   listStageStates,
+  getPerson,
+  listGrossIncomes,
   listPeople,
   listVisitedSteps,
 } from "@corr/db";
@@ -185,6 +187,34 @@ export default async function ProcessoPage({
 
   const proponent = process.participants.find((p) => p.role === "proponente");
 
+  // Na Simulação, o que já está no cadastro dos proponentes entra como valor
+  // inicial dos campos em branco: só fica gravado quando o operador salva.
+  const suggestions: Record<string, string> = {};
+  if (viewedStep.key === "simulacao") {
+    const proponentIds = process.participants
+      .filter((p) => p.role === "proponente" || p.role === "coproponente")
+      .map((p) => p.personId);
+    const [proponents, incomes] = await Promise.all([
+      Promise.all(proponentIds.map((personId) => getPerson(ctx, personId))),
+      listGrossIncomes(ctx, proponentIds),
+    ]);
+    const totalIncome = proponentIds.reduce((sum, pid) => sum + (incomes.get(pid) ?? 0), 0);
+    if (totalIncome > 0) suggestions["simulation.family_income"] = String(totalIncome);
+    const oldest = proponents
+      .map((person) => person.birthDate)
+      .filter((date): date is string => Boolean(date))
+      .sort()[0];
+    if (oldest) suggestions["simulation.oldest_birth_date"] = oldest;
+    // Só afirma "sim": a falta de cônjuge ou dependente no cadastro pode ser só
+    // cadastro incompleto.
+    if (
+      proponents.length > 1 ||
+      proponents.some((person) => person.spouseCpf || person.spouseName || (person.dependentsCount ?? 0) > 0)
+    ) {
+      suggestions["simulation.multiple_buyers"] = "sim";
+    }
+  }
+
   // Etapa com questionário próprio (Simulação) usa os campos dela; as demais,
   // a tela de campos da fase no fluxo do escritório.
   const blocks: RenderBlock[] = (viewedStep.blocks ?? currentStage?.blocks ?? []).map((block) => ({
@@ -196,7 +226,7 @@ export default async function ProcessoPage({
       const value =
         def.storage.kind === "column"
           ? ((process as Record<string, unknown>)[def.storage.column] as string | number | null)
-          : (storedValues[key] ?? null);
+          : (storedValues[key] ?? suggestions[key] ?? null);
       // `toFieldView` tira o schema Zod: instância de classe não cruza para o cliente.
       return { def: toFieldView(def), value: value ?? null };
     }),

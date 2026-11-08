@@ -248,7 +248,7 @@ export const PROCESS_FIELDS: FieldDef[] = [
   }),
   field({
     key: "credit.fgts_three_years",
-    label: "Três anos de recolhimento do FGTS",
+    label: "3 anos de registro (FGTS)",
     type: "boolean",
     options: SIM_NAO,
     storage: { kind: "value" },
@@ -426,17 +426,24 @@ export const PROCESS_FIELDS: FieldDef[] = [
   }),
   field({
     key: "simulation.family_income",
-    label: "Renda bruta familiar mensal",
+    label: "Renda bruta mensal (soma dos proponentes)",
     type: "money",
     storage: { kind: "value" },
-    help: "Soma da renda bruta de todos os proponentes.",
   }),
   field({
     key: "simulation.oldest_birth_date",
-    label: "Nascimento do proponente mais velho",
+    label: "Data de nascimento (proponente mais velho)",
     type: "date",
     storage: { kind: "value" },
     help: "Idade + prazo não pode passar de 80 anos e 6 meses.",
+  }),
+  field({
+    key: "simulation.multiple_buyers",
+    label: "Mais de um comprador, cônjuge ou dependente",
+    type: "boolean",
+    options: SIM_NAO,
+    storage: { kind: "value" },
+    help: "Família com mais de uma pessoa muda o enquadramento e o subsídio.",
   }),
   field({
     key: "simulation.dependents",
@@ -453,7 +460,7 @@ export const PROCESS_FIELDS: FieldDef[] = [
   }),
   field({
     key: "simulation.owns_property",
-    label: "Já tem imóvel residencial",
+    label: "Já tem imóvel",
     type: "boolean",
     options: SIM_NAO,
     storage: { kind: "value" },
@@ -461,7 +468,7 @@ export const PROCESS_FIELDS: FieldDef[] = [
   }),
   field({
     key: "simulation.had_subsidy",
-    label: "Já recebeu subsídio habitacional",
+    label: "Já recebeu subsídio",
     type: "boolean",
     options: SIM_NAO,
     storage: { kind: "value" },
