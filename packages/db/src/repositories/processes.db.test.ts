@@ -84,7 +84,7 @@ describe("esteira de processos", () => {
   it("mover de etapa muda a etapa que a lista mostra", async () => {
     const criado = await createProcess(orgA.ctx, processInput(pessoaA1));
     const antes = (await listProcesses(orgA.ctx)).find((p) => p.id === criado.id);
-    expect(antes && currentStepOf(antes).key).toBe("simulacao");
+    expect(antes && currentStepOf(antes).key).toBe("documentacao_pessoal");
 
     await moveProcessToStep(orgA.ctx, criado.id, "revisao_gerente");
 
@@ -144,6 +144,8 @@ describe("esteira de processos", () => {
       newBrokerName: "Corretor Novo de Teste",
       realEstateAgencyId: null,
       newRealEstateAgencyName: null,
+      simulationId: null,
+      newPerson: null,
     });
     const processo = await getProcess(orgA.ctx, criado.id);
 

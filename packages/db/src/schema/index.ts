@@ -5,3 +5,4 @@ export * from "./risk-assessments";
 export * from "./processes";
 export * from "./flows";
 export * from "./documents";
+export * from "./simulations";

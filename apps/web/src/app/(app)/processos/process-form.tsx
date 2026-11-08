@@ -42,14 +42,19 @@ const ROLE_OPTIONS: SelectOption[] = OTHER_PARTICIPANT_ROLES.map((role) => ({
 export function ProcessForm({
   options,
   defaultPersonId,
+  simulation,
 }: {
   options: ProcessFormOptions;
   defaultPersonId?: string;
+  /** Processo nascendo de uma simulação: o cliente pode ainda não ter cadastro. */
+  simulation?: { id: string; clientName: string };
 }) {
   const [state, formAction] = useActionState<ProcessFormState, FormData>(createProcessAction, {});
   const errorOf = (field: string) => state.fieldErrors?.[field];
 
-  const [proponents, setProponents] = useState<string[]>([defaultPersonId ?? ""]);
+  const [proponents, setProponents] = useState<string[]>(
+    simulation ? [] : [defaultPersonId ?? ""],
+  );
   const [others, setOthers] = useState<{ role: string; personId: string }[]>([]);
   const [broker, setBroker] = useState("");
   const [agency, setAgency] = useState("");
@@ -69,6 +74,26 @@ export function ProcessForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
+      {simulation ? (
+        <Card>
+          <CardHeader
+            title={`Cliente da simulação: ${simulation.clientName}`}
+            description="Ainda sem cadastro? Informe o CPF e ele entra como proponente. Já cadastrado, escolha-o na lista de proponentes e deixe o CPF em branco."
+          />
+          <CardBody className="grid gap-4 sm:grid-cols-2">
+            <input type="hidden" name="simulationId" value={simulation.id} />
+            <Field
+              label="CPF do cliente"
+              name="newPersonCpf"
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              error={errorOf("newPerson")}
+            />
+            <Field label="Nome completo" name="newPersonName" defaultValue={simulation.clientName} />
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader title="Modalidade" description="Define as etapas que o processo vai seguir." />
         <CardBody className="max-w-md">

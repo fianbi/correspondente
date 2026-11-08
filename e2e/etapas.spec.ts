@@ -12,8 +12,7 @@ async function novoProcesso(page: Page, etapa?: string): Promise<string> {
   await page.getByRole("button", { name: "Criar processo" }).click();
   await page.waitForURL(/\/processos\/[0-9a-f-]{36}/);
   if (!etapa) return page.url();
-  // Indexador, banco e os demais dados da proposta ficam nas etapas depois da
-  // simulação, que tem questionário próprio.
+  // Abre direto a etapa pedida, para o teste não depender de qual é a atual.
   const url = `${page.url().split("?")[0]}?aba=etapas&etapa=${etapa}`;
   await page.goto(url);
   return url;
@@ -24,7 +23,7 @@ test("a tela do processo é montada a partir do fluxo configurado", async ({ pag
 
   const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
   for (const etapa of [
-    "Simulação",
+    "Documentação pessoal e dados cadastrais",
     "Avaliação de risco",
     "Vistoria da engenharia Caixa",
     "Envio para conformidade",
@@ -113,7 +112,7 @@ test("trocar a etapa pelo cabeçalho vira evento com origem e destino", async ({
   // O menu lateral também é lista: o histórico é a linha com origem e destino.
   const linha = page
     .getByRole("listitem")
-    .filter({ hasText: "Simulação" })
+    .filter({ hasText: "Documentação pessoal e dados cadastrais" })
     .filter({ hasText: "Revisão final pelo gerente da agência" })
     .first();
   await expect(linha).toContainText("Etapa");
@@ -125,10 +124,12 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
   const etapas = page.getByRole("navigation", { name: "Etapas do processo" });
 
   await page.getByRole("button", { name: "Concluir etapa" }).click();
-  await expect(page.getByLabel("Etapa do processo")).toHaveValue("documentacao_pessoal");
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("analise_risco");
 
   // Construção tem engenharia local e PEPT; o roteiro troca com a modalidade.
   await expect(etapas.getByRole("link", { name: "Projeto de engenharia e aprovação na prefeitura" })).toHaveCount(0);
+  // A modalidade fica nos dados da proposta, na etapa de documentação.
+  await etapas.getByRole("link", { name: "Documentação pessoal e dados cadastrais" }).click();
   await page.getByLabel("Modalidade").selectOption("aquisicao_terreno_construcao");
   await page.getByRole("button", { name: "Salvar etapa" }).click();
   await expect(page.locator('p[role="status"]')).toContainText("1 campo(s)");
@@ -136,7 +137,8 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
 
   // Abrir outra etapa só mostra; mover é um clique explícito.
   await etapas.getByRole("link", { name: "Vistoria da engenharia Caixa" }).click();
-  await expect(page.getByLabel("Etapa do processo")).toHaveValue("documentacao_pessoal");
+  await expect(page).toHaveURL(/etapa=vistoria_engenharia/);
+  await expect(page.getByLabel("Etapa do processo")).toHaveValue("analise_risco");
   await page.getByRole("button", { name: "Mover processo para esta etapa" }).click();
   await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
 
@@ -148,19 +150,4 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
   await page.getByRole("button", { name: "Voltar para Vistoria da engenharia Caixa" }).click();
   await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
   await expect(etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" })).toBeVisible();
-});
-
-test("a simulação tem o questionário próprio e grava no histórico", async ({ page }) => {
-  await novoProcesso(page);
-
-  await expect(page.getByRole("heading", { name: "Questionário" })).toBeVisible();
-  await page.getByLabel("Renda bruta mensal (soma dos proponentes)").fill("6.500,00");
-  await page.getByLabel("Já recebeu subsídio").selectOption("nao");
-  await page.getByLabel("Já tem imóvel").selectOption("nao");
-  await page.getByRole("button", { name: "Salvar etapa" }).click();
-  await expect(page.locator('p[role="status"]')).toContainText("campo(s)");
-
-  await page.getByRole("link", { name: "Histórico" }).click();
-  await expect(page.getByText("Renda bruta mensal (soma dos proponentes)")).toBeVisible();
-  await expect(page.getByText("R$ 6.500,00")).toBeVisible();
 });

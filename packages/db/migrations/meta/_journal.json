@@ -169,6 +169,20 @@
       "when": 1794091197514,
       "tag": "0023_etapa_unica_simulacao",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794105081479,
+      "tag": "0024_simulacoes",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794105084633,
+      "tag": "0025_rls_simulacoes",
+      "breakpoints": true
     }
   ]
 }

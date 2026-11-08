@@ -36,8 +36,8 @@ export interface ProcessStepDef {
   hint?: string;
   /**
    * Campos próprios da etapa. Sem isto, a etapa mostra a tela de campos da
-   * fase no fluxo do escritório; com isto, mostra estes — caso da Simulação,
-   * que tem um questionário que nenhuma outra etapa usa.
+   * fase no fluxo do escritório; com isto, mostra estes, para uma etapa com
+   * campos que nenhuma outra usa.
    */
   blocks?: FieldBlock[];
 }
@@ -45,42 +45,6 @@ export interface ProcessStepDef {
 type StepCatalog = Record<string, Omit<ProcessStepDef, "key">>;
 
 const STEPS = {
-  simulacao: {
-    label: "Simulação",
-    phase: "cadastro",
-    responsible: "Escritório e cliente",
-    hint: "Questionário, simulações e a escolhida pelo cliente.",
-    blocks: [
-      {
-        key: "questionario",
-        title: "Questionário",
-        description:
-          "O que a simulação precisa. Nascimento, renda e composição vêm do cadastro dos proponentes quando estão em branco: confira e salve.",
-        fields: [
-          "simulation.oldest_birth_date",
-          "simulation.family_income",
-          "credit.fgts_three_years",
-          "simulation.multiple_buyers",
-          "process.property_value",
-          "simulation.had_subsidy",
-          "simulation.owns_property",
-        ],
-      },
-      {
-        key: "resultado",
-        title: "Simulação escolhida",
-        fields: [
-          "process.financed_value",
-          "process.term_months",
-          "process.amortization",
-          "simulation.interest_rate",
-          "simulation.first_installment",
-          "process.subsidy",
-          "simulation.notes",
-        ],
-      },
-    ],
-  },
   documentacao_pessoal: {
     label: "Documentação pessoal e dados cadastrais",
     phase: "cadastro",
@@ -227,7 +191,6 @@ const STEPS = {
 type StepKey = keyof typeof STEPS;
 
 const INICIO: StepKey[] = [
-  "simulacao",
   "documentacao_pessoal",
   "analise_risco",
   "evolucao_score",
@@ -359,6 +322,7 @@ export const STEP_ORDER: ProcessStepDef[] = Object.entries(STEPS as StepCatalog)
  * antigo precisa continuar legível.
  */
 const RETIRED_STEP_LABELS: Record<string, string> = {
+  simulacao: "Simulação",
   captacao: "Captação do cliente",
   definicao_simulacao: "Definição da simulação",
 };

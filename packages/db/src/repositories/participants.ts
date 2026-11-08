@@ -10,10 +10,11 @@ import {
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { withOrg, type Tx } from "../client";
 import { brokers, realEstateAgencies } from "../schema/catalogs";
-import { personIncomes } from "../schema/people";
+import { people, personIncomes } from "../schema/people";
 import { processParticipants, processes } from "../schema/processes";
 import { insertProcess } from "./processes";
 import { linkCurrentRiskAssessment } from "./risk-assessments";
+import { attachSimulationToProcess } from "./simulations";
 
 /** Renda bruta somada de cada pessoa, numa consulta só. */
 export async function grossIncomeByPerson(
@@ -125,7 +126,32 @@ export async function createProcessWithParticipants(ctx: OrgContext, input: Proc
       realEstateAgencyId = agency?.id ?? null;
     }
 
-    const [first, ...others] = input.proponentIds;
+    // Cliente da simulação sem cadastro: cria a pessoa pelo CPF (ou acha a
+    // que já existe com ele) e ela entra como proponente.
+    const proponentIds = [...input.proponentIds];
+    if (input.newPerson) {
+      const [existing] = await tx
+        .select({ id: people.id })
+        .from(people)
+        .where(and(eq(people.orgId, ctx.orgId), eq(people.cpf, input.newPerson.cpf)))
+        .limit(1);
+      const personId =
+        existing?.id ??
+        (
+          await tx
+            .insert(people)
+            .values({
+              orgId: ctx.orgId,
+              cpf: input.newPerson.cpf,
+              fullName: input.newPerson.fullName.toUpperCase(),
+              createdBy: ctx.userId,
+            })
+            .returning({ id: people.id })
+        )[0]?.id;
+      if (personId && !proponentIds.includes(personId)) proponentIds.unshift(personId);
+    }
+
+    const [first, ...others] = proponentIds;
     if (!first) throw new DomainError("Informe pelo menos um proponente.", "no_proponent");
 
     const created = await insertProcess(tx, ctx, {
@@ -147,6 +173,9 @@ export async function createProcessWithParticipants(ctx: OrgContext, input: Proc
     }
 
     await reorderProponents(tx, ctx, created.id);
+    if (input.simulationId) {
+      await attachSimulationToProcess(tx, ctx, input.simulationId, created.id);
+    }
     return created;
   });
 }

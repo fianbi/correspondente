@@ -129,6 +129,6 @@ test("painel mostra a distribuição por etapa, banco e modalidade", async ({ pa
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "Onde os processos estão" }) });
 
-  await expect(fases.getByText("Simulação", { exact: true })).toBeVisible();
+  await expect(fases.getByText("Documentação pessoal e dados cadastrais")).toBeVisible();
   await expect(fases.getByRole("listitem").first()).toContainText(/\d/);
 });

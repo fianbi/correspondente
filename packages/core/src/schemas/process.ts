@@ -8,6 +8,7 @@ import {
   PROCESS_STATUSES,
 } from "../domain/process";
 import { optionalDate, optionalEnum, optionalInt, optionalMoney, optionalText } from "./helpers";
+import { cpfSchema } from "./person";
 
 const uuidOrNull = z
   .string()
@@ -64,7 +65,7 @@ export const processCreateSchema = z
     modality: z.enum(MODALITIES, "Escolha a modalidade."),
     proponentIds: z
       .array(z.uuid("Selecione a pessoa."))
-      .min(1, "Informe pelo menos um proponente."),
+      .default([]),
     participants: z.array(
       z.object({ personId: z.uuid("Selecione a pessoa."), role: z.enum(OTHER_PARTICIPANT_ROLES) }),
     ),
@@ -72,6 +73,17 @@ export const processCreateSchema = z
     newBrokerName: optionalText,
     realEstateAgencyId: uuidOrNull,
     newRealEstateAgencyName: optionalText,
+    /** Simulação de onde o processo nasceu, quando nasceu de uma. */
+    simulationId: uuidOrNull,
+    /** Cliente da simulação ainda sem cadastro: entra como proponente. */
+    newPerson: z
+      .object({ cpf: cpfSchema, fullName: z.string().trim().min(1, "Informe o nome.") })
+      .nullish()
+      .transform((value) => value ?? null),
+  })
+  .refine((input) => input.proponentIds.length > 0 || input.newPerson !== null, {
+    message: "Informe pelo menos um proponente.",
+    path: ["proponentIds"],
   })
   .refine((input) => new Set(input.proponentIds).size === input.proponentIds.length, {
     message: "A mesma pessoa aparece duas vezes como proponente.",
@@ -83,6 +95,42 @@ export const processCreateSchema = z
   );
 
 export type ProcessCreateInput = z.infer<typeof processCreateSchema>;
+
+/** "sim"/"nao"/vazio do formulário para booleano ou não respondido. */
+const simNao = z
+  .enum(["sim", "nao", ""])
+  .optional()
+  .transform((value) => (value === "sim" ? true : value === "nao" ? false : null));
+
+export const simulationScenarioSchema = z.object({
+  financedValueCents: optionalMoney,
+  termMonths: optionalInt,
+  amortization: optionalEnum(AMORTIZATION_SYSTEMS),
+  interestRate: optionalText,
+  firstInstallmentCents: optionalMoney,
+  subsidyCents: optionalMoney,
+  chosen: z.boolean(),
+});
+
+/**
+ * Simulação: o cliente ainda não tem cadastro, então basta nome e telefone.
+ * As sete perguntas são as que o escritório faz para simular.
+ */
+export const simulationInputSchema = z.object({
+  clientName: z.string().trim().min(1, "Informe o nome do cliente."),
+  clientPhone: optionalText,
+  oldestBirthDate: optionalDate,
+  familyIncomeCents: optionalMoney,
+  fgtsThreeYears: simNao,
+  multipleBuyers: simNao,
+  propertyValueCents: optionalMoney,
+  hadSubsidy: simNao,
+  ownsProperty: simNao,
+  scenarios: z.array(simulationScenarioSchema),
+  notes: optionalText,
+});
+
+export type SimulationInput = z.infer<typeof simulationInputSchema>;
 
 export const processParticipantInputSchema = z.object({
   personId: z.uuid("Selecione a pessoa."),

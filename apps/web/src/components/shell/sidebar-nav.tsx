@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   AlertCircle,
+  Calculator,
   FileSignature,
   FileText,
   Home,
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { href: "/painel", label: "Painel", icon: Home },
+  { href: "/simulacoes", label: "Simulações", icon: Calculator },
   { href: "/processos", label: "Processos", icon: FileText },
   { href: "/pessoas", label: "Pessoas", icon: Users },
   { href: "/pendencias", label: "Pendências", icon: AlertCircle },

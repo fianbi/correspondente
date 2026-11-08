@@ -33,6 +33,10 @@ export async function cleanupE2eData(email: string, desde: string): Promise<void
     )`;
 
     await tx.execute(sql`
+      delete from public.simulations
+      where org_id in ${orgs} and created_at >= ${desde}::timestamptz
+    `);
+    await tx.execute(sql`
       delete from public.processes
       where org_id in ${orgs} and created_at >= ${desde}::timestamptz
     `);

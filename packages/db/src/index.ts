@@ -26,6 +26,8 @@ export type {
   ProcessParticipant,
   Profile,
   RealEstateAgency,
+  Simulation,
+  SimulationScenario,
   Flow,
   FlowStage,
   ProcessEvent,

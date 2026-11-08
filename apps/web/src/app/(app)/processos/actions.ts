@@ -47,6 +47,10 @@ export async function createProcessAction(
   const parsed = processCreateSchema.safeParse({
     modality: text("modality") || undefined,
     proponentIds: formData.getAll("proponentIds").map(String).filter(Boolean),
+    simulationId: text("simulationId"),
+    newPerson: text("newPersonCpf")
+      ? { cpf: text("newPersonCpf"), fullName: text("newPersonName") }
+      : null,
     participants: roles
       .map((role, index) => ({ role, personId: people[index] ?? "" }))
       .filter((row) => row.personId !== ""),
@@ -61,6 +65,15 @@ export async function createProcessAction(
     for (const issue of parsed.error.issues) {
       const path = String(issue.path[0] ?? "");
       if (path && !fieldErrors[path]) fieldErrors[path] = issue.message;
+    }
+    // O schema só confere "algum proponente" quando o resto passou; sem
+    // modalidade, a falta de proponente também precisa aparecer de uma vez.
+    if (
+      !fieldErrors.proponentIds &&
+      formData.getAll("proponentIds").every((value) => !value) &&
+      !text("newPersonCpf")
+    ) {
+      fieldErrors.proponentIds = "Informe pelo menos um proponente.";
     }
     return { error: "Revise os campos destacados.", fieldErrors };
   }
