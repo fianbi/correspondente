@@ -2,7 +2,7 @@
 
 import type { FieldOption, FieldView } from "@corr/core";
 import { toInputValue } from "@corr/core";
-import { Field, Label } from "@/components/ui/field";
+import { Field, Input, Label } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 
 /** Opções que vêm do banco, resolvidas pela página e passadas para cá. */
@@ -28,6 +28,39 @@ export function FieldInput({
 }) {
   const id = `field-${def.key}`;
   const current = toInputValue(def, value ?? null);
+
+  // Agência: o operador digita o número (o servidor cadastra se for nova) e as
+  // já usadas aparecem como sugestão. Lista fechada travava quem ainda não
+  // tinha nenhuma agência cadastrada.
+  if (def.optionsSource === "agencies") {
+    const agencias = options?.agencies ?? [];
+    const numeroDe = (label: string) => label.split(" — ")[0] ?? label;
+    const atual = agencias.find((agencia) => agencia.value === current);
+    const listaId = `${id}-sugestoes`;
+
+    return (
+      <Field label={def.label} name={def.key} hint={def.help} error={error}>
+        <>
+          <Input
+            id={id}
+            name={def.key}
+            defaultValue={atual ? numeroDe(atual.label) : ""}
+            placeholder="Número da agência"
+            inputMode="numeric"
+            list={listaId}
+            invalid={Boolean(error)}
+          />
+          <datalist id={listaId}>
+            {agencias.map((agencia) => (
+              <option key={agencia.value} value={numeroDe(agencia.label)}>
+                {agencia.label}
+              </option>
+            ))}
+          </datalist>
+        </>
+      </Field>
+    );
+  }
 
   if (def.type === "select" || def.type === "boolean") {
     const list = def.optionsSource ? (options?.[def.optionsSource] ?? []) : (def.options ?? []);

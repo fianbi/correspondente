@@ -5,10 +5,14 @@ import { DomainError, parseFieldPatch, stepsForModality } from "@corr/core";
 import {
   applyProcessPatch,
   assignStage,
+  findOrCreateAgency,
+  listBanks,
   getFlowForProcess,
   getProcess,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface StageFormState {
   savedCount?: number;
@@ -39,7 +43,22 @@ export async function saveStageFields(
   if (!blocks) return { error: "Etapa não encontrada neste fluxo." };
 
   const allowedKeys = blocks.flatMap((block) => block.fields);
-  const { values, errors } = parseFieldPatch(Object.fromEntries(formData), allowedKeys);
+  const entrada: Record<string, unknown> = Object.fromEntries(formData);
+
+  // Agência vem digitada (o número); vira o id da agência, cadastrada na hora
+  // se for nova. Banco: o do formulário, o do processo ou, sem nenhum, a Caixa.
+  const agencia =
+    typeof entrada["process.agency"] === "string" ? entrada["process.agency"].trim() : "";
+  if (allowedKeys.includes("process.agency") && agencia && !UUID.test(agencia)) {
+    const bankId =
+      (typeof entrada["process.bank"] === "string" && entrada["process.bank"]) ||
+      process.bankId ||
+      (await listBanks()).find((bank) => bank.code === "104")?.id;
+    if (!bankId) return { error: "Escolha o banco antes de informar a agência." };
+    entrada["process.agency"] = await findOrCreateAgency(ctx, { bankId, number: agencia });
+  }
+
+  const { values, errors } = parseFieldPatch(entrada, allowedKeys);
 
   if (Object.keys(errors).length > 0) {
     return { error: "Revise os campos destacados.", fieldErrors: errors };

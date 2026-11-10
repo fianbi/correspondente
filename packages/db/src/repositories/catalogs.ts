@@ -51,6 +51,43 @@ export async function createAgency(ctx: OrgContext, input: AgencyInput) {
   });
 }
 
+/**
+ * Agência pelo número, cadastrando na hora se o escritório ainda não a tem.
+ * É assim que o operador informa a agência no processo: digita o número, sem
+ * passar antes por um cadastro de agências.
+ */
+export async function findOrCreateAgency(
+  ctx: OrgContext,
+  input: { bankId: string; number: string },
+) {
+  return withOrg(ctx, async (tx) => {
+    const [existing] = await tx
+      .select({ id: agencies.id })
+      .from(agencies)
+      .where(
+        and(
+          eq(agencies.orgId, ctx.orgId),
+          eq(agencies.bankId, input.bankId),
+          eq(agencies.number, input.number),
+        ),
+      )
+      .limit(1);
+    if (existing) return existing.id;
+
+    const [created] = await tx
+      .insert(agencies)
+      .values({
+        orgId: ctx.orgId,
+        bankId: input.bankId,
+        number: input.number,
+        name: `Agência ${input.number}`,
+      })
+      .returning({ id: agencies.id });
+    if (!created) throw new Error("Falha ao cadastrar a agência.");
+    return created.id;
+  });
+}
+
 export async function listRealEstateAgencies(ctx: OrgContext) {
   return withOrg(ctx, (tx) =>
     tx

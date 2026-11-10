@@ -151,3 +151,20 @@ test("as etapas seguem a modalidade, com desvio que volta para quem o abriu", as
   await expect(page.getByLabel("Etapa do processo")).toHaveValue("vistoria_engenharia");
   await expect(etapas.getByRole("link", { name: "Ajustes de projeto (PEPT)" })).toBeVisible();
 });
+
+test("agência é digitada pelo número e fica gravada no processo", async ({ page }) => {
+  const url = await novoProcesso(page, "documentacao_pessoal");
+  const numero = String(1000 + Math.floor(Math.random() * 8999));
+
+  await page.getByLabel("Banco").selectOption({ label: "Caixa" });
+  await page.getByLabel("Agência", { exact: true }).fill(numero);
+  await page.getByLabel("Conta corrente — agência").fill("1234");
+  await page.getByLabel("Conta corrente — número").fill("00012345");
+  await page.getByRole("button", { name: "Salvar etapa" }).click();
+  await expect(page.locator('p[role="status"]')).toBeVisible();
+
+  await page.goto(url);
+  await expect(page.getByLabel("Agência", { exact: true })).toHaveValue(numero);
+  await expect(page.getByLabel("Conta corrente — agência")).toHaveValue("1234");
+  await expect(page.getByLabel("Conta corrente — número")).toHaveValue("00012345");
+});
