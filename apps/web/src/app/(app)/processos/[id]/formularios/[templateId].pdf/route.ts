@@ -1,5 +1,12 @@
 import { NotFoundError } from "@corr/core";
-import { getFormTemplate, getOrg, getPerson, getProcess, getProcessFieldValues } from "@corr/db";
+import {
+  getFormTemplate,
+  getOrg,
+  getPerson,
+  getProcess,
+  getProcessFieldValues,
+  listPersonIncomes,
+} from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { DOCUMENTS_BUCKET } from "@/server/storage";
@@ -24,9 +31,10 @@ export async function GET(
       getOrg(ctx),
     ]);
 
-    const [person, fieldValues] = await Promise.all([
+    const [person, fieldValues, incomes] = await Promise.all([
       getPerson(ctx, process.personId),
       getProcessFieldValues(ctx, id),
+      listPersonIncomes(ctx, process.personId),
     ]);
 
     const { data, error } = await getSupabaseAdmin()
@@ -40,6 +48,7 @@ export async function GET(
       process: process as unknown as Record<string, unknown>,
       org: org as unknown as Record<string, unknown>,
       fieldValues,
+      incomes,
     });
 
     const nomeArquivo = `${template.name.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}-${process.number}.pdf`;

@@ -37,7 +37,46 @@ export interface DadosParaFormulario {
   process: Record<string, unknown>;
   org: Record<string, unknown>;
   fieldValues: Record<string, string | null>;
+  /** Rendas do proponente: decidem as marcas de renda formal/informal. */
+  incomes?: { kind: string }[];
+  /** Data que vai no "Local/data". Padrão: hoje. */
+  hoje?: Date;
 }
+
+/**
+ * Chaves calculadas, que não são um campo do cadastro: coobrigado, data de
+ * hoje e marcas "X" dos quadradinhos dos formulários do banco.
+ */
+export const CHAVES_CALCULADAS: [string, string][] = [
+  ["coobrigado.fullName", "Coobrigado — nome (2º proponente ou cônjuge)"],
+  ["coobrigado.cpf", "Coobrigado — CPF"],
+  ["hoje.data", "Hoje — data (dd/mm/aaaa)"],
+  ["hoje.dia", "Hoje — dia"],
+  ["hoje.mes", "Hoje — mês por extenso"],
+  ["hoje.ano", "Hoje — ano"],
+  ["marcar.sempre", "Marcar X — sempre"],
+  ["marcar.renda_formal", "Marcar X — tem renda formal"],
+  ["marcar.renda_informal", "Marcar X — tem renda informal"],
+  ["marcar.conta_corrente", "Marcar X — abre conta corrente"],
+  ["marcar.conta_poupanca", "Marcar X — abre conta poupança"],
+  ["marcar.cheque_especial", "Marcar X — tem cheque especial"],
+  ["marcar.cartao_credito", "Marcar X — pede cartão de crédito"],
+];
+
+const MESES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
 
 /**
  * Resolve uma chave do catálogo no texto que vai para o PDF.
@@ -51,10 +90,17 @@ export function resolverValor(chave: string, dados: DadosParaFormulario): string
 
   if (escopo === "person") return formatarPessoa(campo, dados.person[campo]);
   if (escopo === "org") return texto(dados.org[campo]);
+  if (escopo === "coobrigado") return resolverCoobrigado(campo, dados);
+  if (escopo === "hoje") return resolverHoje(campo, dados.hoje ?? new Date());
+  if (escopo === "marcar") return resolverMarca(campo, dados) ? "X" : "";
 
   if (escopo === "process") {
-    const direto = dados.process[campo];
-    if (direto !== undefined) return formatarProcesso(campo, direto);
+    // Campo do catálogo guardado em coluna: a chave é snake_case
+    // (`process.contract_number`), a coluna é camelCase (`contractNumber`).
+    const def = getField(chave);
+    const coluna = def?.storage.kind === "column" ? def.storage.column : campo;
+    const direto = dados.process[coluna];
+    if (direto !== undefined) return formatarProcesso(coluna, direto);
   }
 
   // Campos de etapa vivem na tabela de valores, com a chave inteira.
@@ -67,6 +113,65 @@ export function resolverValor(chave: string, dados: DadosParaFormulario): string
   }
 
   return "";
+}
+
+interface Participante {
+  fullName: string;
+  cpf: string;
+  role: string;
+}
+
+/**
+ * Coobrigado do formulário: o 2º proponente do processo; sem ele, o cônjuge
+ * do cadastro do proponente.
+ */
+function resolverCoobrigado(campo: string, dados: DadosParaFormulario): string {
+  const participantes = (dados.process.participants ?? []) as Participante[];
+  const segundo = participantes.find((p) => p.role === "coproponente");
+
+  const nome = segundo?.fullName ?? texto(dados.person.spouseName);
+  const cpf = segundo?.cpf ?? texto(dados.person.spouseCpf);
+
+  if (campo === "fullName") return nome;
+  if (campo === "cpf") return cpf ? formatCpf(cpf) : "";
+  return "";
+}
+
+function resolverHoje(campo: string, hoje: Date): string {
+  // Data no fuso de Brasília: o servidor roda em UTC e, depois das 21h, já
+  // seria "amanhã".
+  const [ano, mes, dia] = hoje
+    .toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" })
+    .split("-");
+  if (campo === "dia") return dia ?? "";
+  if (campo === "mes") return MESES[Number(mes) - 1] ?? "";
+  if (campo === "ano") return ano ?? "";
+  if (campo === "data") return `${dia}/${mes}/${ano}`;
+  return "";
+}
+
+function resolverMarca(campo: string, dados: DadosParaFormulario): boolean {
+  const valor = (chave: string) => dados.fieldValues[chave] ?? null;
+  const rendas = dados.incomes ?? [];
+
+  switch (campo) {
+    case "sempre":
+      return true;
+    case "renda_formal":
+      return rendas.some((renda) => renda.kind === "formal");
+    case "renda_informal":
+      return rendas.some((renda) => renda.kind !== "formal");
+    case "conta_corrente":
+      return valor("assembly.checking_account") === "sim";
+    case "conta_poupanca":
+      return valor("assembly.savings_account") === "sim";
+    case "cartao_credito":
+      return valor("assembly.credit_card") === "sim";
+    case "cheque_especial":
+      return Number(valor("assembly.overdraft_value") ?? 0) > 0;
+    default:
+      return false;
+  }
 }
 
 function texto(valor: unknown): string {

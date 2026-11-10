@@ -8,6 +8,7 @@ import { Field, Label } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import {
+  addReadyTemplate,
   removeTemplate,
   saveFieldMap,
   uploadTemplate,
@@ -22,19 +23,62 @@ export interface TemplateRow {
   fieldMap: Record<string, string>;
 }
 
+export interface ProntoRow {
+  chave: string;
+  nome: string;
+  descricao: string;
+}
+
 export function TemplatesPanel({
   templates,
   opcoes,
+  prontos,
 }: {
   templates: TemplateRow[];
   opcoes: { value: string; label: string }[];
+  prontos: ProntoRow[];
 }) {
   const [uploadState, uploadAction] = useActionState<TemplateState, FormData>(uploadTemplate, {});
   const [aberto, setAberto] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [prontoState, setProntoState] = useState<TemplateState>({});
 
   return (
     <div className="flex flex-col gap-6">
+      {prontos.length > 0 ? (
+        <Card>
+          <CardHeader
+            title="Modelos prontos"
+            description="Formulários do banco que já vêm com os campos ligados ao cadastro."
+          />
+          <CardBody className="flex flex-col gap-3">
+            {prontos.map((pronto) => (
+              <div key={pronto.chave} className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink">{pronto.nome}</p>
+                  <p className="text-xs text-ink-muted">{pronto.descricao}</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => setProntoState(await addReadyTemplate(pronto.chave)))
+                  }
+                >
+                  Adicionar
+                </Button>
+              </div>
+            ))}
+            {prontoState.error ? (
+              <p role="alert" className="text-sm text-status-reprovado">
+                {prontoState.error}
+              </p>
+            ) : null}
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader
           title="Novo modelo"
