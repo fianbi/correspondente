@@ -27,12 +27,6 @@ export const PERGUNTAR_TEXTO = "perguntar.texto";
 export const PERGUNTAR_MARCAR = "perguntar.marcar";
 export const PERGUNTAR_OPCAO = "perguntar.opcao";
 
-export const OPCOES_DE_PERGUNTA: [string, string][] = [
-  [PERGUNTAR_TEXTO, "Perguntar ao gerar — texto"],
-  [PERGUNTAR_MARCAR, "Perguntar ao gerar — caixa de marcar (vira X)"],
-  [PERGUNTAR_OPCAO, "Perguntar ao gerar — uma opção de um grupo (vira X)"],
-];
-
 export type Pergunta =
   | { tipo: "texto"; campo: string }
   | { tipo: "marcar"; campo: string }

@@ -4,17 +4,9 @@ import { useActionState, useState, useTransition } from "react";
 import { FileText, Trash2 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Label } from "@/components/ui/field";
-import { Select } from "@/components/ui/select";
+import { Field } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { lerOpcao, PERGUNTAR_OPCAO } from "@/lib/formularios";
-import {
-  addReadyTemplate,
-  removeTemplate,
-  saveFieldMap,
-  uploadTemplate,
-  type TemplateState,
-} from "./actions";
+import { addReadyTemplate, removeTemplate, saveTemplateInfo, type TemplateState } from "./actions";
 
 export interface TemplateRow {
   id: string;
@@ -33,14 +25,11 @@ export interface ProntoRow {
 
 export function TemplatesPanel({
   templates,
-  opcoes,
   prontos,
 }: {
   templates: TemplateRow[];
-  opcoes: { value: string; label: string }[];
   prontos: ProntoRow[];
 }) {
-  const [uploadState, uploadAction] = useActionState<TemplateState, FormData>(uploadTemplate, {});
   const [aberto, setAberto] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [prontoState, setProntoState] = useState<TemplateState>({});
@@ -51,7 +40,7 @@ export function TemplatesPanel({
         <Card>
           <CardHeader
             title="Modelos prontos"
-            description="Formulários do banco que já vêm com os campos ligados ao cadastro. Atualizar volta o mapeamento ao padrão do sistema, mantendo nome e descrição."
+            description="Formulários do banco já preparados: o que vem do cadastro é preenchido sozinho e o resto é perguntado na hora de gerar. Atualizar traz a versão mais nova, mantendo nome e descrição."
           />
           <CardBody className="flex flex-col gap-3">
             {prontos.map((pronto) => (
@@ -86,56 +75,11 @@ export function TemplatesPanel({
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader
-          title="Novo modelo"
-          description="Envie o PDF em branco que o banco distribui. Ele precisa ter campos preenchíveis."
-        />
-        <CardBody>
-          <form action={uploadAction} className="flex flex-col gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nome" name="name" placeholder="Ficha cadastral Caixa" required />
-              <Field label="Descrição" name="description" placeholder="Quando usar este modelo" />
-            </div>
-
-            <div>
-              <Label htmlFor="template-file">Arquivo PDF</Label>
-              <input
-                id="template-file"
-                name="file"
-                type="file"
-                accept="application/pdf"
-                required
-                className="h-10 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink file:mr-3 file:rounded file:border-0 file:bg-surface-muted file:px-2 file:py-1 file:text-sm file:text-ink"
-              />
-            </div>
-
-            {uploadState.error ? (
-              <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-status-reprovado">
-                {uploadState.error}
-              </p>
-            ) : null}
-            {uploadState.ok ? (
-              <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-status-aprovado">
-                {uploadState.ok}
-              </p>
-            ) : null}
-
-            <div>
-              <SubmitButton>Enviar modelo</SubmitButton>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
-
       {templates.map((template) => (
         <Card key={template.id}>
           <CardHeader
             title={template.name}
-            description={
-              template.description ??
-              `${template.detectedFields.length} campo(s) no PDF · ${Object.keys(template.fieldMap).filter((c) => !c.startsWith("#")).length} mapeado(s)`
-            }
+            description={template.description ?? undefined}
             action={
               <div className="flex items-center gap-2">
                 <Button
@@ -160,13 +104,11 @@ export function TemplatesPanel({
           />
 
           {aberto === template.id ? (
-            <MapeamentoForm template={template} opcoes={opcoes} />
+            <InfoForm template={template} />
           ) : (
             <CardBody className="flex items-center gap-2 text-sm text-ink-muted">
               <FileText className="size-4" aria-hidden />
-              {Object.keys(template.fieldMap).length === 0
-                ? "Nenhum campo mapeado ainda — o formulário sairia em branco."
-                : "Disponível na tela do processo, em Formulários."}
+              Disponível na tela do processo, em Gerar PDF.
             </CardBody>
           )}
         </Card>
@@ -175,15 +117,9 @@ export function TemplatesPanel({
   );
 }
 
-function MapeamentoForm({
-  template,
-  opcoes,
-}: {
-  template: TemplateRow;
-  opcoes: { value: string; label: string }[];
-}) {
+function InfoForm({ template }: { template: TemplateRow }) {
   const [state, action] = useActionState<TemplateState, FormData>(
-    saveFieldMap.bind(null, template.id),
+    saveTemplateInfo.bind(null, template.id),
     {},
   );
 
@@ -199,24 +135,6 @@ function MapeamentoForm({
             placeholder="Quando usar este modelo"
           />
         </div>
-
-        <p className="text-sm text-ink-muted">
-          Para cada campo do PDF, escolha qual dado do sistema deve entrar nele, ou se ele é
-          perguntado na hora de gerar. Em &ldquo;uma opção de um grupo&rdquo;, os campos com o
-          mesmo grupo viram uma escolha única (ex.: grupo Programa, opções MCMV e SBPE). O que
-          ficar sem escolha sai em branco.
-        </p>
-
-        <ul className="flex max-h-[32rem] flex-col gap-2 overflow-y-auto pr-1">
-          {template.detectedFields.map((campo) => (
-            <LinhaDeCampo
-              key={campo}
-              campo={campo}
-              valor={template.fieldMap[campo] ?? ""}
-              opcoes={opcoes}
-            />
-          ))}
-        </ul>
 
         {state.error ? (
           <p role="alert" className="text-sm text-status-reprovado">
@@ -234,55 +152,5 @@ function MapeamentoForm({
         </div>
       </form>
     </CardBody>
-  );
-}
-
-function LinhaDeCampo({
-  campo,
-  valor,
-  opcoes,
-}: {
-  campo: string;
-  valor: string;
-  opcoes: { value: string; label: string }[];
-}) {
-  const opcao = lerOpcao(valor);
-  const [destino, setDestino] = useState(opcao ? PERGUNTAR_OPCAO : valor);
-
-  return (
-    <li className="grid grid-cols-2 items-start gap-3">
-      <code className="truncate pt-2 text-xs text-ink" title={campo}>
-        {campo}
-      </code>
-      <div className="flex flex-col gap-1.5">
-        <Select
-          aria-label={`Dado para o campo ${campo}`}
-          name={`campo:${campo}`}
-          className="h-9 text-sm"
-          options={opcoes}
-          value={destino}
-          onChange={(event) => setDestino(event.target.value)}
-          placeholder="— deixar em branco —"
-        />
-        {destino === PERGUNTAR_OPCAO ? (
-          <div className="grid grid-cols-2 gap-1.5">
-            <Input
-              aria-label={`Grupo do campo ${campo}`}
-              name={`grupo:${campo}`}
-              defaultValue={opcao?.grupo ?? ""}
-              placeholder="Grupo (ex.: Programa)"
-              className="h-9 text-sm"
-            />
-            <Input
-              aria-label={`Opção do campo ${campo}`}
-              name={`opcao:${campo}`}
-              defaultValue={opcao?.opcao ?? campo}
-              placeholder="Opção (ex.: MCMV)"
-              className="h-9 text-sm"
-            />
-          </div>
-        ) : null}
-      </div>
-    </li>
   );
 }
