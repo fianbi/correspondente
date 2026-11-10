@@ -27,16 +27,11 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
   if (!modelo) return { error: "Modelo pronto não encontrado." };
   const fieldMap = { ...modelo.fieldMap, "#pronto": modelo.chave };
 
-  // Já adicionado: atualiza o mapeamento para o mais novo, mantendo nome e
+  // Já adicionado: troca pela versão mais nova (PDF e campos), mantendo nome e
   // descrição que o escritório deu.
   const existente = (await listFormTemplates(ctx)).find(
     (template) => origemPronta(template)?.chave === modelo.chave,
   );
-  if (existente) {
-    await updateFormTemplateMap(ctx, existente.id, fieldMap);
-    revalidatePath("/configuracoes/formularios");
-    return { ok: `Mapeamento de ${existente.name} atualizado.` };
-  }
 
   const bytes = modelo.pdf();
   const campos = await detectarCampos(bytes.slice().buffer);
@@ -49,15 +44,20 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
   if (error) return { error: "Falha ao guardar o modelo." };
 
   const criado = await createFormTemplate(ctx, {
-    name: modelo.nome,
-    description: modelo.descricao,
+    name: existente?.name ?? modelo.nome,
+    description: existente ? existente.description : modelo.descricao,
     storagePath: caminho,
     detectedFields: campos,
   });
   await updateFormTemplateMap(ctx, criado.id, fieldMap);
 
+  if (existente) {
+    const { storagePath } = await deleteFormTemplate(ctx, existente.id);
+    await removeStoredFile(storagePath);
+  }
+
   revalidatePath("/configuracoes/formularios");
-  return { ok: `${modelo.nome} adicionado.` };
+  return { ok: existente ? `${criado.name} atualizado.` : `${criado.name} adicionado.` };
 }
 
 /** Nome e descrição do modelo. Os campos de cada modelo vêm prontos do sistema. */
