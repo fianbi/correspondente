@@ -95,6 +95,13 @@ describe("perguntas na hora de gerar", () => {
         tipo: "opcao",
         grupo: "Programa habitacional",
         opcoes: ["MCMV", "SBPE", "PRO-COTISTA", "EGI"],
+        obrigatoria: true,
+      },
+      {
+        tipo: "opcao",
+        grupo: "Comprovante de endereço",
+        opcoes: ["Titular", "Em nome de terceiros"],
+        obrigatoria: false,
       },
     ]);
   });
@@ -111,6 +118,7 @@ describe("perguntas na hora de gerar", () => {
           "process.checking_operation": "001",
           "process.checking_account_number": "00012345",
           "process.checking_dv": "6",
+          "process.builder": "Construtora Exemplo",
         },
       },
       { "m:Cartão de Crédito": "1", "o:Programa habitacional": "SBPE" },
@@ -119,8 +127,13 @@ describe("perguntas na hora de gerar", () => {
     const texto = (campo: string) => form.getTextField(campo).getText() ?? "";
     expect(texto("Cartão de Crédito")).toBe("X");
     expect(texto("Cheque Especial")).toBe("");
-    expect(texto("CCSBPE")).toBe("X");
-    expect(texto("PCVA")).toBe("");
+    expect(texto("SBPE")).toBe("X");
+    expect(texto("MCMV")).toBe("");
+    expect(texto("EGI")).toBe("");
+    expect(texto("Construtora")).toBe("Construtora Exemplo");
+    expect(texto("Comprovante de Endereço - Titular")).toBe("");
+    expect(texto("Conta Poupança")).toBe("");
+    expect(texto("Dossiê Principal")).toBe("X");
     expect(texto("Conta Corrente")).toBe("X");
     expect(texto("Conta Corrente - Agência")).toBe("1234");
     expect(texto("Conta Corrente - DV")).toBe("6");

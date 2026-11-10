@@ -13,7 +13,7 @@
  * Escreve src/server/pdf/modelos/caixa-mo43047011.ts (PDF em base64, para ir
  * junto no bundle do servidor sem depender de arquivo em disco).
  */
-import { PDFDocument, StandardFonts, TextAlignment } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, TextAlignment } from "pdf-lib";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -54,10 +54,10 @@ const campos = [
   ["Cheque Especial", 55, 337, 14, 12, 1],
   ["Cartão de Crédito", 180, 337, 22, 12, 1],
   ["Crédito Consignado", 324, 337, 16, 12, 1],
-  ["PCVA", 58, 381, 16, 14, 1],
-  ["CCFGTS", 132, 381, 16, 14, 1],
-  ["CCSBPE", 224, 381, 16, 14, 1],
-  ["PRO-COTISTA", 317, 381, 16, 14, 1],
+  ["MCMV", 58, 381, 16, 14, 1],
+  ["SBPE", 132, 381, 16, 14, 1],
+  ["PRO-COTISTA", 224, 381, 16, 14, 1],
+  ["EGI", 341, 381, 16, 14, 1],
   ["Nº do Contrato", 136, 407, 398, 13],
   ["Construtora", 120, 432, 142, 13],
   ["Empreendimento", 353, 432, 182, 13],
@@ -71,6 +71,36 @@ const campos = [
   ["Mês", 383, 639, 97, 12],
   ["Ano", 497, 639, 41, 12],
 ];
+// Programas: o escritório usa MCMV, SBPE, PRO-COTISTA e EGI, não os rótulos
+// impressos (PCVA, CCFGTS, CCSBPE, PRO-COTISTA). Cobre os rótulos antigos e
+// escreve os novos ao lado dos mesmos quadrinhos.
+for (const [x, largura] of [
+  [80, 35],
+  [154, 53],
+  [247, 52],
+  [339, 85],
+  [314, 23], // quadrinho original do 4º programa: "PRO-COTISTA" precisa do espaço
+]) {
+  page.drawRectangle({ x, y: H - 398, width: largura, height: 19, color: rgb(1, 1, 1) });
+}
+// Quadrinho do EGI, depois do rótulo PRO-COTISTA.
+page.drawRectangle({
+  x: 341,
+  y: H - 395,
+  width: 16,
+  height: 14,
+  borderColor: rgb(0, 0, 0),
+  borderWidth: 0.75,
+});
+for (const [rotulo, x] of [
+  ["MCMV", 81],
+  ["SBPE", 155],
+  ["PRO-COTISTA", 248],
+  ["EGI", 364],
+]) {
+  page.drawText(rotulo, { x, y: H - 393, size: 11.5, font, color: rgb(0, 0, 0) });
+}
+
 for (const [nome, x, topo, w, h, marca] of campos) {
   const f = form.createTextField(nome);
   if (marca) f.setAlignment(TextAlignment.Center);

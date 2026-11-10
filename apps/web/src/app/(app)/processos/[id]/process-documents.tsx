@@ -142,10 +142,18 @@ function Perguntas({
         }
         return (
           <fieldset key={pergunta.grupo} className="flex flex-col gap-1">
-            <legend className="mb-1 text-xs font-medium text-ink-muted">{pergunta.grupo}</legend>
+            <legend className="mb-1 text-xs font-medium text-ink-muted">
+              {pergunta.grupo}
+              {pergunta.obrigatoria ? "" : " (opcional)"}
+            </legend>
             {pergunta.opcoes.map((opcao) => (
               <label key={opcao} className="flex items-center gap-2 text-sm text-ink">
-                <input type="radio" name={parametroDe.opcao(pergunta.grupo)} value={opcao} />
+                <input
+                  type="radio"
+                  name={parametroDe.opcao(pergunta.grupo)}
+                  value={opcao}
+                  required={pergunta.obrigatoria}
+                />
                 {opcao}
               </label>
             ))}

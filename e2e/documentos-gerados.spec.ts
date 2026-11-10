@@ -62,7 +62,7 @@ test("modelo pronto da Caixa gera o formulário com cadastro e respostas", async
   expect(form.getTextField("Razão Social - CCA").getText()).toBe("Escritório Demo");
   expect(form.getTextField("Cartão de Crédito").getText()).toBe("X");
   expect(form.getTextField("Cheque Especial").getText() ?? "").toBe("");
-  expect(form.getTextField("CCSBPE").getText()).toBe("X");
+  expect(form.getTextField("SBPE").getText()).toBe("X");
 });
 
 test("painel mostra a distribuição por etapa, banco e modalidade", async ({ page }) => {

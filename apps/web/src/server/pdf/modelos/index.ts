@@ -21,7 +21,7 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
     chave: "caixa-mo43047011",
     nome: "Caixa — Ateste de verificação documental (MO43047011)",
     descricao:
-      "Apresentação de propostas, informações complementares e ateste do CCA. Programa, cheque especial, cartão e consignado são perguntados ao gerar.",
+      "Apresentação de propostas, informações complementares e ateste do CCA. Programa, cheque especial, cartão, consignado e comprovante de endereço são perguntados ao gerar.",
     pdf: () => Uint8Array.from(Buffer.from(CAIXA_MO43047011_PDF_BASE64, "base64")),
     fieldMap: {
       "Razão Social - CCA": "org.name",
@@ -36,17 +36,25 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
       "Conta Corrente - Operação": "process.checking_operation",
       "Conta Corrente - Conta": "process.checking_account_number",
       "Conta Corrente - DV": "process.checking_dv",
-      "Conta Poupança": "marcar.conta_poupanca",
       "Cheque Especial": PERGUNTAR_MARCAR,
       "Cartão de Crédito": PERGUNTAR_MARCAR,
       "Crédito Consignado": PERGUNTAR_MARCAR,
-      // O formulário tem PCVA (hoje MCMV), CCFGTS, CCSBPE e PRO-COTISTA. EGI
-      // não tem quadrinho: escolhê-lo não marca nenhum programa.
-      PCVA: montarOpcao("Programa habitacional", "MCMV"),
-      CCSBPE: montarOpcao("Programa habitacional", "SBPE"),
+      // Os rótulos impressos (PCVA, CCFGTS, CCSBPE) foram trocados no PDF pelos
+      // programas que o escritório usa. Escolha obrigatória.
+      MCMV: montarOpcao("Programa habitacional", "MCMV"),
+      SBPE: montarOpcao("Programa habitacional", "SBPE"),
       "PRO-COTISTA": montarOpcao("Programa habitacional", "PRO-COTISTA"),
-      "#opcoes:Programa habitacional": "MCMV|SBPE|PRO-COTISTA|EGI",
+      EGI: montarOpcao("Programa habitacional", "EGI"),
+      "#obrigatorio:Programa habitacional": "1",
       "Nº do Contrato": "process.contract_number",
+      Construtora: "process.builder",
+      Empreendimento: "process.development",
+      // Opcional: sem resposta, os dois quadrinhos ficam em branco.
+      "Comprovante de Endereço - Titular": montarOpcao("Comprovante de endereço", "Titular"),
+      "Comprovante de Endereço - Em Nome de Terceiros": montarOpcao(
+        "Comprovante de endereço",
+        "Em nome de terceiros",
+      ),
       "Renda Formal": "marcar.renda_formal",
       "Outras Rendas": "marcar.renda_informal",
       "Declaração - sócios/familiares não participam": "marcar.sempre",

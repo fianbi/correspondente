@@ -17,6 +17,7 @@
  *
  * - `#opcoes:Grupo` → "A|B|C": ordem das opções do grupo, inclusive opções
  *   que não têm quadrinho no PDF (escolhê-las não marca nada);
+ * - `#obrigatorio:Grupo` → "1": o grupo precisa de resposta para gerar;
  * - `#pronto` → chave do modelo pronto de onde o modelo veio.
  *
  * Fica fora do servidor porque a tela de geração (cliente) monta o formulário
@@ -30,7 +31,7 @@ export const PERGUNTAR_OPCAO = "perguntar.opcao";
 export type Pergunta =
   | { tipo: "texto"; campo: string }
   | { tipo: "marcar"; campo: string }
-  | { tipo: "opcao"; grupo: string; opcoes: string[] };
+  | { tipo: "opcao"; grupo: string; opcoes: string[]; obrigatoria: boolean };
 
 /** Separa `perguntar.opcao:Grupo=Opção` em grupo e opção. */
 export function lerOpcao(valor: string): { grupo: string; opcao: string } | null {
@@ -64,7 +65,12 @@ export function perguntasDoModelo(fieldMap: Record<string, string>): Pergunta[] 
       let grupo = grupos.get(opcao.grupo);
       if (!grupo) {
         const ordem = fieldMap[`#opcoes:${opcao.grupo}`]?.split("|").filter(Boolean) ?? [];
-        grupo = { tipo: "opcao", grupo: opcao.grupo, opcoes: [...ordem] };
+        grupo = {
+          tipo: "opcao",
+          grupo: opcao.grupo,
+          opcoes: [...ordem],
+          obrigatoria: fieldMap[`#obrigatorio:${opcao.grupo}`] === "1",
+        };
         grupos.set(opcao.grupo, grupo);
         perguntas.push(grupo);
       }

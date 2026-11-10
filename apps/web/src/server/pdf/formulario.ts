@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import {
   formatBRL,
   formatCpf,
@@ -233,6 +233,7 @@ export async function preencherFormulario(
 ): Promise<ResultadoPreenchimento> {
   const doc = await PDFDocument.load(modelo, { ignoreEncryption: true });
   const form = doc.getForm();
+  const fonte = await doc.embedFont(StandardFonts.Helvetica);
 
   const preenchidos: string[] = [];
   const ignorados: string[] = [];
@@ -247,7 +248,16 @@ export async function preencherFormulario(
     }
 
     try {
-      form.getTextField(campoDoPdf).setText(valor);
+      const campo = form.getTextField(campoDoPdf);
+      campo.setText(valor);
+
+      // Campo estreito (conta, DV) com valor comprido: diminui a letra até
+      // caber, em vez de cortar o número.
+      const largura = campo.acroField.getWidgets()[0]?.getRectangle().width ?? 0;
+      const ocupado = fonte.widthOfTextAtSize(valor, 9);
+      if (largura > 0 && ocupado > largura - 3) {
+        campo.setFontSize(Math.max(5, Math.floor((9 * (largura - 3)) / ocupado)));
+      }
       preenchidos.push(campoDoPdf);
     } catch {
       // Campo que sumiu do modelo ou não é de texto (caixa, assinatura). O

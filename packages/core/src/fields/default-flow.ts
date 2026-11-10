@@ -44,7 +44,12 @@ export const DEFAULT_FLOW: FlowDef = {
         {
           key: "imovel",
           title: "Imóvel",
-          fields: ["process.property_address", "process.property_registration"],
+          fields: [
+            "process.property_address",
+            "process.property_registration",
+            "process.builder",
+            "process.development",
+          ],
         },
         {
           key: "parceiros",

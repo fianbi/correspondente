@@ -133,6 +133,19 @@ export const PROCESS_FIELDS: FieldDef[] = [
     type: "text",
     storage: { kind: "value" },
   }),
+  // Imóvel na planta: construtora e empreendimento vão nos formulários da Caixa.
+  field({
+    key: "process.builder",
+    label: "Construtora",
+    type: "text",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "process.development",
+    label: "Empreendimento",
+    type: "text",
+    storage: { kind: "value" },
+  }),
   field({
     key: "process.property_value",
     label: "Valor do imóvel",
