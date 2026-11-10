@@ -106,6 +106,33 @@ export const PROCESS_FIELDS: FieldDef[] = [
     type: "text",
     storage: { kind: "column", column: "contractNumber" },
   }),
+  // Conta corrente do proponente na Caixa: vai na proposta e nos formulários
+  // do banco (ex.: MO43047011, "Propostas Comerciais").
+  field({
+    key: "process.checking_agency",
+    label: "Conta corrente — agência",
+    type: "text",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "process.checking_operation",
+    label: "Conta corrente — operação",
+    type: "text",
+    placeholder: "001, 3701…",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "process.checking_account_number",
+    label: "Conta corrente — número",
+    type: "text",
+    storage: { kind: "value" },
+  }),
+  field({
+    key: "process.checking_dv",
+    label: "Conta corrente — DV",
+    type: "text",
+    storage: { kind: "value" },
+  }),
   field({
     key: "process.property_value",
     label: "Valor do imóvel",

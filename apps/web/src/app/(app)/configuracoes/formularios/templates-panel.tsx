@@ -4,9 +4,10 @@ import { useActionState, useState, useTransition } from "react";
 import { FileText, Trash2 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Field, Label } from "@/components/ui/field";
+import { Field, Input, Label } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { lerOpcao, PERGUNTAR_OPCAO } from "@/lib/formularios";
 import {
   addReadyTemplate,
   removeTemplate,
@@ -27,6 +28,7 @@ export interface ProntoRow {
   chave: string;
   nome: string;
   descricao: string;
+  adicionado: boolean;
 }
 
 export function TemplatesPanel({
@@ -49,7 +51,7 @@ export function TemplatesPanel({
         <Card>
           <CardHeader
             title="Modelos prontos"
-            description="Formulários do banco que já vêm com os campos ligados ao cadastro."
+            description="Formulários do banco que já vêm com os campos ligados ao cadastro. Atualizar volta o mapeamento ao padrão do sistema, mantendo nome e descrição."
           />
           <CardBody className="flex flex-col gap-3">
             {prontos.map((pronto) => (
@@ -66,13 +68,18 @@ export function TemplatesPanel({
                     startTransition(async () => setProntoState(await addReadyTemplate(pronto.chave)))
                   }
                 >
-                  Adicionar
+                  {pronto.adicionado ? "Atualizar" : "Adicionar"}
                 </Button>
               </div>
             ))}
             {prontoState.error ? (
               <p role="alert" className="text-sm text-status-reprovado">
                 {prontoState.error}
+              </p>
+            ) : null}
+            {prontoState.ok ? (
+              <p role="status" className="text-sm text-status-aprovado">
+                {prontoState.ok}
               </p>
             ) : null}
           </CardBody>
@@ -127,7 +134,7 @@ export function TemplatesPanel({
             title={template.name}
             description={
               template.description ??
-              `${template.detectedFields.length} campo(s) no PDF · ${Object.keys(template.fieldMap).length} mapeado(s)`
+              `${template.detectedFields.length} campo(s) no PDF · ${Object.keys(template.fieldMap).filter((c) => !c.startsWith("#")).length} mapeado(s)`
             }
             action={
               <div className="flex items-center gap-2">
@@ -137,7 +144,7 @@ export function TemplatesPanel({
                   size="sm"
                   onClick={() => setAberto(aberto === template.id ? null : template.id)}
                 >
-                  {aberto === template.id ? "Fechar" : "Mapear campos"}
+                  {aberto === template.id ? "Fechar" : "Editar"}
                 </Button>
                 <button
                   type="button"
@@ -183,26 +190,31 @@ function MapeamentoForm({
   return (
     <CardBody>
       <form action={action} className="flex flex-col gap-3">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nome" name="name" defaultValue={template.name} required />
+          <Field
+            label="Descrição"
+            name="description"
+            defaultValue={template.description ?? ""}
+            placeholder="Quando usar este modelo"
+          />
+        </div>
+
         <p className="text-sm text-ink-muted">
-          Para cada campo do PDF, escolha qual dado do sistema deve entrar nele. O que ficar sem
-          escolha sai em branco no formulário.
+          Para cada campo do PDF, escolha qual dado do sistema deve entrar nele, ou se ele é
+          perguntado na hora de gerar. Em &ldquo;uma opção de um grupo&rdquo;, os campos com o
+          mesmo grupo viram uma escolha única (ex.: grupo Programa, opções MCMV e SBPE). O que
+          ficar sem escolha sai em branco.
         </p>
 
-        <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">
+        <ul className="flex max-h-[32rem] flex-col gap-2 overflow-y-auto pr-1">
           {template.detectedFields.map((campo) => (
-            <li key={campo} className="grid grid-cols-2 items-center gap-3">
-              <code className="truncate text-xs text-ink" title={campo}>
-                {campo}
-              </code>
-              <Select
-                aria-label={`Dado para o campo ${campo}`}
-                name={`campo:${campo}`}
-                className="h-9 text-sm"
-                options={opcoes}
-                defaultValue={template.fieldMap[campo] ?? ""}
-                placeholder="— deixar em branco —"
-              />
-            </li>
+            <LinhaDeCampo
+              key={campo}
+              campo={campo}
+              valor={template.fieldMap[campo] ?? ""}
+              opcoes={opcoes}
+            />
           ))}
         </ul>
 
@@ -218,9 +230,59 @@ function MapeamentoForm({
         ) : null}
 
         <div>
-          <SubmitButton size="sm">Salvar mapeamento</SubmitButton>
+          <SubmitButton size="sm">Salvar</SubmitButton>
         </div>
       </form>
     </CardBody>
+  );
+}
+
+function LinhaDeCampo({
+  campo,
+  valor,
+  opcoes,
+}: {
+  campo: string;
+  valor: string;
+  opcoes: { value: string; label: string }[];
+}) {
+  const opcao = lerOpcao(valor);
+  const [destino, setDestino] = useState(opcao ? PERGUNTAR_OPCAO : valor);
+
+  return (
+    <li className="grid grid-cols-2 items-start gap-3">
+      <code className="truncate pt-2 text-xs text-ink" title={campo}>
+        {campo}
+      </code>
+      <div className="flex flex-col gap-1.5">
+        <Select
+          aria-label={`Dado para o campo ${campo}`}
+          name={`campo:${campo}`}
+          className="h-9 text-sm"
+          options={opcoes}
+          value={destino}
+          onChange={(event) => setDestino(event.target.value)}
+          placeholder="— deixar em branco —"
+        />
+        {destino === PERGUNTAR_OPCAO ? (
+          <div className="grid grid-cols-2 gap-1.5">
+            <Input
+              aria-label={`Grupo do campo ${campo}`}
+              name={`grupo:${campo}`}
+              defaultValue={opcao?.grupo ?? ""}
+              placeholder="Grupo (ex.: Programa)"
+              className="h-9 text-sm"
+            />
+            <Input
+              aria-label={`Opção do campo ${campo}`}
+              name={`opcao:${campo}`}
+              defaultValue={opcao?.opcao ?? campo}
+              placeholder="Opção (ex.: MCMV)"
+              className="h-9 text-sm"
+            />
+          </div>
+        ) : null}
+      </div>
+    </li>
   );
 }

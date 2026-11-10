@@ -2,12 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { DomainError } from "@corr/core";
-import { createFormTemplate, deleteFormTemplate, updateFormTemplateMap } from "@corr/db";
+import {
+  createFormTemplate,
+  deleteFormTemplate,
+  getFormTemplate,
+  listFormTemplates,
+  updateFormTemplateInfo,
+  updateFormTemplateMap,
+} from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { DOCUMENTS_BUCKET, removeStoredFile } from "@/server/storage";
 import { detectarCampos } from "@/server/pdf/formulario";
-import { getModeloPronto } from "@/server/pdf/modelos";
+import { getModeloPronto, origemPronta } from "@/server/pdf/modelos";
+import { ehChaveInterna, montarOpcao, PERGUNTAR_OPCAO } from "@/lib/formularios";
 
 export interface TemplateState {
   error?: string;
@@ -79,6 +87,18 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
   const ctx = await requireOrgContext();
   const modelo = getModeloPronto(chave);
   if (!modelo) return { error: "Modelo pronto não encontrado." };
+  const fieldMap = { ...modelo.fieldMap, "#pronto": modelo.chave };
+
+  // Já adicionado: atualiza o mapeamento para o mais novo, mantendo nome e
+  // descrição que o escritório deu.
+  const existente = (await listFormTemplates(ctx)).find(
+    (template) => origemPronta(template)?.chave === modelo.chave,
+  );
+  if (existente) {
+    await updateFormTemplateMap(ctx, existente.id, fieldMap);
+    revalidatePath("/configuracoes/formularios");
+    return { ok: `Mapeamento de ${existente.name} atualizado.` };
+  }
 
   const bytes = modelo.pdf();
   const campos = await detectarCampos(bytes.slice().buffer);
@@ -96,13 +116,16 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
     storagePath: caminho,
     detectedFields: campos,
   });
-  await updateFormTemplateMap(ctx, criado.id, modelo.fieldMap);
+  await updateFormTemplateMap(ctx, criado.id, fieldMap);
 
   revalidatePath("/configuracoes/formularios");
   return { ok: `${modelo.nome} adicionado.` };
 }
 
-/** Salva o de-para entre os campos do PDF e as chaves do catálogo. */
+/**
+ * Salva nome, descrição e o de-para entre os campos do PDF e as origens dos
+ * valores (chave do catálogo ou pergunta na hora de gerar).
+ */
 export async function saveFieldMap(
   templateId: string,
   _prev: TemplateState,
@@ -110,14 +133,43 @@ export async function saveFieldMap(
 ): Promise<TemplateState> {
   const ctx = await requireOrgContext();
 
-  const fieldMap: Record<string, string> = {};
+  const nome = String(formData.get("name") ?? "").trim();
+  if (nome.length < 3) return { error: "Dê um nome ao modelo." };
+  const descricao = String(formData.get("description") ?? "").trim() || null;
+
+  let atual: Record<string, string>;
+  try {
+    atual = (await getFormTemplate(ctx, templateId)).fieldMap;
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  // Chaves internas (#pronto, ordem das opções) não aparecem na tela e
+  // continuam como estavam.
+  const fieldMap: Record<string, string> = Object.fromEntries(
+    Object.entries(atual).filter(([chave]) => ehChaveInterna(chave)),
+  );
+
   for (const [chave, valor] of formData.entries()) {
     if (!chave.startsWith("campo:")) continue;
-    const destino = String(valor).trim();
-    if (destino) fieldMap[chave.slice("campo:".length)] = destino;
+    const campo = chave.slice("campo:".length);
+    let destino = String(valor).trim();
+
+    if (destino === PERGUNTAR_OPCAO) {
+      const grupo = String(formData.get(`grupo:${campo}`) ?? "").trim();
+      const opcao = String(formData.get(`opcao:${campo}`) ?? "").trim();
+      if (!grupo || !opcao) {
+        return { error: `Em "${campo}", diga o grupo e o nome da opção.` };
+      }
+      destino = montarOpcao(grupo, opcao);
+    }
+
+    if (destino) fieldMap[campo] = destino;
   }
 
   try {
+    await updateFormTemplateInfo(ctx, templateId, { name: nome, description: descricao });
     await updateFormTemplateMap(ctx, templateId, fieldMap);
   } catch (error) {
     if (error instanceof DomainError) return { error: error.message };
@@ -125,7 +177,8 @@ export async function saveFieldMap(
   }
 
   revalidatePath("/configuracoes/formularios");
-  return { ok: `${Object.keys(fieldMap).length} campo(s) mapeado(s).` };
+  const mapeados = Object.keys(fieldMap).filter((chave) => !ehChaveInterna(chave)).length;
+  return { ok: `Salvo: ${mapeados} campo(s) mapeado(s).` };
 }
 
 export async function removeTemplate(templateId: string): Promise<void> {

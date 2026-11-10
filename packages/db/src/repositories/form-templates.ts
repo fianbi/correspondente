@@ -62,6 +62,23 @@ export async function updateFormTemplateMap(
   });
 }
 
+/** Nome e descrição do modelo, editáveis depois de criado. */
+export async function updateFormTemplateInfo(
+  ctx: OrgContext,
+  templateId: string,
+  input: { name: string; description: string | null },
+) {
+  return withOrg(ctx, async (tx) => {
+    const [updated] = await tx
+      .update(formTemplates)
+      .set({ name: input.name, description: input.description, updatedAt: new Date() })
+      .where(and(eq(formTemplates.orgId, ctx.orgId), eq(formTemplates.id, templateId)))
+      .returning();
+    if (!updated) throw new NotFoundError("Modelo de formulário");
+    return updated;
+  });
+}
+
 export async function deleteFormTemplate(ctx: OrgContext, templateId: string) {
   return withOrg(ctx, async (tx) => {
     const [deleted] = await tx

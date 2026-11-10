@@ -29,6 +29,10 @@ export const DEFAULT_FLOW: FlowDef = {
             "process.proposal_number",
             "process.contract_number",
             "process.term_months",
+            "process.checking_agency",
+            "process.checking_operation",
+            "process.checking_account_number",
+            "process.checking_dv",
           ],
         },
         {

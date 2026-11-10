@@ -1,3 +1,4 @@
+import { perguntasDoModelo } from "@/lib/formularios";
 import Link from "next/link";
 import type { Metadata, Route } from "next";
 import { headers } from "next/headers";
@@ -224,7 +225,11 @@ export default async function ProcessoPage({
               processId={id}
               templates={templates
                 .filter((template) => Object.keys(template.fieldMap).length > 0)
-                .map((template) => ({ id: template.id, name: template.name }))}
+                .map((template) => ({
+                  id: template.id,
+                  name: template.name,
+                  perguntas: perguntasDoModelo(template.fieldMap),
+                }))}
             />
             <DeleteProcess processId={id} number={process.number} />
           </div>

@@ -14,7 +14,7 @@ import { preencherFormulario } from "@/server/pdf/formulario";
 
 /** Gera o formulário do banco preenchido com os dados do processo. */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; templateId: string }> },
 ) {
   const ctx = await requireOrgContext();
@@ -41,15 +41,21 @@ export async function GET(
       .storage.from(DOCUMENTS_BUCKET)
       .download(template.storagePath);
 
-    if (error || !data) return new Response("Modelo não encontrado no armazenamento.", { status: 502 });
+    if (error || !data)
+      return new Response("Modelo não encontrado no armazenamento.", { status: 502 });
 
-    const { pdf } = await preencherFormulario(await data.arrayBuffer(), template.fieldMap, {
-      person: person as unknown as Record<string, unknown>,
-      process: process as unknown as Record<string, unknown>,
-      org: org as unknown as Record<string, unknown>,
-      fieldValues,
-      incomes,
-    });
+    const { pdf } = await preencherFormulario(
+      await data.arrayBuffer(),
+      template.fieldMap,
+      {
+        person: person as unknown as Record<string, unknown>,
+        process: process as unknown as Record<string, unknown>,
+        org: org as unknown as Record<string, unknown>,
+        fieldValues,
+        incomes,
+      },
+      Object.fromEntries(new URL(request.url).searchParams),
+    );
 
     const nomeArquivo = `${template.name.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}-${process.number}.pdf`;
 

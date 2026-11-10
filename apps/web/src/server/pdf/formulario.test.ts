@@ -58,7 +58,9 @@ describe("modelo pronto Caixa MO43047011", () => {
   it("tem todos os campos mapeados presentes no PDF", async () => {
     const campos = await detectarCampos(modelo.pdf().slice().buffer);
     expect(campos.length).toBeGreaterThan(30);
-    for (const campo of Object.keys(modelo.fieldMap)) expect(campos).toContain(campo);
+    for (const campo of Object.keys(modelo.fieldMap)) {
+      if (!campo.startsWith("#")) expect(campos).toContain(campo);
+    }
   });
 
   it("sai preenchido com o cadastro", async () => {
@@ -78,5 +80,50 @@ describe("modelo pronto Caixa MO43047011", () => {
 
   it("só existe uma vez na lista", () => {
     expect(MODELOS_PRONTOS.filter((m) => m.chave === modelo.chave)).toHaveLength(1);
+  });
+});
+
+describe("perguntas na hora de gerar", () => {
+  it("monta as perguntas do modelo Caixa: caixas de marcar e programa único", async () => {
+    const { perguntasDoModelo } = await import("../../lib/formularios");
+    const perguntas = perguntasDoModelo(getModeloPronto("caixa-mo43047011")!.fieldMap);
+    expect(perguntas).toEqual([
+      { tipo: "marcar", campo: "Cheque Especial" },
+      { tipo: "marcar", campo: "Cartão de Crédito" },
+      { tipo: "marcar", campo: "Crédito Consignado" },
+      {
+        tipo: "opcao",
+        grupo: "Programa habitacional",
+        opcoes: ["MCMV", "SBPE", "PRO-COTISTA", "EGI"],
+      },
+    ]);
+  });
+
+  it("marca X só no que foi escolhido, e conta corrente vem do processo", async () => {
+    const modelo = getModeloPronto("caixa-mo43047011")!;
+    const { pdf } = await preencherFormulario(
+      modelo.pdf().slice().buffer,
+      modelo.fieldMap,
+      {
+        ...dados,
+        fieldValues: {
+          "process.checking_agency": "1234",
+          "process.checking_operation": "001",
+          "process.checking_account_number": "00012345",
+          "process.checking_dv": "6",
+        },
+      },
+      { "m:Cartão de Crédito": "1", "o:Programa habitacional": "SBPE" },
+    );
+    const form = (await PDFDocument.load(pdf)).getForm();
+    const texto = (campo: string) => form.getTextField(campo).getText() ?? "";
+    expect(texto("Cartão de Crédito")).toBe("X");
+    expect(texto("Cheque Especial")).toBe("");
+    expect(texto("CCSBPE")).toBe("X");
+    expect(texto("PCVA")).toBe("");
+    expect(texto("Conta Corrente")).toBe("X");
+    expect(texto("Conta Corrente - Agência")).toBe("1234");
+    expect(texto("Conta Corrente - DV")).toBe("6");
+    expect(texto("Declaração - sócios/familiares não participam")).toBe("X");
   });
 });

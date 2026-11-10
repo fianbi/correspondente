@@ -13,6 +13,7 @@ import {
   type ProcessStage,
   type ProcessStatus,
 } from "@corr/core";
+import { ehChaveInterna, responder } from "../../lib/formularios";
 
 /**
  * Preenchimento de formulário do banco a partir de um PDF modelo.
@@ -57,7 +58,7 @@ export const CHAVES_CALCULADAS: [string, string][] = [
   ["marcar.sempre", "Marcar X — sempre"],
   ["marcar.renda_formal", "Marcar X — tem renda formal"],
   ["marcar.renda_informal", "Marcar X — tem renda informal"],
-  ["marcar.conta_corrente", "Marcar X — abre conta corrente"],
+  ["marcar.conta_corrente", "Marcar X — tem conta corrente na proposta"],
   ["marcar.conta_poupanca", "Marcar X — abre conta poupança"],
   ["marcar.cheque_especial", "Marcar X — tem cheque especial"],
   ["marcar.cartao_credito", "Marcar X — pede cartão de crédito"],
@@ -162,7 +163,10 @@ function resolverMarca(campo: string, dados: DadosParaFormulario): boolean {
     case "renda_informal":
       return rendas.some((renda) => renda.kind !== "formal");
     case "conta_corrente":
-      return valor("assembly.checking_account") === "sim";
+      return (
+        Boolean(valor("process.checking_account_number")) ||
+        valor("assembly.checking_account") === "sim"
+      );
     case "conta_poupanca":
       return valor("assembly.savings_account") === "sim";
     case "cartao_credito":
@@ -224,6 +228,8 @@ export async function preencherFormulario(
   modelo: ArrayBuffer,
   fieldMap: Record<string, string>,
   dados: DadosParaFormulario,
+  /** Respostas da tela de geração, para os campos perguntados ao gerar. */
+  respostas: Record<string, string> = {},
 ): Promise<ResultadoPreenchimento> {
   const doc = await PDFDocument.load(modelo, { ignoreEncryption: true });
   const form = doc.getForm();
@@ -232,9 +238,9 @@ export async function preencherFormulario(
   const ignorados: string[] = [];
 
   for (const [campoDoPdf, chave] of Object.entries(fieldMap)) {
-    if (!chave) continue;
+    if (!chave || ehChaveInterna(campoDoPdf)) continue;
 
-    const valor = resolverValor(chave, dados);
+    const valor = responder(campoDoPdf, chave, respostas) ?? resolverValor(chave, dados);
     if (valor === "") {
       ignorados.push(campoDoPdf);
       continue;

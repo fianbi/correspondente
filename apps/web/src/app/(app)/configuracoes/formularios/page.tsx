@@ -4,7 +4,8 @@ import { PROCESS_FIELDS } from "@corr/core";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
 import { CHAVES_CALCULADAS } from "@/server/pdf/formulario";
-import { MODELOS_PRONTOS } from "@/server/pdf/modelos";
+import { MODELOS_PRONTOS, origemPronta } from "@/server/pdf/modelos";
+import { OPCOES_DE_PERGUNTA } from "@/lib/formularios";
 import { TemplatesPanel } from "./templates-panel";
 
 export const metadata: Metadata = { title: "Formulários" };
@@ -50,6 +51,7 @@ export default async function FormulariosPage() {
   const templates = await listFormTemplates(ctx);
 
   const opcoes = [
+    ...OPCOES_DE_PERGUNTA,
     ...CHAVES_DE_PESSOA,
     ...CHAVES_DE_ESCRITORIO,
     ...CHAVES_CALCULADAS,
@@ -73,9 +75,12 @@ export default async function FormulariosPage() {
             fieldMap: template.fieldMap,
           }))}
           opcoes={opcoes}
-          prontos={MODELOS_PRONTOS.filter(
-            (modelo) => !templates.some((template) => template.name === modelo.nome),
-          ).map((modelo) => ({ chave: modelo.chave, nome: modelo.nome, descricao: modelo.descricao }))}
+          prontos={MODELOS_PRONTOS.map((modelo) => ({
+            chave: modelo.chave,
+            nome: modelo.nome,
+            descricao: modelo.descricao,
+            adicionado: templates.some((template) => origemPronta(template)?.chave === modelo.chave),
+          }))}
         />
       </main>
     </>
