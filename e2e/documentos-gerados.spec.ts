@@ -56,13 +56,11 @@ test("modelo pronto da Caixa gera o formulário com cadastro e respostas", async
   );
   expect(resposta.status()).toBe(200);
 
-  const form = (await PDFDocument.load(await resposta.body())).getForm();
-  expect(form.getTextField("Proponente").getText()).toBeTruthy();
-  expect(form.getTextField("CPF do proponente").getText()).toMatch(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/);
-  expect(form.getTextField("Razão Social - CCA").getText()).toBe("Escritório Demo");
-  expect(form.getTextField("Cartão de Crédito").getText()).toBe("X");
-  expect(form.getTextField("Cheque Especial").getText() ?? "").toBe("");
-  expect(form.getTextField("SBPE").getText()).toBe("X");
+  expect(resposta.headers()["content-type"]).toContain("application/pdf");
+  // Os valores são escritos sobre o fundo do formulário (conteúdo e posição
+  // são conferidos no teste de unidade); aqui basta o PDF sair inteiro.
+  const doc = await PDFDocument.load(await resposta.body());
+  expect(doc.getPageCount()).toBe(1);
 });
 
 test("painel mostra a distribuição por etapa, banco e modalidade", async ({ page }) => {

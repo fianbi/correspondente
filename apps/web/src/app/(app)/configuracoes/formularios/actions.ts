@@ -25,7 +25,7 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
   const ctx = await requireOrgContext();
   const modelo = getModeloPronto(chave);
   if (!modelo) return { error: "Modelo pronto não encontrado." };
-  const fieldMap = { ...modelo.fieldMap, "#pronto": modelo.chave };
+  const fieldMap = { "#pronto": modelo.chave };
 
   // Já adicionado: troca pela versão mais nova (PDF e campos), mantendo nome e
   // descrição que o escritório deu.
@@ -33,7 +33,7 @@ export async function addReadyTemplate(chave: string): Promise<TemplateState> {
     (template) => origemPronta(template)?.chave === modelo.chave,
   );
 
-  const bytes = modelo.pdf();
+  const bytes = modelo.fundo();
   const campos = await detectarCampos(bytes.slice().buffer);
 
   const caminho = `${ctx.orgId}/modelos/${crypto.randomUUID()}.pdf`;

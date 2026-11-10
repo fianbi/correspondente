@@ -1,4 +1,5 @@
 import { perguntasDoModelo } from "@/lib/formularios";
+import { origemPronta, perguntasDoModeloPronto } from "@/server/pdf/modelos";
 import Link from "next/link";
 import type { Metadata, Route } from "next";
 import { headers } from "next/headers";
@@ -228,7 +229,12 @@ export default async function ProcessoPage({
                 .map((template) => ({
                   id: template.id,
                   name: template.name,
-                  perguntas: perguntasDoModelo(template.fieldMap),
+                  perguntas: (() => {
+                    const pronto = origemPronta(template);
+                    return pronto
+                      ? perguntasDoModeloPronto(pronto)
+                      : perguntasDoModelo(template.fieldMap);
+                  })(),
                 }))}
             />
             <DeleteProcess processId={id} number={process.number} />

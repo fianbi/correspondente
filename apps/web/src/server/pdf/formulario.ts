@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 import {
   formatBRL,
   formatCpf,
@@ -14,6 +14,7 @@ import {
   type ProcessStatus,
 } from "@corr/core";
 import { ehChaveInterna, responder } from "../../lib/formularios";
+import type { ModeloPronto } from "./modelos";
 
 /**
  * Preenchimento de formulário do banco a partir de um PDF modelo.
@@ -272,4 +273,117 @@ export async function preencherFormulario(
   form.updateFieldAppearances();
 
   return { pdf: await doc.save(), preenchidos, ignorados };
+}
+
+/** Tamanho da letra dos formulários da Caixa (Arial 11, que a Helvetica imita). */
+const TAMANHO = 11;
+const ENTRELINHA = 12;
+const PRETO = rgb(0, 0, 0);
+
+/** Quebra o texto em linhas que caibam na largura, sem cortar palavra. */
+function quebrar(texto: string, fonte: PDFFont, largura: number): string[] {
+  const linhas: string[] = [];
+  let atual = "";
+  for (const palavra of texto.split(/\s+/)) {
+    const tentativa = atual ? `${atual} ${palavra}` : palavra;
+    if (atual && fonte.widthOfTextAtSize(tentativa, TAMANHO) > largura) {
+      linhas.push(atual);
+      atual = palavra;
+    } else {
+      atual = tentativa;
+    }
+  }
+  if (atual) linhas.push(atual);
+  return linhas;
+}
+
+export interface Escrita {
+  texto: string;
+  x: number;
+  /** Linha de base, medida do topo da página. */
+  base: number;
+}
+
+/**
+ * O que escrever e onde, num modelo pronto. Separado do desenho para o teste
+ * conferir conteúdo e posição sem ler o PDF de volta.
+ */
+export function planejarModeloPronto(
+  modelo: ModeloPronto,
+  dados: DadosParaFormulario,
+  respostas: Record<string, string>,
+  fonte: PDFFont,
+): Escrita[] {
+  const escritas: Escrita[] = [];
+  const valorDe = (rotulo: string, chave: string) =>
+    responder(rotulo, chave, respostas) ?? resolverValor(chave, dados);
+
+  for (const item of modelo.itens) {
+    if (item.tipo === "marca") {
+      if (!valorDe(item.rotulo, item.valor)) continue;
+      const largura = fonte.widthOfTextAtSize("X", TAMANHO);
+      const altura = fonte.heightAtSize(TAMANHO, { descender: false });
+      escritas.push({
+        texto: "X",
+        x: item.x + (item.largura - largura) / 2,
+        base: item.topo + item.altura - (item.altura - altura) / 2 - 0.5,
+      });
+      continue;
+    }
+
+    if (item.tipo === "linha") {
+      let x = item.x;
+      for (const parte of item.partes) {
+        // Sem valor, fica uma lacuna para preencher à mão.
+        const texto =
+          typeof parte === "string" ? parte : resolverValor(parte.valor, dados) || "______";
+        escritas.push({ texto, x, base: item.base });
+        x += fonte.widthOfTextAtSize(texto, TAMANHO);
+      }
+      continue;
+    }
+
+    const texto = valorDe(item.rotulo, item.valor);
+    if (!texto) continue;
+
+    const linhas = item.largura ? quebrar(texto, fonte, item.largura) : [texto];
+    linhas.forEach((linha, indice) => {
+      const largura = fonte.widthOfTextAtSize(linha, TAMANHO);
+      const x =
+        item.centralizar && item.largura
+          ? item.x + Math.max(0, (item.largura - largura) / 2)
+          : item.x;
+      escritas.push({ texto: linha, x, base: item.base + indice * ENTRELINHA });
+    });
+  }
+
+  return escritas;
+}
+
+/**
+ * Gera um modelo pronto: escreve os valores sobre o fundo do formulário, na
+ * letra do próprio formulário. O texto cresce com o conteúdo; onde a largura
+ * acaba, desce para a linha de baixo.
+ */
+export async function desenharModeloPronto(
+  modelo: ModeloPronto,
+  dados: DadosParaFormulario,
+  respostas: Record<string, string> = {},
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.load(modelo.fundo());
+  const page = doc.getPage(0);
+  const H = page.getHeight();
+  const fonte = await doc.embedFont(StandardFonts.Helvetica);
+
+  for (const escrita of planejarModeloPronto(modelo, dados, respostas, fonte)) {
+    page.drawText(escrita.texto, {
+      x: escrita.x,
+      y: H - escrita.base,
+      size: TAMANHO,
+      font: fonte,
+      color: PRETO,
+    });
+  }
+
+  return doc.save();
 }
