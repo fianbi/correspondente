@@ -65,6 +65,21 @@ test("modelo pronto da Caixa gera o formulário com cadastro e respostas", async
   expect(doc.getPageCount()).toBe(1);
 });
 
+test("DAMP abre a página da Caixa já preenchida com o proponente", async ({ page }) => {
+  await primeiroProcesso(page);
+  await page.getByRole("group").filter({ hasText: "Gerar PDF" }).click();
+  const link = page.getByRole("link", { name: /^DAMP · / }).first();
+  const nome = (await link.textContent())!.replace(/^DAMP · /, "").trim();
+
+  const [damp] = await Promise.all([page.context().waitForEvent("page"), link.click()]);
+  await damp.waitForLoadState("load");
+  // O preenchimento roda no `ready` da página, depois dos scripts da Caixa.
+  await expect(damp.locator("#text_nome")).toHaveValue(nome);
+  await expect(damp.locator("#text_cpf")).toHaveValue(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/);
+  await expect(damp.locator("#chkusufruto1")).toBeChecked();
+  await expect(damp).toHaveTitle(`DAMP - ${nome}`);
+});
+
 test("painel mostra a distribuição por etapa, banco e modalidade", async ({ page }) => {
   await page.goto("/painel");
 

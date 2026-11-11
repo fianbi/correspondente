@@ -22,9 +22,12 @@ interface TemplateItem {
 export function ProcessDocuments({
   processId,
   templates,
+  damp,
 }: {
   processId: string;
   templates: TemplateItem[];
+  /** Proponentes que recebem a DAMP (página offline da Caixa, preenchida). */
+  damp: { personId: string; fullName: string }[];
 }) {
   const [perguntando, setPerguntando] = useState<TemplateItem | null>(null);
 
@@ -87,6 +90,25 @@ export function ProcessDocuments({
                 Nenhum formulário mapeado. Configure em Formulários, no menu lateral.
               </p>
             )}
+
+            {damp.length > 0 ? (
+              <>
+                <p className="border-t border-line px-3 pt-2 pb-1 text-xs font-medium text-ink-muted">
+                  DAMP (página da Caixa, já preenchida)
+                </p>
+                {damp.map((pessoa) => (
+                  <a
+                    key={pessoa.personId}
+                    href={`/processos/${processId}/damp/${pessoa.personId}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="block px-3 py-2 text-sm text-ink hover:bg-surface-muted"
+                  >
+                    DAMP · {pessoa.fullName}
+                  </a>
+                ))}
+              </>
+            ) : null}
           </>
         )}
       </div>

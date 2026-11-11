@@ -50,6 +50,7 @@ import { rotuloAgencia } from "@/lib/agencias";
 import { StageForm, type RenderBlock, type StepState } from "./stage-form";
 import { ProcessHeaderControls } from "./header-controls";
 import { ProcessDocuments } from "./process-documents";
+import { participantesDaDamp } from "@/server/damp/participantes";
 import { DocumentsPanel } from "./documents-panel";
 import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
@@ -221,6 +222,10 @@ export default async function ProcessoPage({
             />
             <ProcessDocuments
               processId={id}
+              damp={participantesDaDamp(process).map(({ personId, fullName }) => ({
+                personId,
+                fullName,
+              }))}
               templates={templates
                 .filter((template) => Object.keys(template.fieldMap).length > 0)
                 .map((template) => ({
