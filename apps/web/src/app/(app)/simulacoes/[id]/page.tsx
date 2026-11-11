@@ -44,7 +44,7 @@ export default async function SimulacaoPage({ params }: { params: Promise<{ id: 
           )
         }
       />
-      <main className="max-w-5xl p-6">
+      <main className="max-w-5xl p-4 sm:p-6">
         <SimulationForm simulation={simulation} />
       </main>
     </>

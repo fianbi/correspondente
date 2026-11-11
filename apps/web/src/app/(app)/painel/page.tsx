@@ -59,7 +59,7 @@ export default async function PainelPage() {
     <>
       <PageHeader title="Painel" description={`Visão geral de ${ctx.orgName}.`} />
 
-      <main className="flex flex-col gap-6 p-6">
+      <main className="flex flex-col gap-6 p-4 sm:p-6">
         {expiring.length > 0 ? (
           <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-status-aguardando" aria-hidden />

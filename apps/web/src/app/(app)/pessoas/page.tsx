@@ -35,7 +35,7 @@ export default async function PessoasPage({
         }
       />
 
-      <main className="flex flex-col gap-4 p-6">
+      <main className="flex flex-col gap-4 p-4 sm:p-6">
         <SearchInput placeholder="Buscar por nome, CPF ou celular" label="Buscar pessoa" />
 
         {rows.length === 0 ? (
@@ -48,8 +48,8 @@ export default async function PessoasPage({
             }
           />
         ) : (
-          <Card className="overflow-hidden">
-            <table className="w-full text-sm">
+          <Card className="overflow-x-auto">
+            <table className="w-full min-w-2xl text-sm">
               <thead className="border-b border-line bg-surface-muted text-left text-xs text-ink-muted">
                 <tr>
                   <th className="px-5 py-2.5 font-medium">Nome</th>

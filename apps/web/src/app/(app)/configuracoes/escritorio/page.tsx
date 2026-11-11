@@ -16,7 +16,7 @@ export default async function EscritorioPage() {
     <>
       <PageHeader title="Escritório" description="Dados usados nos formulários e documentos gerados." />
 
-      <main className="flex max-w-3xl flex-col gap-6 p-6">
+      <main className="flex max-w-3xl flex-col gap-6 p-4 sm:p-6">
         <Card>
           <CardHeader title="Informações" />
           <CardBody>

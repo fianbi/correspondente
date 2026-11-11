@@ -8,7 +8,7 @@ export default function NovaPessoaPage() {
   return (
     <>
       <PageHeader title="Nova pessoa" description="Só CPF e nome são obrigatórios; o resto pode ser completado depois." />
-      <main className="max-w-5xl p-6">
+      <main className="max-w-5xl p-4 sm:p-6">
         <PersonForm />
       </main>
     </>

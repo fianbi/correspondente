@@ -31,7 +31,7 @@ export default async function SimulacoesPage() {
         }
       />
 
-      <main className="flex flex-col gap-4 p-6">
+      <main className="flex flex-col gap-4 p-4 sm:p-6">
         {rows.length === 0 ? (
           <EmptyState
             title="Nenhuma simulação ainda"

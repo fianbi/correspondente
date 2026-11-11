@@ -20,7 +20,7 @@ export default async function PendenciasPage() {
         description="Tudo que está travando processos, em um lugar só."
       />
 
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         {pendencies.length === 0 ? (
           <EmptyState
             title="Nenhuma pendência aberta"

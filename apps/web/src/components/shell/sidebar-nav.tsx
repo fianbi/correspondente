@@ -21,56 +21,53 @@ const ITEMS = [
   { href: "/pendencias", label: "Pendências", icon: AlertCircle },
 ] as const;
 
+const RODAPE = [
+  { href: "/configuracoes/formularios", label: "Formulários", icon: FileSignature },
+  { href: "/configuracoes/escritorio", label: "Configurações", icon: Settings },
+] as const;
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  active,
+}: {
+  href: (typeof ITEMS)[number]["href"] | (typeof RODAPE)[number]["href"];
+  label: string;
+  icon: typeof Home;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
+        active
+          ? "bg-brand-50 font-medium text-brand-700"
+          : "text-ink-muted hover:bg-surface-muted hover:text-ink",
+      )}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden />
+      {label}
+    </Link>
+  );
+}
+
 export function SidebarNav() {
   const pathname = usePathname();
+  const ativo = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <nav className="flex flex-1 flex-col gap-0.5 px-2 py-3" aria-label="Navegação principal">
-      {ITEMS.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
-        return (
-          <Link
-            key={href}
-            href={href}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
-              active
-                ? "bg-brand-50 font-medium text-brand-700"
-                : "text-ink-muted hover:bg-surface-muted hover:text-ink",
-            )}
-          >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            {label}
-          </Link>
-        );
-      })}
+      {ITEMS.map((item) => (
+        <NavLink key={item.href} {...item} active={ativo(item.href)} />
+      ))}
 
       <div className="mt-auto">
-        <Link
-          href="/configuracoes/formularios"
-          className={cn(
-            "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
-            pathname === "/configuracoes/formularios"
-              ? "bg-brand-50 font-medium text-brand-700"
-              : "text-ink-muted hover:bg-surface-muted hover:text-ink",
-          )}
-        >
-          <FileSignature className="size-4 shrink-0" aria-hidden />
-          Formulários
-        </Link>
-        <Link
-          href="/configuracoes/escritorio"
-          className={cn(
-            "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition",
-            pathname === "/configuracoes/escritorio"
-              ? "bg-brand-50 font-medium text-brand-700"
-              : "text-ink-muted hover:bg-surface-muted hover:text-ink",
-          )}
-        >
-          <Settings className="size-4 shrink-0" aria-hidden />
-          Configurações
-        </Link>
+        {RODAPE.map((item) => (
+          <NavLink key={item.href} {...item} active={ativo(item.href)} />
+        ))}
       </div>
     </nav>
   );

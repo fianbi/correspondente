@@ -10,7 +10,7 @@ export default async function NovaSimulacaoPage() {
   return (
     <>
       <PageHeader title="Nova simulação" />
-      <main className="max-w-5xl p-6">
+      <main className="max-w-5xl p-4 sm:p-6">
         <SimulationForm />
       </main>
     </>

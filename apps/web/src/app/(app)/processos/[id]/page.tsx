@@ -242,7 +242,7 @@ export default async function ProcessoPage({
         }
       />
 
-      <main className="flex flex-col gap-5 p-6 lg:flex-row">
+      <main className="flex flex-col gap-5 p-4 sm:p-6 lg:flex-row">
         <nav className="lg:w-64 lg:shrink-0" aria-label="Etapas do processo">
           <ol className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
             {visibleSteps.map((step) => {

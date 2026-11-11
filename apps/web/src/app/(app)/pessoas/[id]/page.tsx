@@ -129,7 +129,7 @@ export default async function PessoaPage({
         }
       />
 
-      <main className="flex max-w-5xl flex-col gap-6 p-6">
+      <main className="flex max-w-5xl flex-col gap-6 p-4 sm:p-6">
         <nav aria-label="Seções da pessoa" className="flex flex-wrap gap-1 border-b border-line pb-2">
           {TABS.map((target) => (
             <Link

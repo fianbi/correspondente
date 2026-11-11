@@ -51,7 +51,7 @@ export default async function ProcessosPage({
         }
       />
 
-      <main className="flex flex-col gap-4 p-6">
+      <main className="flex flex-col gap-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput placeholder="Buscar por cliente, CPF ou número" label="Buscar processo" />
           <div className="flex rounded-md border border-line bg-white p-0.5 text-sm" role="group" aria-label="Quais processos">

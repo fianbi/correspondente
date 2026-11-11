@@ -18,7 +18,7 @@ export default async function FormulariosPage() {
         description="Formulários do banco, preenchidos automaticamente com os dados do processo."
       />
 
-      <main className="max-w-4xl p-6">
+      <main className="max-w-4xl p-4 sm:p-6">
         <TemplatesPanel
           templates={templates.map((template) => ({
             id: template.id,
