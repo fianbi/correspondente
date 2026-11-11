@@ -46,6 +46,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { DynamicOptions } from "@/components/fields/field-input";
 import { History } from "./history";
+import { rotuloAgencia } from "@/lib/agencias";
 import { StageForm, type RenderBlock, type StepState } from "./stage-form";
 import { ProcessHeaderControls } from "./header-controls";
 import { ProcessDocuments } from "./process-documents";
@@ -102,7 +103,7 @@ export default async function ProcessoPage({
 
   const options: DynamicOptions = {
     banks: banks.map((b) => ({ value: b.id, label: b.shortName })),
-    agencies: agencies.map((a) => ({ value: a.id, label: `${a.number} — ${a.name}` })),
+    agencies: agencies.map((a) => ({ value: a.id, label: rotuloAgencia(a) })),
     brokers: brokers.map((b) => ({ value: b.id, label: b.name })),
     real_estate_agencies: realEstate.map((a) => ({ value: a.id, label: a.name })),
     members: memberOptions,
@@ -369,6 +370,7 @@ export default async function ProcessoPage({
                 .join(" · ")}
               blocks={blocks}
               options={options}
+              agencias={agencies.map((a) => ({ id: a.id, number: a.number, name: a.name, city: a.city }))}
               state={stateOf(viewedStep)}
               assignedTo={stateByStep.get(viewedStep.key)?.assignedTo ?? null}
               members={memberOptions}

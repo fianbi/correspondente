@@ -2,8 +2,10 @@
 
 import type { FieldOption, FieldView } from "@corr/core";
 import { toInputValue } from "@corr/core";
-import { Field, Input, Label } from "@/components/ui/field";
+import { Field, Label } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import type { AgenciaOpcao } from "@/lib/agencias";
+import { AgencyInput } from "./agency-input";
 
 /** Opções que vêm do banco, resolvidas pela página e passadas para cá. */
 export type DynamicOptions = Partial<Record<string, FieldOption[]>>;
@@ -19,46 +21,31 @@ export function FieldInput({
   def,
   value,
   options,
+  agencias,
   error,
 }: {
   def: FieldView;
   value: string | number | null;
   options?: DynamicOptions;
+  /** Cadastro de agências do escritório, para o campo de agência. */
+  agencias?: AgenciaOpcao[];
   error?: string;
 }) {
   const id = `field-${def.key}`;
   const current = toInputValue(def, value ?? null);
 
-  // Agência: o operador digita o número (o servidor cadastra se for nova) e as
-  // já usadas aparecem como sugestão. Lista fechada travava quem ainda não
-  // tinha nenhuma agência cadastrada.
+  // Agência: escolhida do cadastro do escritório pelo número, nome ou
+  // cidade; número novo é cadastrado ao salvar (ver AgencyInput).
   if (def.optionsSource === "agencies") {
-    const agencias = options?.agencies ?? [];
-    const numeroDe = (label: string) => label.split(" — ")[0] ?? label;
-    const atual = agencias.find((agencia) => agencia.value === current);
-    const listaId = `${id}-sugestoes`;
-
     return (
-      <Field label={def.label} name={def.key} hint={def.help} error={error}>
-        <>
-          <Input
-            id={id}
-            name={def.key}
-            defaultValue={atual ? numeroDe(atual.label) : ""}
-            placeholder="Número da agência"
-            inputMode="numeric"
-            list={listaId}
-            invalid={Boolean(error)}
-          />
-          <datalist id={listaId}>
-            {agencias.map((agencia) => (
-              <option key={agencia.value} value={numeroDe(agencia.label)}>
-                {agencia.label}
-              </option>
-            ))}
-          </datalist>
-        </>
-      </Field>
+      <AgencyInput
+        name={def.key}
+        label={def.label}
+        hint={def.help}
+        error={error}
+        agencias={agencias ?? []}
+        atualId={current}
+      />
     );
   }
 

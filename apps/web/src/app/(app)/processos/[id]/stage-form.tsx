@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FieldInput, type DynamicOptions } from "@/components/fields/field-input";
+import type { AgenciaOpcao } from "@/lib/agencias";
 import { assignStageAction, saveStageFields, type StageFormState } from "./stage-actions";
 import { StepActions } from "./step-progress";
 
@@ -33,6 +34,7 @@ export function StageForm({
   subtitle,
   blocks,
   options,
+  agencias,
   state: stepState,
   assignedTo,
   members,
@@ -45,6 +47,7 @@ export function StageForm({
   subtitle: string;
   blocks: RenderBlock[];
   options: DynamicOptions;
+  agencias: AgenciaOpcao[];
   state: StepState;
   assignedTo: string | null;
   members: FieldOption[];
@@ -95,6 +98,7 @@ export function StageForm({
                   def={def}
                   value={value}
                   options={options}
+                  agencias={agencias}
                   error={formState.fieldErrors?.[def.key]}
                 />
               </div>

@@ -11,6 +11,11 @@ import {
   getProcess,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
+import {
+  CAMPO_CIDADE_AGENCIA_NOVA,
+  CAMPO_NOME_AGENCIA_NOVA,
+  NUMERO_AGENCIA,
+} from "@/lib/agencias";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -45,17 +50,36 @@ export async function saveStageFields(
   const allowedKeys = blocks.flatMap((block) => block.fields);
   const entrada: Record<string, unknown> = Object.fromEntries(formData);
 
-  // Agência vem digitada (o número); vira o id da agência, cadastrada na hora
-  // se for nova. Banco: o do formulário, o do processo ou, sem nenhum, a Caixa.
+  // Agência: vem o id de uma do cadastro ou, se for nova, o número digitado
+  // (com nome e cidade opcionais), que é cadastrada aqui mesmo. Banco: o do
+  // formulário, o do processo ou, sem nenhum, a Caixa.
   const agencia =
     typeof entrada["process.agency"] === "string" ? entrada["process.agency"].trim() : "";
   if (allowedKeys.includes("process.agency") && agencia && !UUID.test(agencia)) {
+    if (!NUMERO_AGENCIA.test(agencia)) {
+      return {
+        error: "Revise os campos destacados.",
+        fieldErrors: {
+          "process.agency":
+            "Agência não encontrada no cadastro. Para cadastrar uma nova, digite o número dela.",
+        },
+      };
+    }
     const bankId =
       (typeof entrada["process.bank"] === "string" && entrada["process.bank"]) ||
       process.bankId ||
       (await listBanks()).find((bank) => bank.code === "104")?.id;
     if (!bankId) return { error: "Escolha o banco antes de informar a agência." };
-    entrada["process.agency"] = await findOrCreateAgency(ctx, { bankId, number: agencia });
+    const texto = (chave: string) => {
+      const valor = entrada[chave];
+      return typeof valor === "string" ? valor : null;
+    };
+    entrada["process.agency"] = await findOrCreateAgency(ctx, {
+      bankId,
+      number: agencia,
+      name: texto(CAMPO_NOME_AGENCIA_NOVA),
+      city: texto(CAMPO_CIDADE_AGENCIA_NOVA),
+    });
   }
 
   const { values, errors } = parseFieldPatch(entrada, allowedKeys);

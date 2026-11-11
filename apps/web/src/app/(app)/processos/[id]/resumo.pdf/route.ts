@@ -1,4 +1,5 @@
 import { NotFoundError, resolveCurrentStep, stepsForModality } from "@corr/core";
+import { rotuloAgencia } from "@/lib/agencias";
 import { getOrg, getProcess, listAgencies, listBanks, listBrokers } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { gerarResumoPdf } from "@/server/pdf/resumo";
@@ -51,7 +52,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         propertyAddress: process.propertyAddress,
         propertyRegistration: process.propertyRegistration,
         bankName: banks.find((b) => b.id === process.bankId)?.name ?? null,
-        agencyName: agencies.find((a) => a.id === process.agencyId)?.name ?? null,
+        agencyName: (() => {
+          const agencia = agencies.find((a) => a.id === process.agencyId);
+          return agencia ? rotuloAgencia(agencia) : null;
+        })(),
         brokerName: brokers.find((b) => b.id === process.brokerId)?.name ?? null,
         createdAt: process.createdAt,
       },

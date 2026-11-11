@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata, Route } from "next";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { MODALITY_LABELS, formatBRL, formatCpf } from "@corr/core";
-import { currentStepOf, listProcesses } from "@corr/db";
+import { currentStepOf, listAgencies, listProcesses } from "@corr/db";
+import { rotuloAgencia } from "@/lib/agencias";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader, EmptyState } from "@/components/shell/page-header";
 import { Card } from "@/components/ui/card";
@@ -20,17 +21,26 @@ export const metadata: Metadata = { title: "Processos" };
 export default async function ProcessosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ encerrados?: string; q?: string }>;
+  searchParams: Promise<{ encerrados?: string; q?: string; agencia?: string }>;
 }) {
   const ctx = await requireOrgContext();
-  const { encerrados, q } = await searchParams;
+  const { encerrados, q, agencia } = await searchParams;
   const includeClosed = encerrados === "1";
 
-  const rows = await listProcesses(ctx, { includeClosed, search: q });
-  const filterHref = (closed: boolean) => {
+  const [rows, agencias] = await Promise.all([
+    listProcesses(ctx, {
+      includeClosed,
+      search: q,
+      agencyId: agencia && /^[0-9a-f-]{36}$/i.test(agencia) ? agencia : undefined,
+    }),
+    agencia ? listAgencies(ctx) : Promise.resolve([]),
+  ]);
+  const agenciaFiltrada = agencias.find((item) => item.id === agencia);
+  const filterHref = (closed: boolean, comAgencia = true) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (closed) params.set("encerrados", "1");
+    if (agencia && comAgencia) params.set("agencia", agencia);
     const query = params.toString();
     return (query ? `/processos?${query}` : "/processos") as Route;
   };
@@ -74,6 +84,16 @@ export default async function ProcessosPage({
               </Link>
             ))}
           </div>
+          {agenciaFiltrada ? (
+            <Link
+              href={filterHref(includeClosed, false)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm text-brand-700 hover:bg-brand-100"
+              aria-label="Tirar o filtro de agência"
+            >
+              Agência {rotuloAgencia(agenciaFiltrada)}
+              <X className="size-3.5" aria-hidden />
+            </Link>
+          ) : null}
         </div>
 
         {rows.length === 0 ? (
@@ -94,6 +114,7 @@ export default async function ProcessosPage({
                   <th className="px-5 py-2.5 font-medium">Cliente</th>
                   <th className="px-5 py-2.5 font-medium">Modalidade</th>
                   <th className="px-5 py-2.5 font-medium">Banco</th>
+                  <th className="px-5 py-2.5 font-medium">Agência</th>
                   <th className="px-5 py-2.5 font-medium">Etapa</th>
                   <th className="px-5 py-2.5 font-medium">Status</th>
                   <th className="px-5 py-2.5 text-right font-medium">Financiamento</th>
@@ -116,6 +137,7 @@ export default async function ProcessosPage({
                       {process.modality ? MODALITY_LABELS[process.modality] : "—"}
                     </td>
                     <td className="px-5 py-3 text-ink-muted">{process.bankShortName ?? "—"}</td>
+                    <td className="tabular px-5 py-3 text-ink-muted">{process.agencyNumber ?? "—"}</td>
                     <td className="px-5 py-3 text-ink-muted">
                       {currentStepOf(process).label}
                     </td>

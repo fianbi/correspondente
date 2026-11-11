@@ -8,6 +8,7 @@ import {
   FileSignature,
   FileText,
   Home,
+  Landmark,
   Settings,
   Users,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const ITEMS = [
 ] as const;
 
 const RODAPE = [
+  { href: "/configuracoes/agencias", label: "Agências", icon: Landmark },
   { href: "/configuracoes/formularios", label: "Formulários", icon: FileSignature },
   { href: "/configuracoes/escritorio", label: "Configurações", icon: Settings },
 ] as const;

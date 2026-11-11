@@ -60,6 +60,7 @@ const listSelection = {
   personCpf: people.cpf,
   bankShortName: banks.shortName,
   agencyName: agencies.name,
+  agencyNumber: agencies.number,
   brokerName: brokers.name,
   assignedToName: profiles.fullName,
 } as const;
@@ -82,6 +83,8 @@ export interface ListProcessesOptions {
   includeClosed?: boolean;
   /** Nome ou CPF do cliente principal, ou número do processo. */
   search?: string;
+  /** Só os processos desta agência. */
+  agencyId?: string;
 }
 
 export async function listProcesses(ctx: OrgContext, options: ListProcessesOptions = {}) {
@@ -89,6 +92,7 @@ export async function listProcesses(ctx: OrgContext, options: ListProcessesOptio
     const filters = [eq(processes.orgId, ctx.orgId)];
     if (options.stage) filters.push(eq(processes.stage, options.stage));
     if (options.status) filters.push(eq(processes.status, options.status));
+    if (options.agencyId) filters.push(eq(processes.agencyId, options.agencyId));
     else if (!options.includeClosed) {
       filters.push(notInArray(processes.status, [...CLOSED_STATUSES]));
     }
