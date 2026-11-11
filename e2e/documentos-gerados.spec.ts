@@ -44,7 +44,9 @@ test("modelo pronto da Caixa gera o formulário com cadastro e respostas", async
   const url = await primeiroProcesso(page);
   await page.getByRole("group").filter({ hasText: "Gerar PDF" }).click();
   await page.getByRole("button", { name: /MO43047011/ }).click();
-  await expect(page.getByLabel("Cartão de Crédito")).toBeVisible();
+  // A etapa do processo também tem um campo "Cartão de crédito": a pergunta
+  // do formulário é a caixa de marcar.
+  await expect(page.getByRole("checkbox", { name: "Cartão de Crédito" })).toBeVisible();
   await expect(page.getByLabel("EGI")).toBeVisible();
 
   const id = /\/processos\/([0-9a-f-]{36})/.exec(url)![1];
