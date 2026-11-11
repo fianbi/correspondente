@@ -122,3 +122,73 @@ describe("modelo pronto Caixa MO43047011", async () => {
     expect(MODELOS_PRONTOS.filter((m) => m.chave === modelo.chave)).toHaveLength(1);
   });
 });
+
+describe("modelos prontos Caixa MO30844 e MO30825", async () => {
+  const { desenharModeloPronto, planejarModeloPronto } = await import("./formulario");
+  const { perguntasDoModeloPronto } = await import("./modelos");
+  const { StandardFonts } = await import("pdf-lib");
+  const fonte = await (await PDFDocument.create()).embedFont(StandardFonts.Helvetica);
+
+  const comProcesso = {
+    ...dados,
+    process: {
+      ...dados.process,
+      participants: [
+        { fullName: "Maria Souza", cpf: "52998224725", role: "proponente" },
+        { fullName: "Ana Lima", cpf: "39053344705", role: "coproponente" },
+        { fullName: "Pedro Vendedor", cpf: "16899535009", role: "vendedor" },
+      ],
+    },
+    fieldValues: {
+      "process.checking_agency": "2352",
+      "process.checking_operation": "001",
+      "process.checking_account_number": "00012345",
+      "process.checking_dv": "6",
+    },
+  };
+
+  it("MO30844: cliente, conta op.conta-dv, débitos marcados e participantes", () => {
+    const modelo = getModeloPronto("caixa-mo30844")!;
+    const plano = planejarModeloPronto(modelo, comProcesso, {}, fonte);
+    const textos = plano.map((escrita) => escrita.texto);
+    expect(textos).toContain("Maria Souza");
+    expect(textos).toContain("529.982.247-25");
+    expect(textos).toContain("2352");
+    expect(textos).toContain("001.00012345-6");
+    expect(plano.filter((escrita) => escrita.texto === "X")).toHaveLength(2);
+    expect(textos).toContain("Curitiba, 10 de novembro de 2026");
+    // Proponente, 2º proponente e cônjuge do cadastro; o vendedor não assina.
+    expect(textos).toContain("Maria Souza / 529.982.247-25");
+    expect(textos).toContain("Ana Lima / 390.533.447-05");
+    expect(textos).toContain("José Souza / 111.444.777-35");
+    expect(textos.join(" ")).not.toContain("Pedro");
+    expect(perguntasDoModeloPronto(modelo)).toEqual([]);
+  });
+
+  it("MO30825: só proponentes, com Desconheço possuir marcado para cada um", () => {
+    const modelo = getModeloPronto("caixa-mo30825")!;
+    const plano = planejarModeloPronto(modelo, comProcesso, {}, fonte);
+    const textos = plano.map((escrita) => escrita.texto);
+    expect(textos).toContain("Ana Lima");
+    expect(textos).toContain("390.533.447-05");
+    expect(textos.join(" ")).not.toContain("José");
+    const marcas = plano.filter((escrita) => escrita.texto === "X");
+    expect(marcas).toHaveLength(2);
+    expect(marcas.every((marca) => marca.pagina === 1)).toBe(true);
+    expect(perguntasDoModeloPronto(modelo)).toEqual([]);
+  });
+
+  it("gera os PDFs com todas as páginas do formulário", async () => {
+    for (const [chave, paginas] of [
+      ["caixa-mo30844", 2],
+      ["caixa-mo30825", 3],
+    ] as const) {
+      const pdf = await desenharModeloPronto(getModeloPronto(chave)!, comProcesso, {});
+      expect((await PDFDocument.load(pdf)).getPageCount()).toBe(paginas);
+      if (process.env.SALVAR_PDF) {
+        const fs = await import("node:fs");
+        fs.writeFileSync(`${process.env.SALVAR_PDF}/${chave}.pdf`, pdf);
+      }
+    }
+  });
+});

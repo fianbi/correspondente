@@ -52,6 +52,10 @@ export interface DadosParaFormulario {
 export const CHAVES_CALCULADAS: [string, string][] = [
   ["coobrigado.fullName", "Coobrigado — nome (2º proponente ou cônjuge)"],
   ["coobrigado.cpf", "Coobrigado — CPF"],
+  ["participante.1.assinatura", "Participantes (proponentes e cônjuge) — 1º: nome / CPF"],
+  ["proponente.1.assinatura", "Proponentes — 1º: nome / CPF"],
+  ["conta.caixa", "Conta corrente da proposta — op.conta-dv"],
+  ["local.data", "Local e data por extenso (cidade do escritório, hoje)"],
   ["hoje.data", "Hoje — data (dd/mm/aaaa)"],
   ["hoje.dia", "Hoje — dia"],
   ["hoje.mes", "Hoje — mês por extenso"],
@@ -93,6 +97,16 @@ export function resolverValor(chave: string, dados: DadosParaFormulario): string
   if (escopo === "person") return formatarPessoa(campo, dados.person[campo]);
   if (escopo === "org") return texto(dados.org[campo]);
   if (escopo === "coobrigado") return resolverCoobrigado(campo, dados);
+  if (escopo === "participante" || escopo === "proponente") {
+    return resolverParticipante(escopo, campo, dados);
+  }
+  if (escopo === "conta" && campo === "caixa") return contaCaixa(dados);
+  if (escopo === "local" && campo === "data") {
+    const hoje = dados.hoje ?? new Date();
+    const cidade = texto(dados.org.city);
+    const data = `${resolverHoje("dia", hoje)} de ${resolverHoje("mes", hoje)} de ${resolverHoje("ano", hoje)}`;
+    return cidade ? `${cidade}, ${data}` : data;
+  }
   if (escopo === "hoje") return resolverHoje(campo, dados.hoje ?? new Date());
   if (escopo === "marcar") return resolverMarca(campo, dados) ? "X" : "";
 
@@ -139,6 +153,56 @@ function resolverCoobrigado(campo: string, dados: DadosParaFormulario): string {
   return "";
 }
 
+/**
+ * Quem assina pelo financiamento, na ordem dos formulários da Caixa: o
+ * proponente principal, os demais proponentes e, só em `participante`, os
+ * cônjuges (o cadastrado no processo ou, sem ele, o do cadastro do
+ * proponente). Vendedor, anuente e engenheiro não entram.
+ */
+export function participantesDoFinanciamento(
+  dados: DadosParaFormulario,
+  soProponentes: boolean,
+): { nome: string; cpf: string }[] {
+  const participantes = (dados.process.participants ?? []) as Participante[];
+  const lista: { nome: string; cpf: string }[] = [];
+  const digitos = (cpf: string) => cpf.replace(/\D/g, "");
+  const incluir = (nome: string, cpf: string) => {
+    if (!nome && !cpf) return;
+    if (cpf && lista.some((p) => digitos(p.cpf) === digitos(cpf))) return;
+    lista.push({ nome, cpf });
+  };
+
+  incluir(texto(dados.person.fullName), texto(dados.person.cpf));
+  for (const p of participantes) if (p.role === "coproponente") incluir(p.fullName, p.cpf);
+  if (!soProponentes) {
+    for (const p of participantes) if (p.role === "conjuge") incluir(p.fullName, p.cpf);
+    incluir(texto(dados.person.spouseName), texto(dados.person.spouseCpf));
+  }
+  return lista;
+}
+
+/** `participante.2.nome`, `proponente.1.cpf`, `participante.3.assinatura` (nome / CPF). */
+function resolverParticipante(escopo: string, campo: string, dados: DadosParaFormulario): string {
+  const [ordem, parte] = campo.split(".");
+  const quem = participantesDoFinanciamento(dados, escopo === "proponente")[Number(ordem) - 1];
+  if (!quem) return "";
+  const cpf = quem.cpf ? formatCpf(quem.cpf) : "";
+  if (parte === "nome") return quem.nome;
+  if (parte === "cpf") return cpf;
+  if (parte === "assinatura") return [quem.nome, cpf].filter(Boolean).join(" / ");
+  return "";
+}
+
+/** Conta corrente da proposta como a Caixa escreve: operação.conta-DV. */
+function contaCaixa(dados: DadosParaFormulario): string {
+  const valor = (chave: string) => (dados.fieldValues[chave] ?? "").trim();
+  const conta = valor("process.checking_account_number");
+  if (!conta) return "";
+  const operacao = valor("process.checking_operation");
+  const dv = valor("process.checking_dv");
+  return `${operacao ? `${operacao}.` : ""}${conta}${dv ? `-${dv}` : ""}`;
+}
+
 function resolverHoje(campo: string, hoje: Date): string {
   // Data no fuso de Brasília: o servidor roda em UTC e, depois das 21h, já
   // seria "amanhã".
@@ -155,6 +219,12 @@ function resolverHoje(campo: string, hoje: Date): string {
 function resolverMarca(campo: string, dados: DadosParaFormulario): boolean {
   const valor = (chave: string) => dados.fieldValues[chave] ?? null;
   const rendas = dados.incomes ?? [];
+
+  // Uma marca por proponente: `marcar.proponente.2` só sai se houver o 2º.
+  if (campo.startsWith("proponente.")) {
+    const ordem = Number(campo.split(".")[1]);
+    return participantesDoFinanciamento(dados, true).length >= ordem;
+  }
 
   switch (campo) {
     case "sempre":
@@ -281,12 +351,12 @@ const ENTRELINHA = 12;
 const PRETO = rgb(0, 0, 0);
 
 /** Quebra o texto em linhas que caibam na largura, sem cortar palavra. */
-function quebrar(texto: string, fonte: PDFFont, largura: number): string[] {
+function quebrar(texto: string, fonte: PDFFont, largura: number, tamanho = TAMANHO): string[] {
   const linhas: string[] = [];
   let atual = "";
   for (const palavra of texto.split(/\s+/)) {
     const tentativa = atual ? `${atual} ${palavra}` : palavra;
-    if (atual && fonte.widthOfTextAtSize(tentativa, TAMANHO) > largura) {
+    if (atual && fonte.widthOfTextAtSize(tentativa, tamanho) > largura) {
       linhas.push(atual);
       atual = palavra;
     } else {
@@ -299,6 +369,9 @@ function quebrar(texto: string, fonte: PDFFont, largura: number): string[] {
 
 export interface Escrita {
   texto: string;
+  /** Página do formulário, a partir de 0. */
+  pagina: number;
+  tamanho: number;
   x: number;
   /** Linha de base, medida do topo da página. */
   base: number;
@@ -319,12 +392,15 @@ export function planejarModeloPronto(
     responder(rotulo, chave, respostas) ?? resolverValor(chave, dados);
 
   for (const item of modelo.itens) {
+    const pagina = item.pagina ?? 0;
     if (item.tipo === "marca") {
       if (!valorDe(item.rotulo, item.valor)) continue;
       const largura = fonte.widthOfTextAtSize("X", TAMANHO);
       const altura = fonte.heightAtSize(TAMANHO, { descender: false });
       escritas.push({
         texto: "X",
+        pagina,
+        tamanho: TAMANHO,
         x: item.x + (item.largura - largura) / 2,
         base: item.topo + item.altura - (item.altura - altura) / 2 - 0.5,
       });
@@ -337,7 +413,7 @@ export function planejarModeloPronto(
         // Sem valor, fica uma lacuna para preencher à mão.
         const texto =
           typeof parte === "string" ? parte : resolverValor(parte.valor, dados) || "______";
-        escritas.push({ texto, x, base: item.base });
+        escritas.push({ texto, pagina, tamanho: TAMANHO, x, base: item.base });
         x += fonte.widthOfTextAtSize(texto, TAMANHO);
       }
       continue;
@@ -346,14 +422,16 @@ export function planejarModeloPronto(
     const texto = valorDe(item.rotulo, item.valor);
     if (!texto) continue;
 
-    const linhas = item.largura ? quebrar(texto, fonte, item.largura) : [texto];
+    const tamanho = item.tamanho ?? TAMANHO;
+    const entrelinha = (ENTRELINHA * tamanho) / TAMANHO;
+    const linhas = item.largura ? quebrar(texto, fonte, item.largura, tamanho) : [texto];
     linhas.forEach((linha, indice) => {
-      const largura = fonte.widthOfTextAtSize(linha, TAMANHO);
+      const largura = fonte.widthOfTextAtSize(linha, tamanho);
       const x =
         item.centralizar && item.largura
           ? item.x + Math.max(0, (item.largura - largura) / 2)
           : item.x;
-      escritas.push({ texto: linha, x, base: item.base + indice * ENTRELINHA });
+      escritas.push({ texto: linha, pagina, tamanho, x, base: item.base + indice * entrelinha });
     });
   }
 
@@ -371,15 +449,14 @@ export async function desenharModeloPronto(
   respostas: Record<string, string> = {},
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.load(modelo.fundo());
-  const page = doc.getPage(0);
-  const H = page.getHeight();
   const fonte = await doc.embedFont(StandardFonts.Helvetica);
 
   for (const escrita of planejarModeloPronto(modelo, dados, respostas, fonte)) {
+    const page = doc.getPage(escrita.pagina);
     page.drawText(escrita.texto, {
       x: escrita.x,
-      y: H - escrita.base,
-      size: TAMANHO,
+      y: page.getHeight() - escrita.base,
+      size: escrita.tamanho,
       font: fonte,
       color: PRETO,
     });
