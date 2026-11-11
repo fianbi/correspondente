@@ -8,6 +8,7 @@ import {
   DomainError,
   NotFoundError,
   STEP_ORDER,
+  exigirPermissao,
   resolveCurrentStep,
   stepsForModality,
 } from "@corr/core";
@@ -276,6 +277,7 @@ export async function deleteProcess(
   processId: string,
   typedNumber: string,
 ): Promise<{ removedFiles: string[] }> {
+  exigirPermissao(ctx, "excluir_processo");
   return withOrg(ctx, async (tx) => {
     const [process] = await tx
       .select({ number: processes.number })

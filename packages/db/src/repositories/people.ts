@@ -4,6 +4,7 @@ import {
   type PersonInput,
   DomainError,
   NotFoundError,
+  exigirPermissao,
   nomeParaConfirmar,
   onlyDigits,
 } from "@corr/core";
@@ -225,6 +226,7 @@ export async function deletePerson(
   personId: string,
   typedName: string,
 ): Promise<{ removedFiles: string[] }> {
+  exigirPermissao(ctx, "excluir_pessoa");
   return withOrg(ctx, async (tx) => {
     const [person] = await tx
       .select({ fullName: people.fullName })

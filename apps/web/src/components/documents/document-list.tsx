@@ -49,12 +49,15 @@ export function DocumentList({
   groups,
   context,
   ownerOptions,
+  canDelete = true,
 }: {
   groups: DocumentGroup[];
   /** Onde a lista aparece: muda o texto de origem de cada linha. */
   context: { kind: "processo"; processId: string } | { kind: "pessoa" };
   /** Pessoas a quem um documento pode ser atribuído na edição. */
   ownerOptions?: SelectOption[];
+  /** O papel de quem vê permite excluir documento. */
+  canDelete?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -81,6 +84,7 @@ export function DocumentList({
                   document={document}
                   context={context}
                   ownerOptions={ownerOptions}
+                  canDelete={canDelete}
                 />
               ))}
             </ul>
@@ -112,10 +116,12 @@ function DocumentItem({
   document,
   context,
   ownerOptions,
+  canDelete,
 }: {
   document: DocumentRow;
   context: { kind: "processo"; processId: string } | { kind: "pessoa" };
   ownerOptions?: SelectOption[];
+  canDelete: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [mode, setMode] = useState<"view" | "rejecting" | "editing">("view");
@@ -222,17 +228,19 @@ function DocumentItem({
             <IconButton label="Corrigir tipo ou pessoa" onClick={() => setMode("editing")}>
               <Pencil className="size-4" aria-hidden />
             </IconButton>
-            <IconButton
-              label="Excluir"
-              disabled={pending}
-              onClick={() => {
-                if (window.confirm(`Excluir "${document.title}"? O arquivo é apagado e não volta.`)) {
-                  startTransition(() => removeDocument(document.id));
-                }
-              }}
-            >
-              <Trash2 className="size-4" aria-hidden />
-            </IconButton>
+            {canDelete ? (
+              <IconButton
+                label="Excluir"
+                disabled={pending}
+                onClick={() => {
+                  if (window.confirm(`Excluir "${document.title}"? O arquivo é apagado e não volta.`)) {
+                    startTransition(() => removeDocument(document.id));
+                  }
+                }}
+              >
+                <Trash2 className="size-4" aria-hidden />
+              </IconButton>
+            ) : null}
           </div>
         ) : null}
       </div>

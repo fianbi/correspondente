@@ -18,7 +18,9 @@ export default async function LoginPage({
         <p className="text-sm font-semibold uppercase tracking-wide text-brand-600">Correspondente</p>
         <h1 className="mt-2 text-2xl font-semibold text-ink">Entrar na sua conta</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Gestão de processos de crédito imobiliário do seu escritório.
+          {next?.startsWith("/convite/")
+            ? "Entre (ou crie sua conta) com o e-mail que recebeu o convite."
+            : "Gestão de processos de crédito imobiliário do seu escritório."}
         </p>
       </div>
 
@@ -26,7 +28,10 @@ export default async function LoginPage({
 
       <p className="text-sm text-ink-muted">
         Ainda não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-brand-600 hover:underline">
+        <Link
+          href={next ? `/cadastro?next=${encodeURIComponent(next)}` : "/cadastro"}
+          className="font-medium text-brand-600 hover:underline"
+        >
           Criar conta
         </Link>
       </p>

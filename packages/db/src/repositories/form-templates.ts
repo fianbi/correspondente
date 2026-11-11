@@ -1,4 +1,4 @@
-import { type OrgContext, NotFoundError } from "@corr/core";
+import { type OrgContext, NotFoundError, exigirPermissao } from "@corr/core";
 import { and, asc, eq } from "drizzle-orm";
 import { withOrg } from "../client";
 import { formTemplates } from "../schema/documents";
@@ -29,6 +29,7 @@ export async function createFormTemplate(
   ctx: OrgContext,
   input: { name: string; description?: string | null; storagePath: string; detectedFields: string[] },
 ) {
+  exigirPermissao(ctx, "gerenciar_formularios");
   return withOrg(ctx, async (tx) => {
     const [created] = await tx
       .insert(formTemplates)
@@ -51,6 +52,7 @@ export async function updateFormTemplateMap(
   templateId: string,
   fieldMap: Record<string, string>,
 ) {
+  exigirPermissao(ctx, "gerenciar_formularios");
   return withOrg(ctx, async (tx) => {
     const [updated] = await tx
       .update(formTemplates)
@@ -68,6 +70,7 @@ export async function updateFormTemplateInfo(
   templateId: string,
   input: { name: string; description: string | null },
 ) {
+  exigirPermissao(ctx, "gerenciar_formularios");
   return withOrg(ctx, async (tx) => {
     const [updated] = await tx
       .update(formTemplates)
@@ -80,6 +83,7 @@ export async function updateFormTemplateInfo(
 }
 
 export async function deleteFormTemplate(ctx: OrgContext, templateId: string) {
+  exigirPermissao(ctx, "gerenciar_formularios");
   return withOrg(ctx, async (tx) => {
     const [deleted] = await tx
       .delete(formTemplates)

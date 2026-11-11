@@ -157,3 +157,15 @@ uma tabela nova e esquecer a policy, o que nenhum teste de funcionalidade pegari
 - [x] **M3** — documentos, checklist por fase, pendências, link de acesso para terceiros
 - [x] **M4** — extensão MV3: captura e preenchimento no Caixa Aqui
 - [x] **M5** — formulários PDF, resumo do processo, painel com indicadores
+
+## Equipe e papéis
+
+Quem entra na equipe entra por convite (Configurações → Equipe): o administrador gera um
+link para o e-mail da pessoa, que vale 7 dias, uma vez, e só para quem entrar com esse
+e-mail. O banco guarda só o hash do token, como no portal do cliente.
+
+O que cada papel pode fazer além do dia a dia está em `PERMISSOES` (`@corr/core`) e é
+conferido nos repositórios, não só escondido na tela: excluir processo ou pessoa, mexer em
+formulários, nos dados do escritório e na equipe é de Administrador para cima; excluir
+documento, de Analista para cima. Só o Proprietário cria ou tira outro Proprietário, e o
+escritório nunca fica sem um.

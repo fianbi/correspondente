@@ -20,6 +20,7 @@ export type {
   NewProcess,
   Org,
   OrgMember,
+  OrgInvite,
   Person,
   PersonIncome,
   Process,

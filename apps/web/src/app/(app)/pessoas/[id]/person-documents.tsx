@@ -18,10 +18,12 @@ export function PersonDocuments({
   personId,
   documents,
   processes,
+  canDelete,
 }: {
   personId: string;
   documents: DocumentRow[];
   processes: SelectOption[];
+  canDelete: boolean;
 }) {
   const [type, setType] = useState<DocumentType>("rg");
   const [processId, setProcessId] = useState("");
@@ -67,6 +69,7 @@ export function PersonDocuments({
 
       <DocumentList
         context={{ kind: "pessoa" }}
+        canDelete={canDelete}
         groups={[
           {
             key: "todos",

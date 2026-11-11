@@ -12,3 +12,4 @@ export * from "./site-mappings";
 export * from "./form-templates";
 export * from "./risk-assessments";
 export * from "./simulations";
+export * from "./team";

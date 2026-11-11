@@ -4,6 +4,7 @@ import {
   type OrgContext,
   type StageRequirement,
   NotFoundError,
+  exigirPermissao,
 } from "@corr/core";
 import { type SQL, and, desc, eq, inArray, or } from "drizzle-orm";
 import { withOrg } from "../client";
@@ -168,6 +169,7 @@ export async function reviewDocument(
 }
 
 export async function deleteDocument(ctx: OrgContext, documentId: string) {
+  exigirPermissao(ctx, "excluir_documento");
   return withOrg(ctx, async (tx) => {
     const [deleted] = await tx
       .delete(documents)

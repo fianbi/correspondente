@@ -44,6 +44,7 @@ export function DocumentsPanel({
   people,
   links,
   portalBaseUrl,
+  canDelete,
 }: {
   processId: string;
   stageKey: string | null;
@@ -53,6 +54,7 @@ export function DocumentsPanel({
   people: ProcessPerson[];
   links: AccessLinkRow[];
   portalBaseUrl: string;
+  canDelete: boolean;
 }) {
   const firstPerson = people[0]?.personId ?? PROCESS_OWNER;
   const [type, setType] = useState<DocumentType>("rg");
@@ -223,6 +225,7 @@ export function DocumentsPanel({
       <DocumentList
         groups={groups}
         context={{ kind: "processo", processId }}
+        canDelete={canDelete}
         ownerOptions={people.map((person) => ({ value: person.personId, label: person.fullName }))}
       />
 

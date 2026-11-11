@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
-import { ORG_ROLE_LABELS, roleAtLeast } from "@corr/core";
-import { getOrg, listOrgMembers } from "@corr/db";
+import { pode } from "@corr/core";
+import { getOrg, listOrgMembers, listPendingInvites } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
+import { enderecoDoSistema } from "@/server/url";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
+import { TeamCard } from "./team-card";
 
 export const metadata: Metadata = { title: "Escritório" };
 
+const DATA = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
+
 export default async function EscritorioPage() {
   const ctx = await requireOrgContext();
-  const [org, members] = await Promise.all([getOrg(ctx), listOrgMembers(ctx)]);
+  const [org, members, invites, baseUrl] = await Promise.all([
+    getOrg(ctx),
+    listOrgMembers(ctx),
+    listPendingInvites(ctx),
+    enderecoDoSistema(),
+  ]);
 
   return (
     <>
@@ -20,28 +29,28 @@ export default async function EscritorioPage() {
         <Card>
           <CardHeader title="Informações" />
           <CardBody>
-            <SettingsForm org={org} canEdit={roleAtLeast(ctx.role, "admin")} />
+            <SettingsForm org={org} canEdit={pode(ctx.role, "gerenciar_escritorio")} />
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader title="Equipe" description={`${members.length} usuário(s) com acesso.`} />
-          <CardBody className="p-0">
-            <ul className="divide-y divide-line">
-              {members.map((member) => (
-                <li key={member.userId} className="flex items-center justify-between gap-4 px-5 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{member.fullName}</p>
-                    <p className="truncate text-xs text-ink-muted">{member.email}</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-ink-muted">
-                    {ORG_ROLE_LABELS[member.role]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardBody>
-        </Card>
+        <TeamCard
+          members={members.map((member) => ({
+            userId: member.userId,
+            fullName: member.fullName,
+            email: member.email,
+            role: member.role,
+          }))}
+          invites={invites.map((invite) => ({
+            id: invite.id,
+            email: invite.email,
+            role: invite.role,
+            expiresAt: DATA.format(invite.expiresAt),
+          }))}
+          currentUserId={ctx.userId}
+          currentRole={ctx.role}
+          canManage={pode(ctx.role, "gerenciar_equipe")}
+          baseUrl={baseUrl}
+        />
       </main>
     </>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pode } from "@corr/core";
 import { listFormTemplates } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
@@ -20,6 +21,7 @@ export default async function FormulariosPage() {
 
       <main className="max-w-4xl p-4 sm:p-6">
         <TemplatesPanel
+          canManage={pode(ctx.role, "gerenciar_formularios")}
           templates={templates.map((template) => ({
             id: template.id,
             name: template.name,

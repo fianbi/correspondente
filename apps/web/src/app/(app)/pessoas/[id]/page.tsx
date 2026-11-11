@@ -8,6 +8,7 @@ import {
   formatBRL,
   formatCpf,
   formatPhone,
+  pode,
   resolveCurrentStep,
   stepsForModality,
 } from "@corr/core";
@@ -128,11 +129,13 @@ export default async function PessoaPage({
             >
               Novo processo
             </Link>
-            <DeletePerson
-              personId={person.id}
-              fullName={person.fullName}
-              processCount={processes.length}
-            />
+            {pode(ctx.role, "excluir_pessoa") ? (
+              <DeletePerson
+                personId={person.id}
+                fullName={person.fullName}
+                processCount={processes.length}
+              />
+            ) : null}
           </div>
         }
       />
@@ -278,6 +281,7 @@ export default async function PessoaPage({
         ) : tab === "documentos" ? (
           <PersonDocuments
             personId={person.id}
+            canDelete={pode(ctx.role, "excluir_documento")}
             documents={documents}
             processes={processes.map((process) => ({
               value: process.id,

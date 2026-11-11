@@ -82,7 +82,34 @@ export const orgCounters = pgTable("org_counters", {
   nextProcessNumber: integer("next_process_number").notNull().default(1),
 });
 
+/**
+ * Convite para entrar na equipe do escritório. Como o link do portal, o token
+ * só existe em texto na hora em que é gerado; o banco guarda o hash. Vale para
+ * o e-mail convidado, por 7 dias, uma vez.
+ */
+export const orgInvites = pgTable(
+  "org_invites",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => orgs.id, { onDelete: "cascade" }),
+    /** Em minúsculas. */
+    email: text("email").notNull(),
+    role: orgRole("role").notNull().default("operacional"),
+    tokenHash: text("token_hash").notNull().unique(),
+    invitedBy: uuid("invited_by").references(() => profiles.id, { onDelete: "set null" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedBy: uuid("accepted_by").references(() => profiles.id, { onDelete: "set null" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [index("org_invites_org_idx").on(table.orgId)],
+);
+
 export type Org = typeof orgs.$inferSelect;
 export type NewOrg = typeof orgs.$inferInsert;
 export type Profile = typeof profiles.$inferSelect;
 export type OrgMember = typeof orgMembers.$inferSelect;
+export type OrgInvite = typeof orgInvites.$inferSelect;

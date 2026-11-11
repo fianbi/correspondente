@@ -40,6 +40,18 @@ export async function requireSessionUser(): Promise<SessionUser> {
   return user;
 }
 
+/** Grava o escritório ativo no cookie. Quem chama já conferiu o vínculo. */
+export async function gravarEscritorioAtivo(orgId: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_ORG_COOKIE, orgId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
 export interface ActiveOrg extends OrgContext {
   orgName: string;
   orgSlug: string;

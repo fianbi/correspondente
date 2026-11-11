@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DomainError } from "@corr/core";
+import { DomainError, MENSAGEM_SEM_PERMISSAO, exigirPermissao, pode } from "@corr/core";
 import {
   createFormTemplate,
   deleteFormTemplate,
@@ -23,6 +23,9 @@ export interface TemplateState {
 /** Adiciona ao escritório um dos modelos que o sistema já traz mapeados. */
 export async function addReadyTemplate(chave: string): Promise<TemplateState> {
   const ctx = await requireOrgContext();
+  if (!pode(ctx.role, "gerenciar_formularios")) {
+    return { error: MENSAGEM_SEM_PERMISSAO.gerenciar_formularios };
+  }
   const modelo = getModeloPronto(chave);
   if (!modelo) return { error: "Modelo pronto não encontrado." };
   const fieldMap = { "#pronto": modelo.chave };
@@ -85,6 +88,7 @@ export async function saveTemplateInfo(
 
 export async function removeTemplate(templateId: string): Promise<void> {
   const ctx = await requireOrgContext();
+  exigirPermissao(ctx, "gerenciar_formularios");
   const { storagePath } = await deleteFormTemplate(ctx, templateId);
   await removeStoredFile(storagePath);
   revalidatePath("/configuracoes/formularios");

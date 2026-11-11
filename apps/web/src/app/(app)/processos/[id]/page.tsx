@@ -2,7 +2,6 @@ import { perguntasDoModelo } from "@/lib/formularios";
 import { origemPronta, perguntasDoModeloPronto } from "@/server/pdf/modelos";
 import Link from "next/link";
 import type { Metadata, Route } from "next";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import {
@@ -11,6 +10,7 @@ import {
   detoursFrom,
   formatCpf,
   nextStep,
+  pode,
   requireField,
   resolveCurrentStep,
   stepsForModality,
@@ -40,6 +40,7 @@ import {
   listVisitedSteps,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
+import { enderecoDoSistema } from "@/server/url";
 import { PageHeader } from "@/components/shell/page-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -180,12 +181,7 @@ export default async function ProcessoPage({
     accessCount: link.accessCount,
   }));
 
-  // O link do portal precisa da origem real da requisição: em produção é o
-  // domínio do escritório, em desenvolvimento é o localhost da máquina.
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const portalBaseUrl = `${protocol}://${host}`;
+  const portalBaseUrl = await enderecoDoSistema();
 
   const proponent = process.participants.find((p) => p.role === "proponente");
 
@@ -237,7 +233,9 @@ export default async function ProcessoPage({
                   })(),
                 }))}
             />
-            <DeleteProcess processId={id} number={process.number} />
+            {pode(ctx.role, "excluir_processo") ? (
+              <DeleteProcess processId={id} number={process.number} />
+            ) : null}
           </div>
         }
       />
@@ -344,6 +342,7 @@ export default async function ProcessoPage({
               people={processPeople}
               links={linkRows}
               portalBaseUrl={portalBaseUrl}
+              canDelete={pode(ctx.role, "excluir_documento")}
             />
           ) : tab === "pendencias" ? (
             <PendenciesPanel

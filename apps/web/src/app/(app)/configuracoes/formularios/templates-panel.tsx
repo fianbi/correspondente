@@ -26,9 +26,12 @@ export interface ProntoRow {
 export function TemplatesPanel({
   templates,
   prontos,
+  canManage,
 }: {
   templates: TemplateRow[];
   prontos: ProntoRow[];
+  /** Admin e Proprietário adicionam, editam e tiram modelos; os demais só veem. */
+  canManage: boolean;
 }) {
   const [aberto, setAberto] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -36,7 +39,16 @@ export function TemplatesPanel({
 
   return (
     <div className="flex flex-col gap-6">
-      {prontos.length > 0 ? (
+      {!canManage ? (
+        <p className="text-sm text-ink-muted">
+          Só administradores adicionam ou mudam modelos.{" "}
+          {templates.length > 0
+            ? "Os modelos abaixo já estão disponíveis na tela do processo, em Gerar PDF."
+            : "Nenhum modelo foi adicionado ainda."}
+        </p>
+      ) : null}
+
+      {canManage && prontos.length > 0 ? (
         <Card>
           <CardHeader
             title="Modelos prontos"
@@ -81,25 +93,27 @@ export function TemplatesPanel({
             title={template.name}
             description={template.description ?? undefined}
             action={
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setAberto(aberto === template.id ? null : template.id)}
-                >
-                  {aberto === template.id ? "Fechar" : "Editar"}
-                </Button>
-                <button
-                  type="button"
-                  aria-label={`Excluir ${template.name}`}
-                  disabled={pending}
-                  onClick={() => startTransition(() => void removeTemplate(template.id))}
-                  className="rounded-md p-1.5 text-ink-muted transition hover:bg-surface-muted hover:text-status-reprovado disabled:opacity-40"
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                </button>
-              </div>
+              canManage ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setAberto(aberto === template.id ? null : template.id)}
+                  >
+                    {aberto === template.id ? "Fechar" : "Editar"}
+                  </Button>
+                  <button
+                    type="button"
+                    aria-label={`Excluir ${template.name}`}
+                    disabled={pending}
+                    onClick={() => startTransition(() => void removeTemplate(template.id))}
+                    className="rounded-md p-1.5 text-ink-muted transition hover:bg-surface-muted hover:text-status-reprovado disabled:opacity-40"
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                </div>
+              ) : undefined
             }
           />
 

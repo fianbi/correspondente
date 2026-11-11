@@ -53,5 +53,6 @@ export async function signUp(_prev: AuthFormState, formData: FormData): Promise<
   });
   if (error) return { error: error.message };
 
-  redirect("/cadastro/escritorio");
+  // Quem chegou por um convite volta para ele; os demais cadastram o escritório.
+  redirect(safeInternalPath(formData.get("next")?.toString(), "/cadastro/escritorio"));
 }

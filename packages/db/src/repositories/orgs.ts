@@ -1,4 +1,4 @@
-import { type OrgContext, type OrgRole, ForbiddenError, NotFoundError, roleAtLeast } from "@corr/core";
+import { type OrgContext, type OrgRole, NotFoundError, exigirPermissao } from "@corr/core";
 import { and, eq } from "drizzle-orm";
 import { getAdminDb, withOrg } from "../client";
 import { orgCounters, orgMembers, orgs, profiles } from "../schema/orgs";
@@ -67,9 +67,7 @@ export type OrgProfileUpdate = Partial<{
 }>;
 
 export async function updateOrg(ctx: OrgContext, patch: OrgProfileUpdate) {
-  if (!roleAtLeast(ctx.role, "admin")) {
-    throw new ForbiddenError("Só administradores podem alterar os dados do escritório.");
-  }
+  exigirPermissao(ctx, "gerenciar_escritorio");
   return withOrg(ctx, async (tx) => {
     const [updated] = await tx
       .update(orgs)
