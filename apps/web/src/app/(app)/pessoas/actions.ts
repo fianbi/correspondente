@@ -7,10 +7,12 @@ import {
   DuplicatePersonError,
   addPersonIncome,
   createPerson,
+  deletePerson,
   deletePersonIncome,
   updatePerson,
 } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
+import { removeStoredFile } from "@/server/storage";
 
 export interface PersonFormState {
   error?: string;
@@ -78,4 +80,26 @@ export async function removeIncome(personId: string, incomeId: string): Promise<
   const ctx = await requireOrgContext();
   await deletePersonIncome(ctx, incomeId);
   revalidatePath(`/pessoas/${personId}`);
+}
+
+/**
+ * Exclui o cadastro depois da confirmação digitada. Os arquivos que eram só
+ * do cadastro saem do armazenamento depois que o banco confirmou.
+ */
+export async function deletePersonAction(
+  personId: string,
+  typedName: string,
+): Promise<{ error?: string }> {
+  const ctx = await requireOrgContext();
+  let removedFiles: string[];
+  try {
+    ({ removedFiles } = await deletePerson(ctx, personId, typedName));
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+
+  await Promise.allSettled(removedFiles.map((path) => removeStoredFile(path)));
+  revalidatePath("/pessoas");
+  redirect("/pessoas");
 }

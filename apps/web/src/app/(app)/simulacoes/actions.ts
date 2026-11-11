@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { DomainError, simulationInputSchema } from "@corr/core";
-import { createSimulation, updateSimulation } from "@corr/db";
+import { createSimulation, deleteSimulation, updateSimulation } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 
 export interface SimulationFormState {
@@ -74,4 +74,16 @@ export async function saveSimulation(
   if (!simulationId) redirect(`/simulacoes/${id}`);
   revalidatePath(`/simulacoes/${id}`);
   return { saved: true };
+}
+
+export async function deleteSimulationAction(simulationId: string): Promise<{ error?: string }> {
+  const ctx = await requireOrgContext();
+  try {
+    await deleteSimulation(ctx, simulationId);
+  } catch (error) {
+    if (error instanceof DomainError) return { error: error.message };
+    throw error;
+  }
+  revalidatePath("/simulacoes");
+  redirect("/simulacoes");
 }

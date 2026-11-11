@@ -4,11 +4,14 @@ import {
   type PersonInput,
   DomainError,
   NotFoundError,
+  nomeParaConfirmar,
   onlyDigits,
 } from "@corr/core";
-import { and, asc, count, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { withOrg } from "../client";
 import { people, personIncomes } from "../schema/people";
+import { documents } from "../schema/documents";
+import { processParticipants } from "../schema/processes";
 
 /** CPF já cadastrado: o chamador precisa do id para oferecer "abrir cadastro". */
 export class DuplicatePersonError extends DomainError {
@@ -202,5 +205,68 @@ export async function sumPersonGrossIncome(ctx: OrgContext, personId: string): P
       .from(personIncomes)
       .where(and(eq(personIncomes.orgId, ctx.orgId), eq(personIncomes.personId, personId)));
     return Number(row?.total ?? 0);
+  });
+}
+
+/**
+ * Exclui a pessoa de vez. Quem chama confirma digitando o primeiro nome dela;
+ * a conferência é feita aqui também, para nenhum outro caminho apagar sem ela.
+ *
+ * Só sai quem não está em nenhum processo: o processo depende da pessoa, e
+ * tirar alguém de um processo é uma decisão à parte. Saem junto as rendas, as
+ * avaliações de risco e os documentos que eram só do cadastro. Documento
+ * pessoal enviado por um processo continua no processo, sem o dono.
+ *
+ * Devolve os caminhos dos arquivos que saíram, para quem chama apagar do
+ * armazenamento (o banco não alcança o bucket).
+ */
+export async function deletePerson(
+  ctx: OrgContext,
+  personId: string,
+  typedName: string,
+): Promise<{ removedFiles: string[] }> {
+  return withOrg(ctx, async (tx) => {
+    const [person] = await tx
+      .select({ fullName: people.fullName })
+      .from(people)
+      .where(and(eq(people.orgId, ctx.orgId), eq(people.id, personId)))
+      .limit(1);
+    if (!person) throw new NotFoundError("Pessoa");
+
+    if (nomeParaConfirmar(typedName) !== nomeParaConfirmar(person.fullName)) {
+      const primeiroNome = person.fullName.trim().split(/\s+/)[0];
+      throw new DomainError(
+        `Para excluir, digite o primeiro nome da pessoa (${primeiroNome}).`,
+        "confirmation_mismatch",
+      );
+    }
+
+    const [emProcessos] = await tx
+      .select({ total: sql<number>`count(distinct ${processParticipants.processId})::int` })
+      .from(processParticipants)
+      .where(
+        and(eq(processParticipants.orgId, ctx.orgId), eq(processParticipants.personId, personId)),
+      );
+    if ((emProcessos?.total ?? 0) > 0) {
+      throw new DomainError(
+        `${person.fullName} está em ${emProcessos!.total} processo(s). Tire a pessoa dos processos (ou exclua os processos) antes de excluir o cadastro.`,
+        "person_in_use",
+      );
+    }
+
+    const removed = await tx
+      .delete(documents)
+      .where(
+        and(
+          eq(documents.orgId, ctx.orgId),
+          eq(documents.personId, personId),
+          isNull(documents.processId),
+        ),
+      )
+      .returning({ storagePath: documents.storagePath });
+
+    await tx.delete(people).where(and(eq(people.orgId, ctx.orgId), eq(people.id, personId)));
+
+    return { removedFiles: removed.map((row) => row.storagePath) };
   });
 }

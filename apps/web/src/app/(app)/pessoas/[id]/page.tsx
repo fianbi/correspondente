@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { PersonForm } from "../person-form";
 import { IncomeSection } from "./income-section";
 import { PersonDocuments } from "./person-documents";
+import { DeletePerson } from "./delete-person";
 import {
   RiskAssessmentDetails,
   RiskExtrasList,
@@ -120,12 +121,19 @@ export default async function PessoaPage({
         title={person.fullName}
         description={formatCpf(person.cpf)}
         action={
-          <Link
-            href={`/processos/novo?personId=${person.id}`}
-            className="inline-flex h-9 items-center rounded-md border border-line bg-white px-3 text-sm font-medium text-ink hover:bg-surface-muted"
-          >
-            Novo processo
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/processos/novo?personId=${person.id}`}
+              className="inline-flex h-9 items-center rounded-md border border-line bg-white px-3 text-sm font-medium text-ink hover:bg-surface-muted"
+            >
+              Novo processo
+            </Link>
+            <DeletePerson
+              personId={person.id}
+              fullName={person.fullName}
+              processCount={processes.length}
+            />
+          </div>
         }
       />
 

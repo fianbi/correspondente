@@ -110,3 +110,17 @@ export async function attachSimulationToProcess(
     .set({ processId, updatedAt: new Date() })
     .where(and(eq(simulations.orgId, ctx.orgId), eq(simulations.id, simulationId)));
 }
+
+/**
+ * Exclui a simulação. O processo que nasceu dela continua igual: só perde a
+ * linha "Nasceu da simulação de...".
+ */
+export async function deleteSimulation(ctx: OrgContext, simulationId: string) {
+  return withOrg(ctx, async (tx) => {
+    const deleted = await tx
+      .delete(simulations)
+      .where(and(eq(simulations.orgId, ctx.orgId), eq(simulations.id, simulationId)))
+      .returning({ id: simulations.id });
+    if (deleted.length === 0) throw new NotFoundError("Simulação");
+  });
+}

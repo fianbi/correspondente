@@ -6,6 +6,7 @@ import { getProcess, getSimulation } from "@corr/db";
 import { requireOrgContext } from "@/server/session";
 import { PageHeader } from "@/components/shell/page-header";
 import { SimulationForm } from "../simulation-form";
+import { DeleteSimulation } from "./delete-simulation";
 
 export const metadata: Metadata = { title: "Simulação" };
 
@@ -27,21 +28,28 @@ export default async function SimulacaoPage({ params }: { params: Promise<{ id: 
         title={simulation.clientName}
         description="Simulação"
         action={
-          process ? (
-            <Link
-              href={`/processos/${process.id}` as Route}
-              className="inline-flex h-10 items-center rounded-md border border-line bg-white px-4 text-sm font-medium text-ink hover:bg-surface-muted"
-            >
-              Ver processo #{process.number}
-            </Link>
-          ) : (
-            <Link
-              href={`/processos/novo?simulacao=${simulation.id}` as Route}
-              className="inline-flex h-10 items-center rounded-md bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              Abrir processo
-            </Link>
-          )
+          <div className="flex flex-wrap items-center gap-2">
+            {process ? (
+              <Link
+                href={`/processos/${process.id}` as Route}
+                className="inline-flex h-10 items-center rounded-md border border-line bg-white px-4 text-sm font-medium text-ink hover:bg-surface-muted"
+              >
+                Ver processo #{process.number}
+              </Link>
+            ) : (
+              <Link
+                href={`/processos/novo?simulacao=${simulation.id}` as Route}
+                className="inline-flex h-10 items-center rounded-md bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-700"
+              >
+                Abrir processo
+              </Link>
+            )}
+            <DeleteSimulation
+              simulationId={simulation.id}
+              clientName={simulation.clientName}
+              processNumber={process?.number ?? null}
+            />
+          </div>
         }
       />
       <main className="max-w-5xl p-4 sm:p-6">

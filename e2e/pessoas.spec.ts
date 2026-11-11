@@ -163,3 +163,27 @@ test("campo obrigatório em branco abre a seção dele", async ({ page }) => {
   // envio sem mostrar nada.
   await expect(page.getByLabel("CPF")).toBeVisible();
 });
+
+test("excluir pessoa pede o primeiro nome; quem está em processo não sai", async ({ page }) => {
+  await page.goto("/pessoas/nova");
+  await page.getByLabel("CPF").fill(cpfFicticio());
+  const nome = `OTAVIO EXCLUIDO ${Date.now().toString().slice(-5)}`;
+  await page.getByLabel("Nome completo").fill(nome);
+  await page.getByRole("button", { name: "Cadastrar pessoa" }).click();
+  await expect(page.getByRole("heading", { name: nome })).toBeVisible();
+
+  await page.getByRole("button", { name: "Excluir", exact: true }).click();
+  const confirmar = page.getByRole("button", { name: "Excluir pessoa" });
+  await expect(confirmar).toBeDisabled();
+  await page.getByLabel("Primeiro nome para confirmar").fill("Otávio");
+  await confirmar.click();
+  await expect(page).toHaveURL(/\/pessoas$/);
+  await expect(page.getByRole("link", { name: nome })).toHaveCount(0);
+
+  // A pessoa do seed está em processo: a janela explica e não exclui.
+  await page.goto("/pessoas");
+  await page.getByRole("link", { name: "ANA PAULA RIBEIRO" }).click();
+  await page.getByRole("button", { name: "Excluir", exact: true }).click();
+  await expect(page.getByText(/está em \d+ processo/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Excluir pessoa" })).toHaveCount(0);
+});
