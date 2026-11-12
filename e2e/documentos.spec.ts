@@ -33,11 +33,12 @@ test("checklist da etapa mostra o que falta e marca o que chegou", async ({ page
   const url = await novoProcesso(page);
   await page.goto(`${url}?aba=documentos`);
 
-  // A primeira lista da página é a navegação de etapas; o checklist é o cartão
-  // que tem o próprio título.
+  // A primeira lista da página é a barra de etapas; o checklist é o cartão
+  // da etapa aberta, com o próprio título.
   const checklist = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: /O que a etapa pede/ }) });
+    .filter({ has: page.getByRole("heading", { name: "Documentos da etapa" }) })
+    .last();
 
   await expect(checklist).toBeVisible();
   await expect(checklist.getByText("RG", { exact: true })).toBeVisible();
@@ -87,7 +88,7 @@ test("pendência aparece na visão global e some ao ser resolvida", async ({ pag
   // de rodadas anteriores, e um sufixo curto acabaria colidindo.
   const titulo = `Falta certidão ${randomUUID().slice(0, 8)}`;
   await page.getByLabel("Nova pendência").fill(titulo);
-  await page.getByRole("button", { name: "Adicionar" }).click();
+  await page.getByRole("button", { name: "Adicionar", exact: true }).click();
   await expect(page.getByText(titulo)).toBeVisible();
 
   await page.goto("/pendencias");

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MODALITIES } from "./process";
+import { DOCUMENT_TYPES } from "./document";
+import { requireField } from "../fields/catalog";
 import {
   STEP_ORDER,
   detoursFrom,
@@ -34,7 +36,14 @@ describe("andamento por modalidade", () => {
   });
 
   it("as fases dos passos seguem a ordem do funil", () => {
-    const order = ["cadastro", "correspondente", "montagem", "conformidade_contrato", "agencia", "cri"];
+    const order = [
+      "cadastro",
+      "correspondente",
+      "montagem",
+      "conformidade_contrato",
+      "agencia",
+      "cri",
+    ];
     for (const modality of MODALITIES) {
       const idx = stepsForModality(modality).map((s) => order.indexOf(s.phase));
       expect([...idx].sort((a, b) => a - b)).toEqual(idx);
@@ -66,5 +75,17 @@ describe("andamento por modalidade", () => {
     expect(resolveCurrentStep(steps, null, "agencia").key).toBe("revisao_gerente");
     // Passo de outro roteiro (PEPT num imóvel usado) também cai na fase.
     expect(resolveCurrentStep(steps, "ajustes_pept", "correspondente").key).toBe("analise_risco");
+  });
+
+  it("cada etapa só cita campos do catálogo e tipos de documento que existem", () => {
+    for (const step of STEP_ORDER) {
+      for (const block of step.blocks ?? []) {
+        for (const key of block.fields) expect(() => requireField(key)).not.toThrow();
+      }
+      for (const requirement of step.requirements ?? []) {
+        expect(DOCUMENT_TYPES).toContain(requirement.documentType);
+      }
+      expect(step.doneWhen, step.key).toBeTruthy();
+    }
   });
 });

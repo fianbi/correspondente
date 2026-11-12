@@ -12,7 +12,9 @@ function cpfFicticio(): string {
   return `${base}${d1}${digito(`${base}${d1}`, 11)}`;
 }
 
-test("simulação sem cadastro vira processo com a pessoa criada e o cenário escolhido", async ({ page }) => {
+test("simulação sem cadastro vira processo com a pessoa criada e o cenário escolhido", async ({
+  page,
+}) => {
   const nome = `CLIENTE SIMULOU ${Date.now().toString().slice(-5)}`;
 
   await page.goto("/simulacoes");
@@ -41,11 +43,15 @@ test("simulação sem cadastro vira processo com a pessoa criada e o cenário es
   await page.getByRole("button", { name: "Criar processo" }).click();
 
   await expect(page).toHaveURL(/\/processos\/[0-9a-f-]{36}/);
-  await expect(page.getByText("Nasceu da simulação de")).toBeVisible();
-  await expect(page.getByLabel("Etapa do processo")).toHaveValue("documentacao_pessoal");
+  await expect(page.getByText("Simulação:")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Etapas do processo" })).toHaveAttribute(
+    "data-etapa-atual",
+    "documentacao_pessoal",
+  );
   const participantes = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Participantes" }) });
+    .filter({ has: page.getByRole("heading", { name: "Participantes" }) })
+    .last();
   await expect(participantes).toContainText(nome);
   // O cenário escolhido vira o valor inicial da proposta.
   await expect(page.getByLabel("Valor de financiamento")).toHaveValue("250000,00");

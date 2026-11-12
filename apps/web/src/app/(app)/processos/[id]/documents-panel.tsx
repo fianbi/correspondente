@@ -2,11 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Check, Upload } from "lucide-react";
-import {
-  DOCUMENT_TYPE_LABELS,
-  isProcessDocumentType,
-  type DocumentType,
-} from "@corr/core";
+import { DOCUMENT_TYPE_LABELS, isProcessDocumentType, type DocumentType } from "@corr/core";
 import type { ChecklistItem, DocumentRow } from "@corr/db";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +41,7 @@ export function DocumentsPanel({
   links,
   portalBaseUrl,
   canDelete,
+  parts = { checklist: true, uploader: true, list: true, links: true },
 }: {
   processId: string;
   stageKey: string | null;
@@ -55,6 +52,16 @@ export function DocumentsPanel({
   links: AccessLinkRow[];
   portalBaseUrl: string;
   canDelete: boolean;
+  /**
+   * Partes a mostrar. Na etapa aberta vão o checklist e o envio; a lista
+   * completa e os links para o cliente ficam em "Todos os documentos".
+   */
+  parts?: {
+    checklist?: boolean;
+    uploader?: boolean;
+    list?: boolean;
+    links?: boolean;
+  };
 }) {
   const firstPerson = people[0]?.personId ?? PROCESS_OWNER;
   const [type, setType] = useState<DocumentType>("rg");
@@ -79,7 +86,10 @@ export function DocumentsPanel({
 
   function requestFromChecklist(next: DocumentType) {
     chooseType(next);
-    uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    uploaderRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
     uploaderRef.current?.querySelector<HTMLSelectElement>("select")?.focus();
   }
 
@@ -97,15 +107,15 @@ export function DocumentsPanel({
       subtitle: "Imóvel, contrato, laudo e o que não é de uma pessoa só.",
       emptyText: "Nenhum documento do processo ainda.",
       documents: documents.filter(
-        (document) =>
-          !document.personId && document.processId === processId,
+        (document) => !document.personId && document.processId === processId,
       ),
     },
   ];
   // Pessoa que saiu do processo continua com os arquivos enviados nele.
   const known = new Set(people.map((person) => person.personId));
   const orphans = documents.filter(
-    (document) => document.personId && !known.has(document.personId) && document.processId === processId,
+    (document) =>
+      document.personId && !known.has(document.personId) && document.processId === processId,
   );
   if (orphans.length > 0) {
     groups.push({
@@ -119,10 +129,10 @@ export function DocumentsPanel({
 
   return (
     <div className="flex flex-col gap-5">
-      {checklist.length > 0 ? (
+      {parts.checklist && checklist.length > 0 ? (
         <Card>
           <CardHeader
-            title={`O que a etapa pede: ${stepLabel}`}
+            title="Documentos da etapa"
             description={
               missing.length === 0
                 ? "Tudo recebido."
@@ -182,54 +192,61 @@ export function DocumentsPanel({
         </Card>
       ) : null}
 
-      <div ref={uploaderRef}>
-        <Card>
-          <CardHeader
-            title="Adicionar documento"
-            description="Documento pessoal enviado aqui também fica no cadastro da pessoa e vale para os outros processos dela."
-          />
-          <CardBody>
-            <DocumentUploader
-              owner={
-                owner === PROCESS_OWNER ? { processId } : { processId, personId: owner }
-              }
-              type={type}
-              stageKey={stageKey}
-              fields={
-                <>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="document-type">Tipo</Label>
-                    <DocumentTypeSelect
-                      id="document-type"
-                      value={type}
-                      onChange={(event) => chooseType(event.target.value as DocumentType)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="document-owner">De quem é</Label>
-                    <Select
-                      id="document-owner"
-                      placeholder={null}
-                      options={ownerOptions}
-                      value={owner}
-                      onChange={(event) => setOwner(event.target.value)}
-                    />
-                  </div>
-                </>
-              }
+      {parts.uploader ? (
+        <div ref={uploaderRef}>
+          <Card>
+            <CardHeader
+              title="Adicionar documento"
+              description="Documento pessoal enviado aqui também fica no cadastro da pessoa e vale para os outros processos dela."
             />
-          </CardBody>
-        </Card>
-      </div>
+            <CardBody>
+              <DocumentUploader
+                owner={owner === PROCESS_OWNER ? { processId } : { processId, personId: owner }}
+                type={type}
+                stageKey={stageKey}
+                fields={
+                  <>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="document-type">Tipo</Label>
+                      <DocumentTypeSelect
+                        id="document-type"
+                        value={type}
+                        onChange={(event) => chooseType(event.target.value as DocumentType)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor="document-owner">De quem é</Label>
+                      <Select
+                        id="document-owner"
+                        placeholder={null}
+                        options={ownerOptions}
+                        value={owner}
+                        onChange={(event) => setOwner(event.target.value)}
+                      />
+                    </div>
+                  </>
+                }
+              />
+            </CardBody>
+          </Card>
+        </div>
+      ) : null}
 
-      <DocumentList
-        groups={groups}
-        context={{ kind: "processo", processId }}
-        canDelete={canDelete}
-        ownerOptions={people.map((person) => ({ value: person.personId, label: person.fullName }))}
-      />
+      {parts.list ? (
+        <DocumentList
+          groups={groups}
+          context={{ kind: "processo", processId }}
+          canDelete={canDelete}
+          ownerOptions={people.map((person) => ({
+            value: person.personId,
+            label: person.fullName,
+          }))}
+        />
+      ) : null}
 
-      <AccessLinksCard processId={processId} links={links} portalBaseUrl={portalBaseUrl} />
+      {parts.links ? (
+        <AccessLinksCard processId={processId} links={links} portalBaseUrl={portalBaseUrl} />
+      ) : null}
     </div>
   );
 }

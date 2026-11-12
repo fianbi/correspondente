@@ -1,14 +1,12 @@
 "use client";
 
-import { useActionState, useTransition, type ComponentProps } from "react";
-import type { FieldOption, FieldView } from "@corr/core";
+import { useActionState } from "react";
+import type { FieldView } from "@corr/core";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { FieldInput, type DynamicOptions } from "@/components/fields/field-input";
 import type { AgenciaOpcao } from "@/lib/agencias";
-import { assignStageAction, saveStageFields, type StageFormState } from "./stage-actions";
-import { StepActions } from "./step-progress";
+import { saveStageFields, type StageFormState } from "./stage-actions";
 
 export type StepState = "concluida" | "atual" | "pendente";
 
@@ -20,80 +18,41 @@ export interface RenderBlock {
 }
 
 /**
- * Tela de uma etapa: quem é o responsável, os botões de movimento e os campos.
+ * Campos de uma etapa. Cada etapa mostra só o que se preenche nela; a visão
+ * completa do processo é o PDF "Resumo do processo".
  *
- * `fieldsKey` é a tela de campos do fluxo do escritório que vale para a etapa
- * — várias etapas seguidas (SICAQ, vistoria, PEPT) preenchem a mesma análise
- * de crédito, então a configuração de campos não se repete etapa a etapa.
+ * `fieldsKey` é a fase do fluxo do escritório, usada quando a etapa não tem
+ * campos próprios.
  */
 export function StageForm({
   processId,
   stepKey,
   fieldsKey,
-  stepLabel,
-  subtitle,
   blocks,
   options,
   agencias,
-  state: stepState,
-  assignedTo,
-  members,
-  actions,
 }: {
   processId: string;
   stepKey: string;
   fieldsKey: string;
-  stepLabel: string;
-  subtitle: string;
   blocks: RenderBlock[];
   options: DynamicOptions;
   agencias: AgenciaOpcao[];
-  state: StepState;
-  assignedTo: string | null;
-  members: FieldOption[];
-  /**
-   * Dados dos botões de movimento. Vão como dados, não como elemento pronto:
-   * um elemento montado na página do servidor e renderizado aqui entre outros
-   * filhos dispara o aviso de `key` do React em desenvolvimento.
-   */
-  actions: Omit<ComponentProps<typeof StepActions>, "processId">;
 }) {
   const action = saveStageFields.bind(null, processId, fieldsKey, stepKey);
   const [formState, formAction] = useActionState<StageFormState, FormData>(action, {});
-  const [pending, startTransition] = useTransition();
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-ink">{stepLabel}</h2>
-            <StepStateChip state={stepState} />
-          </div>
-          <p className="mt-0.5 text-xs text-ink-muted">{subtitle}</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            aria-label="Responsável pela etapa"
-            className="h-8 w-44 text-xs"
-            options={members}
-            defaultValue={assignedTo ?? ""}
-            disabled={pending}
-            onChange={(event) =>
-              startTransition(() => void assignStageAction(processId, stepKey, event.target.value))
-            }
-          />
-          <StepActions processId={processId} {...actions} />
-        </div>
-      </div>
-
       {blocks.map((block) => (
         <Card key={block.key}>
           <CardHeader title={block.title} description={block.description} />
           <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {block.fields.map(({ def, value }) => (
-              <div key={def.key} className={def.type === "textarea" ? "sm:col-span-2 lg:col-span-3" : ""}>
+              <div
+                key={def.key}
+                className={def.type === "textarea" ? "sm:col-span-2 lg:col-span-3" : ""}
+              >
                 <FieldInput
                   def={def}
                   value={value}
@@ -111,14 +70,20 @@ export function StageForm({
         Barra de salvar presa ao rodapé: com três ou quatro blocos de campos,
         o botão sumia da tela e o operador rolava até o fim só para salvar.
       */}
-      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-line bg-surface-muted/95 py-3 backdrop-blur">
-        <SubmitButton>Salvar etapa</SubmitButton>
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-line bg-surface/95 py-3 backdrop-blur">
+        <SubmitButton>Salvar dados</SubmitButton>
         {formState.error ? (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-1.5 text-sm text-status-reprovado">
+          <p
+            role="alert"
+            className="rounded-md bg-red-50 px-3 py-1.5 text-sm text-status-reprovado"
+          >
             {formState.error}
           </p>
         ) : formState.savedCount !== undefined ? (
-          <p role="status" className="rounded-md bg-green-50 px-3 py-1.5 text-sm text-status-aprovado">
+          <p
+            role="status"
+            className="rounded-md bg-green-50 px-3 py-1.5 text-sm text-status-aprovado"
+          >
             {formState.savedCount === 0
               ? "Nada mudou — nenhum registro novo no histórico."
               : `${formState.savedCount} campo(s) alterado(s) e registrado(s) no histórico.`}
@@ -126,24 +91,5 @@ export function StageForm({
         ) : null}
       </div>
     </form>
-  );
-}
-
-function StepStateChip({ state }: { state: StepState }) {
-  const styles = {
-    pendente: "bg-surface-muted text-ink-muted",
-    atual: "bg-amber-50 text-status-aguardando",
-    concluida: "bg-green-50 text-status-aprovado",
-  } as const;
-  const labels = {
-    pendente: "Pendente",
-    atual: "Etapa atual",
-    concluida: "Concluída",
-  } as const;
-
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles[state]}`}>
-      {labels[state]}
-    </span>
   );
 }

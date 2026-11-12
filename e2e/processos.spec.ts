@@ -54,7 +54,8 @@ test("abre processo só com modalidade e participantes; o de maior renda vira o 
 
   const participantes = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Participantes" }) });
+    .filter({ has: page.getByRole("heading", { name: "Participantes" }) })
+    .last();
   await expect(
     participantes.getByRole("listitem").filter({ hasText: "Proponente principal" }),
   ).toContainText(principal);
