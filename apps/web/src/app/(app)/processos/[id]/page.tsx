@@ -5,8 +5,10 @@ import type { Metadata, Route } from "next";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import {
+  DOCUMENT_TYPE_LABELS,
   NotFoundError,
   PARTICIPANT_ROLE_LABELS,
+  type DocumentType,
   detoursFrom,
   formatCpf,
   nextStep,
@@ -56,6 +58,7 @@ import { PendenciesPanel } from "./pendencies-panel";
 import { RiskCard } from "./risk-card";
 import { ParticipantsCard } from "./participants-card";
 import { DeleteProcess } from "./delete-process";
+import { CobrarCliente } from "./cobrar-cliente";
 
 export const metadata: Metadata = { title: "Processo" };
 
@@ -165,6 +168,7 @@ export default async function ProcessoPage({
     return {
       personId,
       fullName: entries[0]!.fullName,
+      phone: entries[0]!.phone,
       roles: entries.map((p) => PARTICIPANT_ROLE_LABELS[p.role]),
     };
   });
@@ -339,6 +343,20 @@ export default async function ProcessoPage({
           {tab === "historico" ? (
             <HistoryTab processId={id} actors={members} relations={relations} />
           ) : tab === "documentos" ? (
+            <div className="flex flex-col gap-5">
+            <CobrarCliente
+              escritorio={ctx.orgName}
+              processNumber={process.number}
+              etapa={viewedStep.label}
+              destinatarios={processPeople}
+              documentosFaltando={checklist
+                .filter((item) => !item.satisfied)
+                .map((item) => ({
+                  label: DOCUMENT_TYPE_LABELS[item.documentType as DocumentType] ?? item.documentType,
+                  required: item.required,
+                }))}
+              pendencias={pendencies.filter((p) => p.status === "aberta").map((p) => p.title)}
+            />
             <DocumentsPanel
               processId={id}
               stageKey={currentStage?.key ?? null}
@@ -350,6 +368,7 @@ export default async function ProcessoPage({
               portalBaseUrl={portalBaseUrl}
               canDelete={pode(ctx.role, "excluir_documento")}
             />
+            </div>
           ) : tab === "pendencias" ? (
             <PendenciesPanel
               processId={id}

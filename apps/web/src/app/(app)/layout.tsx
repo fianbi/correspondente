@@ -3,6 +3,7 @@ import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { OrgSwitcher } from "@/components/shell/org-switcher";
 import { UserMenu } from "@/components/shell/user-menu";
 import { MobileMenu } from "@/components/shell/mobile-menu";
+import { QuickSearch } from "@/components/shell/quick-search";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireSessionUser();
@@ -11,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const menu = (
     <>
       <OrgSwitcher memberships={org.memberships} activeOrgId={org.orgId} />
+      <QuickSearch />
       <SidebarNav />
       <UserMenu user={user} />
     </>

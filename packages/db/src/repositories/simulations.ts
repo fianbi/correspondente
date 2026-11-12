@@ -1,10 +1,20 @@
 import { type OrgContext, type SimulationInput, NotFoundError } from "@corr/core";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { withOrg, type Tx } from "../client";
 import { processes } from "../schema/processes";
 import { simulations, type SimulationScenario } from "../schema/simulations";
 
-export async function listSimulations(ctx: OrgContext) {
+export async function listSimulations(ctx: OrgContext, options: { search?: string } = {}) {
+  const search = options.search?.trim();
+  const digits = search?.replace(/\D/g, "") ?? "";
+  const filtro = search
+    ? or(
+        ilike(simulations.clientName, `%${search}%`),
+        digits.length >= 4
+          ? sql`regexp_replace(coalesce(${simulations.clientPhone}, ''), '[^0-9]', '', 'g') like ${`%${digits}%`}`
+          : undefined,
+      )
+    : undefined;
   return withOrg(ctx, (tx) =>
     tx
       .select({
@@ -20,7 +30,7 @@ export async function listSimulations(ctx: OrgContext) {
       })
       .from(simulations)
       .leftJoin(processes, eq(processes.id, simulations.processId))
-      .where(eq(simulations.orgId, ctx.orgId))
+      .where(filtro ? and(eq(simulations.orgId, ctx.orgId), filtro) : eq(simulations.orgId, ctx.orgId))
       .orderBy(desc(simulations.updatedAt))
       .limit(200),
   );

@@ -134,6 +134,7 @@ export async function getProcess(ctx: OrgContext, processId: string) {
         personId: people.id,
         fullName: people.fullName,
         cpf: people.cpf,
+        phone: people.phone,
         role: processParticipants.role,
       })
       .from(processParticipants)
@@ -541,3 +542,45 @@ export async function summarizeByStep(ctx: OrgContext): Promise<AgrupamentoDoPai
     });
   });
 }
+
+/**
+ * Processos ativos sem movimento há pelo menos `days` dias.
+ *
+ * Movimento é qualquer coisa que deixa rastro: campo alterado, troca de etapa
+ * ou status (tudo em `process_events`) e documento recebido, inclusive pelo
+ * link do cliente. É o processo que esfria sem ninguém perceber, porque não
+ * tem prazo vencendo para chamar atenção.
+ */
+export async function listStalledProcesses(ctx: OrgContext, days = 7) {
+  return withOrg(ctx, async (tx) => {
+    const ultimoMovimento = sql`greatest(
+      ${processes.updatedAt},
+      coalesce((select max(e.created_at) from process_events e where e.process_id = ${processes.id}), ${processes.updatedAt}),
+      coalesce((select max(d.created_at) from documents d where d.process_id = ${processes.id}), ${processes.updatedAt})
+    )`;
+
+    const rows = await tx
+      .select({
+        ...listSelection,
+        diasParado: sql<number>`floor(extract(epoch from now() - ${ultimoMovimento}) / 86400)::int`,
+      })
+      .from(processes)
+      .innerJoin(people, eq(people.id, processes.personId))
+      .leftJoin(banks, eq(banks.id, processes.bankId))
+      .leftJoin(agencies, eq(agencies.id, processes.agencyId))
+      .leftJoin(brokers, eq(brokers.id, processes.brokerId))
+      .leftJoin(profiles, eq(profiles.id, processes.assignedTo))
+      .where(
+        and(
+          eq(processes.orgId, ctx.orgId),
+          notInArray(processes.status, [...CLOSED_STATUSES]),
+          sql`${ultimoMovimento} < now() - make_interval(days => ${days})`,
+        ),
+      )
+      .orderBy(sql`${ultimoMovimento} asc`);
+
+    return rows.map((row) => ({ ...row, etapa: currentStepOf(row).label }));
+  });
+}
+
+export type StalledProcessRow = Awaited<ReturnType<typeof listStalledProcesses>>[number];

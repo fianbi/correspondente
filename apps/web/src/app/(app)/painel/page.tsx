@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Hourglass } from "lucide-react";
 import {
   MODALITY_LABELS,
   PROCESS_STATUS_LABELS,
@@ -11,6 +11,7 @@ import {
 } from "@corr/core";
 import {
   listExpiringProcesses,
+  listStalledProcesses,
   summarizeByBank,
   summarizeByModality,
   summarizeByStep,
@@ -43,11 +44,15 @@ const TOKEN_TEXT_CLASSES: Record<string, string> = {
   reprovado: "text-status-reprovado",
 };
 
+/** Dias sem movimento para um processo ativo contar como parado. */
+const DIAS_PARADO = 7;
+
 export default async function PainelPage() {
   const ctx = await requireOrgContext();
-  const [summary, expiring, porBanco, porModalidade, porFase] = await Promise.all([
+  const [summary, expiring, parados, porBanco, porModalidade, porFase] = await Promise.all([
     summarizeProcesses(ctx),
     listExpiringProcesses(ctx, 30),
+    listStalledProcesses(ctx, DIAS_PARADO),
     summarizeByBank(ctx),
     summarizeByModality(ctx),
     summarizeByStep(ctx),
@@ -107,6 +112,48 @@ export default async function PainelPage() {
             );
           })}
         </section>
+
+        {parados.length > 0 ? (
+          <Card>
+            <CardHeader
+              title={`Parados há mais de ${DIAS_PARADO} dias (${parados.length})`}
+              description="Processos ativos sem nenhuma alteração, troca de etapa ou documento recebido. Os mais esquecidos primeiro."
+            />
+            <ul className="divide-y divide-line">
+              {parados.slice(0, 8).map((process) => (
+                <li key={process.id}>
+                  <Link
+                    href={`/processos/${process.id}`}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-5 py-2.5 text-sm transition hover:bg-surface-muted"
+                  >
+                    <Hourglass
+                      className={`size-4 shrink-0 ${process.diasParado >= DIAS_PARADO * 3 ? "text-status-reprovado" : "text-status-aguardando"}`}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-medium text-ink">
+                        #{process.number} {process.personName}
+                      </span>
+                      <span className="text-ink-muted">
+                        {" "}
+                        · {process.etapa}
+                        {process.assignedToName ? ` · ${process.assignedToName}` : ""}
+                      </span>
+                    </span>
+                    <span className="tabular shrink-0 text-xs font-medium text-ink-muted">
+                      {process.diasParado} dias sem movimento
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {parados.length > 8 ? (
+              <p className="border-t border-line px-5 py-2 text-xs text-ink-muted">
+                E mais {parados.length - 8}.
+              </p>
+            ) : null}
+          </Card>
+        ) : null}
 
         <section className="grid gap-4 lg:grid-cols-2">
           <Card>
